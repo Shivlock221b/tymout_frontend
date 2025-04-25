@@ -1,0 +1,125 @@
+# Frontend Architecture Documentation
+
+## Project Overview
+The frontend is a React-based application using modern web technologies including Tailwind CSS for styling and various React ecosystem tools for state management and routing.
+
+## Core Configuration Files
+
+### package.json
+- **Location**: `/package.json`
+- **Purpose**: Main project configuration and dependency management
+- **Key Features**:
+  - Manages project dependencies and scripts
+  - Configures workspace settings
+  - Defines start scripts for all services
+- **Related Files**:
+  - `package-lock.json`: Dependency lock file
+  - `.env`: Environment configuration
+
+### Tailwind Configuration
+- **Location**: `/frontend/tailwind.config.js`
+- **Purpose**: Customizes Tailwind CSS framework
+- **Key Features**:
+  - Custom color palette with indigo theme
+  - Custom font configuration using Inter as primary font
+  - Content paths configuration for CSS purging
+- **Related Files**:
+  - `src/styles/*`: Custom style definitions
+  - `src/index.css`: Global styles
+
+### Frontend Startup
+- **Location**: `/frontend/start-frontend.js`
+- **Purpose**: Manages frontend application startup
+- **Key Features**:
+  - Environment variable configuration
+  - Dynamic port assignment
+  - Process management for development server
+- **Related Files**:
+  - `.env`: Environment variables
+  - `package.json`: Script definitions
+
+## Source Directory Structure (/frontend/src)
+
+### Core Application Files
+- **App.js**: Main application component
+- **index.js**: Application entry point
+
+### Key Directories
+
+1. **components/**
+   - Reusable UI components
+   - Component-specific styles and logic
+   - Follows atomic design principles
+
+2. **pages/**
+   - Page-level components
+   - Route definitions
+   - Page-specific layouts
+
+3. **context/**
+   - React Context definitions
+   - Global state management
+   - Theme providers
+
+4. **services/**
+   - API integration services
+   - External service connectors
+   - Data fetching utilities
+
+5. **utils/**
+   - Helper functions
+   - Common utilities
+   - Constants and configurations
+
+6. **hooks/**
+   - Custom React hooks
+   - Shared stateful logic
+   - Component behavior abstractions
+
+7. **styles/**
+   - Global styles
+   - Theme definitions
+   - Tailwind custom classes
+
+8. **assets/**
+   - Images
+   - Icons
+   - Static resources
+
+9. **data/**
+   - Mock data
+   - Static content
+   - Data models/types
+
+## Best Practices & Conventions
+
+1. **Component Structure**
+   - Each component in its own directory
+   - Includes index.js, styles, and tests
+   - Follows Single Responsibility Principle
+
+2. **State Management**
+   - Context API for global state
+   - Local state for component-specific data
+   - Props for component communication
+
+3. **Styling**
+   - Tailwind CSS for utility-first styling
+   - Custom components for complex styles
+   - Responsive design patterns
+
+4. **Code Organization**
+   - Feature-based directory structure
+   - Clear separation of concerns
+   - Modular and reusable components
+
+5. **Performance**
+   - Code splitting
+   - Lazy loading of routes
+   - Optimized asset loading
+
+## Development Workflow
+1. Start the application using `npm start`
+2. Frontend runs on port specified in .env (default: 3006)
+3. Development server includes hot reloading
+4. Build production version using `npm run build` 

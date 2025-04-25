@@ -1,0 +1,78 @@
+/**
+ * ExplorePage Specific Styles
+ * Following Single Responsibility Principle - this file only contains ExplorePage styles
+ */
+
+/* Main page container styles */
+.container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  touch-action: pan-y; /* Only allow vertical swiping, not horizontal */
+}
+
+/* Category scroll container with horizontal scrolling only */
+.category-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  padding-bottom: 4px; /* Add some padding to avoid cut-off shadows */
+  touch-action: pan-x;  /* Allow horizontal scrolling only in this container */
+}
+
+.category-scroll-container::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* No scrollbar utility class - preserves scrollability but hides scrollbar */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Category filter wrapper styles */
+.category-filter-wrapper {
+  display: flex;
+  min-width: max-content;
+  padding: 2px 0;
+}
+
+/* Tab navigation styles */
+.tabs-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

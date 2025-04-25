@@ -1,0 +1,29 @@
+Global Container Styling: Your index.css had a default .container class with padding-left: 1rem; padding-right: 1rem;
+Inherited Padding: The hero image was nested inside components that either:
+Used the .container class directly
+Were inside parent layouts/wrappers that had their own padding
+Had multiple levels of padding inheritance
+CSS Specificity Issues: Simply adding padding: 0 or moving the hero outside one container wasn't enough because there were likely multiple container layers.
+Why the "Nuclear Option" Worked
+The solution that worked uses a CSS technique that forces an element to be truly viewport-width regardless of its parent containers:
+
+css
+CopyInsert
+.hero-full-bleed {
+  width: 100vw !important;
+  margin-left: calc(-50vw + 50%) !important;
+  margin-right: calc(-50vw + 50%) !important;
+  /* Other overrides */
+}
+This works by:
+
+Using 100vw (viewport width) instead of percentage-based widths
+Calculating negative margins that precisely counteract any parent padding
+Adding !important to override any other CSS rules with higher specificity
+For Future Reference
+When you need an element to be truly edge-to-edge:
+
+Use the .hero-full-bleed class we created (you can reuse it for other full-bleed elements)
+Avoid nesting critical UI elements inside multiple container divs with padding
+Consider container structure when designing layouts that need edge-to-edge elements
+This approach is commonly used for "full-bleed" hero images, background sections, and other elements that need to break out of container constraints in responsive designs.

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Authentication Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test API Gateway Connection</h2>
+        <button onclick="testApiGateway()">Test API Gateway</button>
+        <div id="api-gateway-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test User Service Connection</h2>
+        <button onclick="testUserService()">Test User Service</button>
+        <div id="user-service-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Google Authentication</h2>
+        <button onclick="testGoogleAuth()">Sign in with Google</button>
+        <p>This will redirect you to Google's authentication page. After successful authentication, you should be redirected back to the application.</p>
+    </div>
+
+    <script>
+        // Test API Gateway
+        async function testApiGateway() {
+            const resultDiv = document.getElementById('api-gateway-result');
+            resultDiv.innerHTML = 'Testing API Gateway...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test User Service
+        async function testUserService() {
+            const resultDiv = document.getElementById('user-service-result');
+            resultDiv.innerHTML = 'Testing User Service...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/users/test');
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test Google Authentication
+        function testGoogleAuth() {
+            window.location.href = 'http://localhost:3000/api/users/auth/google';
+        }
+    </script>
+</body>
+</html>
