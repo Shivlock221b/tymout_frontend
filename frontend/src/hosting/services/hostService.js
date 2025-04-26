@@ -37,7 +37,7 @@ const hostService = {
       console.log('[Host Service] Sending event creation request to: http://localhost:3002/events');
       console.log('[Host Service] Request payload:', eventDataCopy);
       
-      const response = await axios.post(`${process.env.EVENT_SERVICE_URL}/events` || 'http://localhost:3002/events', eventDataCopy);
+      const response = await axios.post(`${process.env.REACT_APP_EVENT_SERVICE_URL}/events` || 'http://localhost:3002/events', eventDataCopy);
       console.log('[Host Service] Event creation response:', response.data);
       
       let createdEvent = response.data.data || response.data;
@@ -123,7 +123,7 @@ const hostService = {
               
               // Update the event with the image URL using the dedicated image update endpoint
               const updatedEventResponse = await axios.put(
-                `${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/image`,
+                `${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/image`,
                 updatePayload,
                 { headers: { 'Authorization': authToken } }
               );
@@ -216,7 +216,7 @@ const hostService = {
       }
       
       const response = await axios.put(
-        `${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, 
+        `${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, 
         eventData,
         { headers: { 'x-auth-token': token } }
       );

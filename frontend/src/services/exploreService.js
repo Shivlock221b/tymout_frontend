@@ -35,7 +35,7 @@ const exploreService = {
         console.log('Sending tags to backend:', params.tags);
       }
       
-      const response = await axios.get(`${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/search`, { params: apiParams });
+      const response = await axios.get(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/search`, { params: apiParams });
       // Handle the response format from the backend which returns { success: true, data: events }
       const events = response.data.data || [];
       

@@ -4,7 +4,7 @@ import axios from 'axios';
  * Service for handling event image uploads
  * Following Single Responsibility Principle - this service only handles event image operations
  */
-const API_URL = process.env.EVENT_SERVICE_URL || 'http://localhost:3002'; // Event service URL
+const API_URL = process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'; // Event service URL
 
 /**
  * Upload an event image

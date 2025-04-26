@@ -84,6 +84,17 @@ const userRoutes = require('./routes/users');
 const googleAuthRoutes = require('./routes/googleAuth');
 const currentUserRoutes = require('./routes/currentUser');
 
+// Health check endpoint for Railway deployment
+app.get('/health', (req, res) => {
+  console.log('[User Service:Server] Health check requested');
+  res.status(200).json({ status: 'ok', service: 'user-service' });
+});
+
+app.get('/auth/health', (req, res) => {
+  console.log('[User Service:Server] Auth health check requested');
+  res.status(200).json({ status: 'ok', service: 'user-service' });
+});
+
 // Add request logging middleware before routes
 app.use((req, res, next) => {
   console.log(`[User Service:Server] Received ${req.method} request to ${req.url}`);

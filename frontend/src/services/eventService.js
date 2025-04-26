@@ -36,7 +36,7 @@ const eventService = {
       console.log('[eventService] Current user ID:', currentUserId);
       
       // Directly call event-service backend (bypassing API gateway)
-      const response = await axios.get(`${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`);
+      const response = await axios.get(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`);
       console.log('[eventService] Backend response:', response.data);
       
       // The backend returns { success: true, data: event }
@@ -158,7 +158,7 @@ const eventService = {
       }
       
       // Make the API request
-      const response = await axios.post(`${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/join`, updatedUserData, { headers });
+      const response = await axios.post(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/join`, updatedUserData, { headers });
       console.log('[eventService] Join event response:', response.data);
       
       // Handle the case where we get a 400 error because we've already requested
@@ -210,7 +210,7 @@ const eventService = {
         console.log('[eventService] No token found, request will be unauthorized');
       }
       
-      const response = await axios.post(`${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/leave`, { userId }, { headers });
+      const response = await axios.post(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/leave`, { userId }, { headers });
       console.log('[eventService] Leave event response:', response.data);
       return response.data.data;
     } catch (error) {
@@ -240,7 +240,7 @@ const eventService = {
         console.log('[eventService] No token found, request will be unauthorized');
       }
       
-      const response = await axios.post(`${process.env.EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/feedback`, feedbackData, { headers });
+      const response = await axios.post(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/feedback`, feedbackData, { headers });
       console.log('[eventService] Submit feedback response:', response.data);
       return response.data.data;
     } catch (error) {

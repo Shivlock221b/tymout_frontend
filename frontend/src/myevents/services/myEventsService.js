@@ -3,7 +3,7 @@ import axios from 'axios';
 // Configure axios to connect directly to the event service
 // Note: This bypasses the API gateway
 const eventServiceClient = axios.create({
-  baseURL: process.env.EVENT_SERVICE_URL || 'http://localhost:3002', // Event service runs on port 3002
+  baseURL: process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002', // Event service runs on port 3002
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

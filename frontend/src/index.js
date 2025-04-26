@@ -8,7 +8,7 @@ import { queryClient, QueryClientProvider, ReactQueryDevtools } from './query/qu
 import { initializeAuth } from './stores/authStore';
 
 // Set up axios defaults for API requests
-axios.defaults.baseURL = process.env.API_GATEWAY_URL || 'http://localhost:3000'; // API Gateway URL is on port 3000
+axios.defaults.baseURL = process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'; // API Gateway URL is on port 3000
 axios.defaults.withCredentials = true; // Enable cookies for cross-origin requests
 
 // Initialize auth store manually (preventing circular dependencies)
