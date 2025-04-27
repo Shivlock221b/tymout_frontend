@@ -54,12 +54,6 @@ export const useAuthStore = create(
         error: null
       });
       
-      // Store user ID in localStorage for consistent identification
-      if (userData && userData.id) {
-        localStorage.setItem('userId', userData.id);
-        console.log('[authStore] Stored user ID in localStorage:', userData.id);
-      }
-      
       // Configure axios headers when token changes
       if (token) {
         configureAxiosAuthInterceptor(token);
@@ -106,10 +100,6 @@ export const useAuthStore = create(
           loading: false,
           error: null
         });
-        
-        // We intentionally DO NOT remove the userId from localStorage
-        // This allows us to maintain the user's event request status even when logged out
-        // localStorage.removeItem('userId');
         
         // Remove auth header from axios
         configureAxiosAuthInterceptor(null);
@@ -177,12 +167,6 @@ export const initializeAuth = () => {
   if (authData) {
     try {
       const { state } = JSON.parse(authData);
-      
-      // Store user ID in localStorage if available
-      if (state?.user?.id) {
-        localStorage.setItem('userId', state.user.id);
-        console.log('[authStore] Initialized user ID in localStorage:', state.user.id);
-      }
       
       if (state?.token) {
         configureAxiosAuthInterceptor(state.token);

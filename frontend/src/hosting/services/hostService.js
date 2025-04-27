@@ -34,10 +34,12 @@ const hostService = {
       }
       
       // Directly call event-service backend (bypassing API gateway)
-      console.log('[Host Service] Sending event creation request to: http://localhost:3002/events');
+      const baseUrl = process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002';
+      const url = `${baseUrl}/events`;
+      console.log('[Host Service] Sending event creation request to:', url);
       console.log('[Host Service] Request payload:', eventDataCopy);
       
-      const response = await axios.post(`${process.env.REACT_APP_EVENT_SERVICE_URL}/events` || 'http://localhost:3002/events', eventDataCopy);
+      const response = await axios.post(url, eventDataCopy);
       console.log('[Host Service] Event creation response:', response.data);
       
       let createdEvent = response.data.data || response.data;
@@ -106,7 +108,11 @@ const hostService = {
             // Create update payload with the correct field name
             const updatePayload = { event_image: imageUrl };
             console.log(`[Host Service] Updating event with:`, updatePayload);
-            console.log(`[Host Service] Update URL: http://localhost:3002/events/${eventId}/image`);
+            
+            // Use the correct environment variable with REACT_APP_ prefix
+            const baseUrl = process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002';
+            const imageUpdateUrl = `${baseUrl}/events/${eventId}/image`;
+            console.log(`[Host Service] Update URL:`, imageUpdateUrl);
             
             try {
               // Make sure the token is in the correct format for the Authorization header
@@ -123,7 +129,7 @@ const hostService = {
               
               // Update the event with the image URL using the dedicated image update endpoint
               const updatedEventResponse = await axios.put(
-                `${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}/image`,
+                imageUpdateUrl,
                 updatePayload,
                 { headers: { 'Authorization': authToken } }
               );
@@ -189,6 +195,8 @@ const hostService = {
    */
   updateEvent: async (eventId, eventData) => {
     try {
+      // Use the correct environment variable with REACT_APP_ prefix
+      const baseUrl = process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002';
       console.log(`[Host Service] Updating event ${eventId} with data:`, eventData);
       
       // Extract token from the authorization header, just like event creation
@@ -216,7 +224,7 @@ const hostService = {
       }
       
       const response = await axios.put(
-        `${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, 
+        `${baseUrl}/events/${eventId}`, 
         eventData,
         { headers: { 'x-auth-token': token } }
       );

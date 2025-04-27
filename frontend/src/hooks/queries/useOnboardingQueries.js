@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Configure axios client for user service - same as in settingsService
 const userServiceClient = axios.create({
-  baseURL: process.env.USER_SERVICE_URL || 'http://localhost:3001', // User service runs on port 3001
+  baseURL: process.env.REACT_APP_USER_SERVICE_URL || 'http://localhost:3001', // User service runs on port 3001
   timeout: 10000
   // Don't set default Content-Type here as it will be overridden for FormData
 });
@@ -52,7 +52,7 @@ const uploadOnboardingProfileImage = async (imageFile) => {
     
     // Create a custom instance for this specific request
     const instance = axios.create({
-      baseURL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
+      baseURL: process.env.REACT_APP_USER_SERVICE_URL || 'http://localhost:3001',
       timeout: 30000 // Longer timeout for file uploads
     });
     

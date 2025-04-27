@@ -201,8 +201,8 @@ const ExplorePage = () => {
       `}</style>
       
       {/* City Selector - positioned at the very top of the page */}
-      <div className="w-full bg-white bg-opacity-80 backdrop-blur-sm shadow-md py-2 px-4 mb-2 sticky top-0 z-50">
-        <div className="container mx-auto">
+      <div className="w-full bg-transparent py-2 px-4 mb-2 sticky top-0 z-50">
+        <div className="flex justify-start">
           <CitySelector 
             currentCity={selectedCity}
             onCityChange={handleCityChange}
@@ -226,10 +226,7 @@ const ExplorePage = () => {
               query={searchQuery} 
               onSearch={handleSearch} 
             />
-            <h1 className="text-white text-3xl md:text-4xl font-bold mt-6 text-left pl-1 drop-shadow-lg">
-              Take a Tymout
-            </h1>
-            <h2 className="text-white text-xl md:text-2xl font-bold mt-1 text-left pl-1 drop-shadow-md">
+            <h2 className="text-white text-xl md:text-2xl font-bold mt-6 text-left pl-1 drop-shadow-md">
               Your Next Experience Starts Here.
             </h2>
           </div>

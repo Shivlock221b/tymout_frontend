@@ -279,7 +279,8 @@ router.post(
       body('location', 'Location is required').not().isEmpty(),
       body('date.start', 'Start date is required').isISO8601(),
       body('date.end', 'End date is required').isISO8601(),
-      body('capacity', 'Event capacity is required').isNumeric(),
+      body('capacity', 'Event capacity is required').optional().isNumeric(),
+      body('maxAttendees', 'Max attendees is required').optional().isNumeric(),
       body('tags', 'Tags must be an array').isArray()
     ]
   ],

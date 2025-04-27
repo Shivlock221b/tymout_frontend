@@ -5,11 +5,18 @@ class EventService {
   // Event Methods
   async createEvent(eventData) {
     try {
-      console.log('eventData', eventData);
+      // Map maxAttendees to capacity if capacity is not provided
+      if (!eventData.capacity && eventData.maxAttendees) {
+        console.log('[Event Service] Using maxAttendees as capacity:', eventData.maxAttendees);
+        eventData.capacity = eventData.maxAttendees;
+      }
+      
+      console.log('[Event Service] Final eventData:', eventData);
       const event = new Event(eventData);
       await event.save();
       return event;
     } catch (error) {
+      console.error('[Event Service] Error creating event:', error);
       throw error;
     }
   }

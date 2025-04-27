@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuthStore } from '../../stores/authStore';
 
 const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'; // Change to your backend address if needed
-const API_URL = `${process.env.REACT_APP_CHAT_SERVICE_URL}/api/messages` || 'http://localhost:3020/api/messages';
+const API_URL = `${process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'}/api/messages`;
 
 // useChatSocket: Real-time messaging with REST history
 export function useChatSocket(eventId) {

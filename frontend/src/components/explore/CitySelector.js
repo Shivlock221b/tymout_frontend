@@ -13,8 +13,8 @@ const CitySelector = ({ currentCity, onCityChange }) => {
   
   // Available cities - limited to Gurugram and Agra as requested
   const cities = [
-    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-red-500" /> },
-    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-red-500" /> }
+    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-white" /> },
+    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-white" /> }
   ];
   
   const handleCitySelect = (city) => {
@@ -23,20 +23,20 @@ const CitySelector = ({ currentCity, onCityChange }) => {
   };
   
   return (
-    <div className="relative w-full">
+    <div className="relative">
       {/* Current City Display */}
       <div 
-        className="flex items-center justify-center cursor-pointer py-2 w-full"
+        className="flex items-center cursor-pointer py-2 text-white"
         onClick={() => setShowCityModal(!showCityModal)}
       >
-        <FaMapMarkerAlt className="text-red-500 mr-2" />
+        <FaMapMarkerAlt className="text-white mr-2" />
         <span className="text-base font-medium mr-2">{currentCity || 'Select City'}</span>
-        <FaChevronDown className="text-gray-500" />
+        <FaChevronDown className="text-white" />
       </div>
       
       {/* City Selection Modal */}
       {showCityModal && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-lg z-50 w-full border border-gray-200">
+        <div className="absolute top-full left-0 mt-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-lg z-50 border border-gray-200">
           <div className="p-3 border-b border-gray-200 bg-gray-50 bg-opacity-80">
             <h3 className="text-base font-medium text-center">Select City</h3>
           </div>

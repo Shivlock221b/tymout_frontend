@@ -10,7 +10,24 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // All scroll/page logic removed for always-transparent header
+  const [logoText, setLogoText] = useState("Take a Tymout");
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Animation effect for the logo text
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAnimating(true);
+      
+      // After animation starts, change text after a delay
+      const textTimer = setTimeout(() => {
+        setLogoText("Tymout");
+      }, 600); // Adjusted timing for the improved animation
+      
+      return () => clearTimeout(textTimer);
+    }, 1500); // Delay before animation starts
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Close menu when location changes
   useEffect(() => {
@@ -46,6 +63,42 @@ const Header = () => {
         className="fixed top-0 left-0 right-0 h-[70px] md:h-[80px] z-40 transition-all duration-300 bg-white/30 backdrop-blur-md rounded-b-lg shadow-md"
       />
       
+      {/* Animation styles */}
+      <style jsx="true">{`
+        @keyframes logoTransition {
+          0% { 
+            width: 180px; 
+            opacity: 1;
+            transform: translateX(0);
+          }
+          40% { 
+            opacity: 0.3;
+            transform: translateX(10px);
+          }
+          60% { 
+            width: 100px; 
+            opacity: 0.3;
+            transform: translateX(-5px);
+          }
+          100% { 
+            width: 80px; 
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .logo-container {
+          display: inline-block;
+          overflow: hidden;
+          white-space: nowrap;
+          position: relative;
+        }
+        
+        .animating {
+          animation: logoTransition 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        }
+      `}</style>
+      
       {/* Actual header content with transparent background */}
       <header 
         className="fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300"
@@ -63,7 +116,9 @@ const Header = () => {
               className="text-xl md:text-2xl font-bold transition-colors duration-300 text-indigo-600"
               onClick={handleLogoClick}
             >
-              Tymout
+              <span className={`logo-container ${isAnimating ? 'animating' : ''}`}>
+                {logoText}
+              </span>
             </Link>
           </div>
           

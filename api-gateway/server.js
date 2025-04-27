@@ -73,6 +73,13 @@ app.use('/api/users', createProxyMiddleware({
     if (srcReq.body) {
       proxyReqOpts.headers['content-type'] = 'application/json';
     }
+    
+    // Forward Authorization header if present
+    if (srcReq.headers.authorization) {
+      console.log('[API Gateway] Forwarding Authorization header to User Service');
+      proxyReqOpts.headers['authorization'] = srcReq.headers.authorization;
+    }
+    
     return proxyReqOpts;
   },
   onProxyReq: (proxyReq, req, res) => {
