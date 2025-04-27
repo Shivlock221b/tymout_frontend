@@ -38,7 +38,8 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
       maxAttendees: 10,
       isPublic: true,
       isRecurring: false,
-      tags: []
+      tags: [],
+      category: 'Food'
     }
   });
   
@@ -460,7 +461,8 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                     }`}
                     {...field}
                   >
-                    <option value="Dine">Dine</option>
+                    <option value="">Select a category</option>
+                    <option value="Food">Food</option>
                     <option value="Play">Play</option>
                     <option value="Create">Create</option>
                     <option value="Learn">Learn</option>
