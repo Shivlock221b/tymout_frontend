@@ -6,7 +6,7 @@ Had multiple levels of padding inheritance
 CSS Specificity Issues: Simply adding padding: 0 or moving the hero outside one container wasn't enough because there were likely multiple container layers.
 Why the "Nuclear Option" Worked
 The solution that worked uses a CSS technique that forces an element to be truly viewport-width regardless of its parent containers:
-
+aaaaaaa
 css
 CopyInsert
 .hero-full-bleed {
