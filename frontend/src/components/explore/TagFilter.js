@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeSpecialTag = null, hideRegularTags = false }) => {
   // Popular tags used for filtering
   const availableTags = [
-    'Food', 'Play', 'Create', 'Learn', 'Serve', 
+    'All', 'Only For You', 'Food', 'Play', 'Create', 'Learn', 'Serve', 
     'Socialize', 'Networking', 'Games', 'Adventure', 'Culture', 'Wellness'
   ];
 
@@ -43,12 +43,12 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
           {availableTags.map(tag => (
             <button
               key={tag}
-              onClick={() => handleTagClick(tag)}
+              onClick={() => (tag === 'Only For You' || tag === 'All') ? handleSpecialTagClick(tag) : handleTagClick(tag)}
               className={`
-                tag-item flex-1 px-5 py-3 text-lg font-medium rounded-none transition-all duration-200 flex items-center justify-center border-none first:rounded-l-md last:rounded-r-md !ml-0 !mr-0 first:rounded-l first:rounded-l-md last:rounded-r-md
-                ${selectedTags.includes(tag) 
-                  ? 'bg-indigo-600/90 text-white shadow-sm' 
-                  : 'bg-transparent text-white hover:bg-white/20 shadow-sm'}
+                tag-item flex-1 px-5 py-3 text-lg font-medium transition-all duration-200 flex items-center justify-center border-none !ml-0 !mr-0
+                ${(selectedTags.includes(tag) || (tag === 'Only For You' && activeSpecialTag === 'Only For You') || (tag === 'All' && activeSpecialTag === 'All'))
+                  ? 'bg-white/30 text-white border-b-2 border-white' 
+                  : 'bg-transparent text-white hover:bg-white/20'}
               `}
             >
               {tag}

@@ -29,6 +29,18 @@ const exploreService = {
       // Create a new params object to handle special cases
       const apiParams = { ...params };
       
+      // Handle "Only For You" feature
+      if (params.view === 'Only For You' && params.userInterests) {
+        console.log('Sending user interests to backend for personalized results:', params.userInterests);
+        // Ensure userInterests is properly formatted
+        if (Array.isArray(params.userInterests)) {
+          apiParams.userInterests = params.userInterests;
+        } else if (typeof params.userInterests === 'string') {
+          // If it's a string, convert to array
+          apiParams.userInterests = params.userInterests.split(',');
+        }
+      }
+      
       // Ensure tags are properly formatted for the API
       if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
         // Keep as is - the backend expects an array

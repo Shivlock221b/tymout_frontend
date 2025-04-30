@@ -38,6 +38,8 @@ import ResponsiveNavBar from './components/layout/ResponsiveNavBar';
 import MyEventsPage from './myevents/pages/MyEventsPage';
 import EventPage from './myevents/pages/EventPage';
 import EventChatPage from './myevents/pages/EventChatPage';
+import EventAboutPage from './myevents/pages/EventAboutPage';
+import JoinRequestsPage from './myevents/pages/JoinRequestsPage';
 import './styles/App.css';
 
 // Following Single Responsibility Principle - App component only handles setup
@@ -118,21 +120,44 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
-            {/* MyEvent detail route */}
+            
+            {/* More specific routes first */}
+            {/* Join Requests route */}
             <Route 
-              path="/myevents/:eventId" 
+              path="/myevents/:eventId/requests" 
               element={
                 <ProtectedRoute>
-                  <EventPage />
+                  <JoinRequestsPage />
                 </ProtectedRoute>
               } 
             />
+            
             {/* Event Chat route */}
             <Route 
               path="/myevents/:eventId/chat" 
               element={
                 <ProtectedRoute>
                   <EventChatPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Event About route */}
+            <Route 
+              path="/myevents/about/:eventId" 
+              element={
+                <ProtectedRoute>
+                  <EventAboutPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* MyEvent detail route - least specific, should come last */}
+            <Route 
+              path="/myevents/:eventId" 
+              element={
+                <ProtectedRoute>
+                  <EventPage />
                 </ProtectedRoute>
               } 
             />

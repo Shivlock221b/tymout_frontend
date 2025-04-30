@@ -39,7 +39,10 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId }) => 
         } else {
           senderId = msg.sender;
         }
-        const isOwn = String(senderId).trim() === String(currentUserId).trim();
+        // Check if the message has a pre-processed _senderId field
+        const isOwn = msg._senderId 
+          ? msg._senderId === String(currentUserId).trim()
+          : String(senderId).trim() === String(currentUserId).trim();
         return (
           <ChatMessageBubble
             key={msg._id || msg.id || idx}

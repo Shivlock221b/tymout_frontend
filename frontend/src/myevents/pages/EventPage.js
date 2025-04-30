@@ -86,7 +86,7 @@ const EventPage = () => {
           isMembersLoading ? (
             <div className="p-4 text-gray-500">Loading members...</div>
           ) : (
-            <MembersTab members={members} />
+            <MembersTab members={members} event={event} />
           )
         )}
         {activeTab === 'announcements' && (

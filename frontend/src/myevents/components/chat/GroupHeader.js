@@ -24,7 +24,7 @@ const GroupHeader = ({ event }) => {
   return (
     <button
       className="flex items-center gap-2 group focus:outline-none"
-      onClick={() => navigate(`/myevents/${eventId}`)}
+      onClick={() => navigate(`/myevents/about/${eventId}`)}
       aria-label={`View details for ${eventTitle}`}
       type="button"
     >

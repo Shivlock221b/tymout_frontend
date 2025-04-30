@@ -119,7 +119,11 @@ const TableCreationPage = () => {
       // Check if the event is private - only if isPublic is explicitly false or access is explicitly 'private'
       const isPrivate = formData.isPublic === false || formData.access === 'private';
       setIsPrivateEvent(isPrivate);
+      
       console.log('[TableCreationPage] Event privacy status:', { isPublic: formData.isPublic, access: formData.access, isPrivate });
+      
+      // Update the event status to 'pending' on the backend
+      // This is handled by the default value in the schema, no need to explicitly set it here
       
       // Show share dialog instead of navigating immediately
       setShowShareDialog(true);
@@ -159,7 +163,7 @@ const TableCreationPage = () => {
   // Handle continue button click
   const handleContinue = () => {
     setShowShareDialog(false);
-    navigate('/explore');
+    navigate('/myevents');
   };
   
   return (
@@ -170,29 +174,46 @@ const TableCreationPage = () => {
         {showShareDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Event Created Successfully!</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Event Submitted Successfully!</h2>
               
-              {isPrivateEvent ? (
-                <div className="mb-4">
-                  <p className="text-gray-700 mb-2">Your event is set to <span className="font-semibold">private</span>. Share this link with people you want to invite:</p>
-                  <div className="flex items-center mt-3">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={`${window.location.origin}/events/${createdEventId}`}
-                      className="flex-1 p-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm"
-                    />
-                    <button
-                      onClick={handleCopyLink}
-                      className={`p-2 ${copied ? 'bg-green-500' : 'bg-indigo-600'} text-white rounded-r-md`}
-                    >
-                      {copied ? <FaCheck /> : <FaCopy />}
-                    </button>
+              <div className="mb-4">
+                <p className="text-gray-700 mb-3">Your event has been submitted for review and will be up within 60 minutes after approval.</p>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        You can track the status of your table in the <span className="font-semibold">My Messages</span> tab under the <span className="font-semibold">Pending</span> section.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <p className="text-gray-700 mb-4">Your event is now live and visible on the explore page.</p>
-              )}
+                
+                {isPrivateEvent && (
+                  <div>
+                    <p className="text-gray-700 mb-2">Once approved, you can share this link with people you want to invite:</p>
+                    <div className="flex items-center mt-3">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={`${window.location.origin}/events/${createdEventId}`}
+                        className="flex-1 p-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm"
+                      />
+                      <button
+                        onClick={handleCopyLink}
+                        className={`p-2 ${copied ? 'bg-green-500' : 'bg-indigo-600'} text-white rounded-r-md`}
+                      >
+                        {copied ? <FaCheck /> : <FaCopy />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <div className="flex justify-end mt-4">
                 <button

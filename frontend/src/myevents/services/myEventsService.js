@@ -148,7 +148,26 @@ const myEventsService = {
       console.error('Error rejecting join request:', error);
       throw error;
     }
-  }
+  },
+  
+  /**
+   * Remove an attendee from an event
+   * @param {string} eventId - The event's ID
+   * @param {string} userId - The user's ID to remove
+   * @returns {Promise} - Promise resolving to the updated event
+   */
+  removeAttendee: async (eventId, userId) => {
+    try {
+      const response = await eventServiceClient.delete(`/events/${eventId}/attendees`, {
+        data: { userId }
+      });
+      console.log('Remove attendee response:', response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error removing attendee:', error);
+      throw error;
+    }
+  },
 };
 
 export default myEventsService;

@@ -22,11 +22,16 @@ export function useChatSocket(eventId) {
           ? res.data.map(msg => ({
               ...msg,
               sender: msg.sender || msg.senderId || msg.userId || '',
+              // Ensure consistent sender ID format for comparison
+              _senderId: String(msg.sender || msg.senderId || msg.userId || '').trim(),
             }))
           : [];
         setMessages(normalizedMsgs);
       })
       .catch(() => setMessages([]));
+    
+    // Clear messages when changing events
+    return () => setMessages([]);
   }, [eventId]);
 
   // Setup socket connection
@@ -36,10 +41,17 @@ export function useChatSocket(eventId) {
     socketRef.current = socket;
     socket.emit('joinEvent', eventId);
     socket.on('newMessage', (msg) => {
+      // Skip if this is a message we just sent (to avoid duplicates)
+      if (user && msg.senderId === user._id && Date.now() - new Date(msg.timestamp).getTime() < 5000) {
+        return;
+      }
+      
       // Normalize message to ensure sender field exists
       const normalizedMsg = {
         ...msg,
         sender: msg.sender || msg.senderId || msg.userId || '',
+        // Ensure consistent sender ID format for comparison
+        _senderId: String(msg.sender || msg.senderId || msg.userId || '').trim(),
       };
       setMessages(prev => [...prev, normalizedMsg]);
     });
@@ -66,10 +78,21 @@ export function useChatSocket(eventId) {
       senderAvatar: user.avatar,
       text,
     });
-    // After sending, fetch the latest messages from the backend
-    axios.get(`${API_URL}/${eventId}`)
-      .then(res => setMessages(res.data))
-      .catch(() => {});
+    // Instead of fetching all messages again, add the sent message to the local state
+    // This ensures consistent sender attribution
+    const newMessage = {
+      _id: Date.now().toString(), // Temporary ID until server assigns one
+      eventId,
+      sender: user._id,
+      senderId: user._id,
+      senderName: user.name,
+      senderPhoto: user.avatar,
+      text,
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Update messages locally
+    setMessages(prev => [...prev, newMessage]);
   }, [eventId, user]);
 
   // Delete message

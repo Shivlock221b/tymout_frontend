@@ -120,3 +120,22 @@ export const useRejectJoinRequest = () => {
     },
   });
 };
+
+/**
+ * Hook to remove an attendee from an event
+ * @returns {Object} Mutation result with mutate function
+ */
+export const useRemoveAttendee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ eventId, userId }) => myEventsService.removeAttendee(eventId, userId),
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['myEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['eventDetails', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['eventsAttending'] });
+      queryClient.invalidateQueries({ queryKey: ['hostedEvents'] });
+    },
+  });
+};

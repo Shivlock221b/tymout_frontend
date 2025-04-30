@@ -21,9 +21,13 @@ const MyEventsPage = () => {
     if (activeTab === 'past') {
       return isEventPast(event);
     }
-    // For upcoming tables, show all non-past events (both public and private)
+    // For pending events, show events with status 'pending'
+    if (activeTab === 'pending') {
+      return event.status === 'pending' || event.status === 'rejected';
+    }
+    // For upcoming tables, show all non-past events with status 'accepted'
     if (activeTab === 'upcoming') {
-      return !isEventPast(event);
+      return !isEventPast(event) && (event.status === 'accepted' || !event.status);
     }
     return false;
   });
@@ -54,6 +58,16 @@ const MyEventsPage = () => {
         >
           Past Events
         </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`px-2 py-0.5 rounded-full font-medium text-xs transition 
+            ${activeTab === 'pending'
+              ? 'bg-indigo-600 text-white shadow'
+              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+            }`}
+        >
+          Pending
+        </button>
       </div>
 
       {isLoading ? (
@@ -66,7 +80,11 @@ const MyEventsPage = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Use event._id as the key, assuming it's the unique ID */}
           {filteredEvents.map(event => (
-            <MyEventTicketCard key={event._id} event={event} />
+            <MyEventTicketCard 
+              key={event._id} 
+              event={event} 
+              isPending={activeTab === 'pending'}
+            />
           ))}
         </div>
       )}

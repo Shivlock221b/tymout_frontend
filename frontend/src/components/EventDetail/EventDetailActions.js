@@ -12,6 +12,8 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
   // State to track if the user has requested to join or is already joined
   const [isJoined, setIsJoined] = useState(false);
   const [isRequested, setIsRequested] = useState(false);
+  // Add a local state to persist the requested state even if the API response doesn't include it
+  const [hasRequestedLocally, setHasRequestedLocally] = useState(false);
   
   // Effect to check if the user has requested to join or is already joined
   useEffect(() => {
@@ -28,7 +30,29 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
       console.log('[EventDetailActions] Created default user ID:', userId);
     }
     
-    if (item.attendees && item.requests) {
+    // Check localStorage for this specific event's request status
+    const eventKey = `requested_${item.id}`;
+    const hasRequestedInStorage = localStorage.getItem(eventKey) === 'true';
+    
+    // If we have a record in localStorage, update our local state
+    if (hasRequestedInStorage) {
+      console.log('[EventDetailActions] Found requested status in localStorage for event:', item.id);
+      setHasRequestedLocally(true);
+    }
+    
+    // First check if we've locally requested to join
+    if (hasRequestedLocally) {
+      console.log('[EventDetailActions] User has locally requested to join');
+      setIsRequested(true);
+      return; // Skip further checks if we've already locally requested
+    }
+    
+    // Then check if the item has isRequested flag directly set (from optimistic updates)
+    if (item.isRequested) {
+      console.log('[EventDetailActions] Item has isRequested flag set to true');
+      setIsRequested(true);
+      setHasRequestedLocally(true); // Also set our local flag
+    } else if (item.attendees && item.requests) {
       // Check if user is in attendees
       const joined = item.attendees.some(attendee => {
         const attendeeId = attendee.userId?._id?.toString() || attendee.userId?.toString();
@@ -46,13 +70,21 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
         attendees: item.attendees,
         requests: item.requests,
         joined,
-        requested
+        requested,
+        itemIsRequested: item.isRequested,
+        hasRequestedLocally
       });
       
       setIsJoined(joined);
-      setIsRequested(requested);
+      // Use our local state as a fallback
+      setIsRequested(requested || item.isRequested || hasRequestedLocally);
+      
+      // If we detect a request in the backend data, update our local state too
+      if (requested) {
+        setHasRequestedLocally(true);
+      }
     }
-  }, [item]);
+  }, [item, item.isRequested, hasRequestedLocally]);
   
   // Determine the appropriate content label based on type
   const getTypeLabel = () => {
@@ -114,9 +146,17 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
         onClick={() => {
           // If not already joined or requested, handle the action
           if (!isJoined && !isRequested) {
-            handleMainAction();
-            // Optimistically update the UI
+            // Immediately update both UI states before API call
             setIsRequested(true);
+            setHasRequestedLocally(true); // Set our persistent local state
+            
+            // Store in localStorage for persistence across page reloads
+            const eventKey = `requested_${item.id}`;
+            localStorage.setItem(eventKey, 'true');
+            
+            // Then call the action handler
+            handleMainAction();
+            console.log('[EventDetailActions] Request to join button clicked, setting isRequested=true and hasRequestedLocally=true');
           }
         }}
         disabled={isJoined || isRequested}

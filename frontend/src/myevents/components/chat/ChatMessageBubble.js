@@ -1,6 +1,4 @@
-import React from 'react';
-
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 
 
@@ -8,6 +6,16 @@ import { useState, useRef } from 'react';
 const LONG_PRESS_DURATION = 600; // ms
 
 const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete }) => {
+  // Get initials from name for avatar fallback
+  const getInitials = (fullName) => {
+    if (!fullName) return '?';
+    
+    const names = fullName.split(' ');
+    if (names.length >= 2) {
+      return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return fullName.charAt(0).toUpperCase();
+  };
   const [pressTimer, setPressTimer] = useState(null);
   const touchRef = useRef();
 
@@ -38,12 +46,24 @@ const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete }) => {
     >
       {/* Avatar for other users (left) */}
       {!isOwn && (
-        <img
-          src={userPhoto || '/default-user.png'}
-          alt="Member"
-          className="w-8 h-8 rounded-full object-cover border border-gray-200 bg-gray-50 mr-2"
-          style={{ order: 0 }}
-        />
+        userPhoto ? (
+          <img
+            src={userPhoto}
+            alt="Member"
+            className="w-8 h-8 rounded-full object-cover border border-gray-200 bg-gray-50 mr-2"
+            style={{ order: 0 }}
+          />
+        ) : (
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 text-xs font-bold border border-gray-200 mr-2"
+            style={{ order: 0 }}
+          >
+            {getInitials(message.senderName || 
+              (typeof message.sender === 'object' && (message.sender.name || message.sender.username || message.sender.email || '')) || 
+              message.sender || 
+              'Unknown')}
+          </div>
+        )
       )}
       {/* Message bubble */}
       <div
@@ -75,12 +95,12 @@ const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete }) => {
       </div>
       {/* Avatar for self (right) */}
       {isOwn && (
-        <img
-          src="/user-avatar.png"
-          alt="You"
-          className="w-8 h-8 rounded-full object-cover border border-gray-200 bg-gray-50 ml-2"
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 text-xs font-bold border border-gray-200 ml-2"
           style={{ order: 2 }}
-        />
+        >
+          {getInitials('You')}
+        </div>
       )}
     </div>
   );

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
+import { useUserData } from '../hooks/stores/useAuthStoreHooks';
+import axios from 'axios';
 
 // Import our separate components
 import ExploreSearch from '../components/explore/ExploreSearch';
@@ -22,7 +24,11 @@ const ExplorePage = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getScrollTarget, clearScrollTarget } = useScrollToElement();
+  const { user } = useUserData();
   const pageRef = useRef(null);
+  
+  // State for user interests
+  const [userInterests, setUserInterests] = useState([]);
   
   // Extract filter parameters from URL
   const searchQuery = searchParams.get('q') || '';
@@ -31,6 +37,30 @@ const ExplorePage = () => {
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
+  
+  // Fetch user interests when component mounts
+  useEffect(() => {
+    const fetchUserInterests = async () => {
+      if (user && user._id) {
+        try {
+          console.log('Fetching user interests for user:', user._id);
+          // Use the user's interests directly from the user object if available
+          if (user.interests && Array.isArray(user.interests) && user.interests.length > 0) {
+            setUserInterests(user.interests);
+            console.log('Using interests from user object:', user.interests);
+          }
+        } catch (error) {
+          console.error('Error fetching user interests:', error);
+          // Set some default interests if we can't fetch the user's interests
+          setUserInterests(['Food', 'Tech', 'Networking']);
+        }
+      } else {
+        console.log('No user logged in or missing user ID');
+      }
+    };
+    
+    fetchUserInterests();
+  }, [user]);
   
   // Use React Query hook for data fetching with filters from URL parameters
   const { 
@@ -42,7 +72,9 @@ const ExplorePage = () => {
     tags: selectedTags,
     distance,
     sortBy,
-    city: selectedCity // Include the city parameter in the initial filters
+    city: selectedCity, // Include the city parameter in the initial filters
+    view: activeSpecialTag, // Include the view parameter for special tags
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [] // Include user interests if 'Only For You' is selected
   });
 
 
@@ -126,17 +158,21 @@ const ExplorePage = () => {
 
   // Update URL parameters and trigger data fetch when tags change
   const handleTagSelect = (tags) => {
-    const newParams = new URLSearchParams();
+    // Update URL parameters
+    const newParams = new URLSearchParams(searchParams);
     
-    // Preserve existing parameters
-    if (searchQuery) newParams.set('q', searchQuery);
-    if (activeSpecialTag) newParams.set('view', activeSpecialTag);
-    if (sortBy !== 'relevance') newParams.set('sort', sortBy);
-    if (distance !== 10) newParams.set('distance', distance.toString());
-    if (selectedCity) newParams.set('city', selectedCity); // Preserve city parameter
+    // Remove existing tag parameters
+    newParams.delete('tag');
     
-    // Add all tags as separate parameters
-    tags.forEach(tag => newParams.append('tag', tag));
+    // Add new tag parameters
+    tags.forEach(tag => {
+      newParams.append('tag', tag);
+    });
+    
+    // Clear the 'view' parameter if it was set to 'Only For You'
+    if (activeSpecialTag === 'Only For You') {
+      newParams.delete('view');
+    }
     
     setSearchParams(newParams);
     
@@ -144,15 +180,33 @@ const ExplorePage = () => {
     updateFilters({ tags, city: selectedCity }); // Include city in filter update
   };
   
-  // Handle special tag selection (Explore, Add Tags)
+  // Handle special tag selection (Only For You and All)
   const handleSpecialTagSelect = (tag) => {
-    if (tag === 'Add Tags') {
-      // TODO: Implement Add Tags functionality
-      console.log('Add Tags clicked');
-    } else {
+    if (tag === 'Only For You' || tag === 'All') {
+      // Clear any selected tags
       const newParams = new URLSearchParams(searchParams);
+      newParams.delete('tag');
       newParams.set('view', tag);
       setSearchParams(newParams);
+      
+      if (tag === 'Only For You') {
+        // For 'Only For You', pass user interests to the backend
+        console.log('Filtering by user interests:', userInterests);
+        updateFilters({ 
+          view: tag, 
+          userInterests: userInterests.length > 0 ? userInterests : ['Food', 'Tech', 'Networking'], 
+          city: selectedCity,
+          tags: [] // Clear any category filters
+        });
+      } else if (tag === 'All') {
+        // For 'All', don't apply any tag filters
+        console.log('Showing all events without tag filters');
+        updateFilters({ 
+          view: tag,
+          city: selectedCity,
+          tags: [] // Clear any category filters
+        });
+      }
     }
   };
 

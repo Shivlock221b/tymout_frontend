@@ -5,7 +5,7 @@ import { isPast } from 'date-fns';
 import eventService from '../../services/eventService';
 
 // Only use global CSS classes!
-const MyEventTicketCard = ({ event }) => {
+const MyEventTicketCard = ({ event, isPending = false }) => {
   const navigate = useNavigate();
 
   // Format the date object into a readable string
@@ -24,6 +24,9 @@ const MyEventTicketCard = ({ event }) => {
     : 'Location not available'; // Fallback if location is missing
 
   const handleClick = () => {
+    // Don't navigate if the event is pending
+    if (isPending) return;
+    
     navigate(`/myevents/${event._id}/chat`);
   };
   const [copied, setCopied] = useState(false);
@@ -119,11 +122,11 @@ const MyEventTicketCard = ({ event }) => {
   return (
     <div className="w-full flex flex-col px-0 py-2">
       <div 
-        className="flex items-center gap-2 cursor-pointer"
+        className={`flex items-center gap-2 ${isPending ? '' : 'cursor-pointer'}`}
         onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        onKeyPress={e => { if (e.key === 'Enter') handleClick(); }}
+        role={isPending ? undefined : "button"}
+        tabIndex={isPending ? undefined : 0}
+        onKeyPress={isPending ? undefined : e => { if (e.key === 'Enter') handleClick(); }}
       >
         <img
           src={event.event_image}
@@ -151,8 +154,12 @@ const MyEventTicketCard = ({ event }) => {
         </div>
       </div>
       
-      {/* Show feedback button for past events, share button for current events */}
-      {isPastEvent ? (
+      {/* Show different buttons based on event status */}
+      {isPending ? (
+        <div className="mt-2 self-end flex items-center justify-center py-1 px-3 rounded text-sm font-medium bg-yellow-100 text-yellow-700">
+          {event.status === 'rejected' ? 'Rejected' : 'Pending Approval'}
+        </div>
+      ) : isPastEvent ? (
         <button
           onClick={handleOpenFeedback}
           className="mt-2 self-end flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition bg-indigo-100 hover:bg-indigo-200 text-indigo-700"
