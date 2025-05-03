@@ -47,13 +47,13 @@ const ResponsiveNavBar = () => {
 
       {/* Mobile Bottom Navigation - visible on small screens, hidden on md+ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <ul className="flex justify-around items-center p-2">
+        <ul className="flex justify-between items-center p-2">
           {navItems.map((item) => (
-            <li key={item.name}>
+            <li key={item.name} className="flex-1 flex justify-center">
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex flex-col items-center p-2 ${
+                  `flex flex-col items-center w-full max-w-[80px] mx-auto p-2 ${
                     isActive 
                       ? 'text-indigo-600' 
                       : 'text-gray-500 hover:text-gray-800'
@@ -61,7 +61,7 @@ const ResponsiveNavBar = () => {
                 }
               >
                 <span className="text-xl mb-1">{item.icon}</span>
-                <span className="text-xs">{item.name}</span>
+                <span className="text-xs text-center">{item.name}</span>
               </NavLink>
             </li>
           ))}
