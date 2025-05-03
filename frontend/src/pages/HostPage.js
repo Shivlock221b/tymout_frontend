@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarPlus, FaArrowRight } from 'react-icons/fa';
+import { FaCalendarPlus } from 'react-icons/fa';
 
 /**
  * HostPage Component
@@ -15,9 +15,18 @@ const HostPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 overflow-x-hidden max-w-full">
       <div className="container mx-auto px-4 py-6 pb-20 md:pb-6 overflow-x-hidden">
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Host Dashboard</h1>
-          <p className="mt-1 text-gray-600">Choose what you'd like to host or create</p>
+        <div className="mb-6 flex flex-col items-center gap-4 text-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Host Dashboard</h1>
+            <p className="mt-1 text-gray-600">Choose what you'd like to host or create</p>
+          </div>
+          <button
+            onClick={() => navigate('/host/create-table')}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
+          >
+            <FaCalendarPlus className="h-5 w-5 mr-2" />
+            <span className="font-medium">Create a Table</span>
+          </button>
         </div>
         
         {/* Main Content Area */}
@@ -62,17 +71,6 @@ const HostPage = () => {
                         Contact support →
                       </a>
                     </div>
-                  </div>
-                  
-                  {/* Create a Table Button */}
-                  <div className="mt-8 text-center">
-                    <button
-                      onClick={() => navigate('/host/create-table')}
-                      className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
-                    >
-                      <FaCalendarPlus className="h-5 w-5 mr-2" />
-                      <span className="font-medium">Create a Table</span>
-                    </button>
                   </div>
                 </div>
               </div>

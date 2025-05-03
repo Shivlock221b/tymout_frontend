@@ -22,12 +22,40 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
     
     if (type === 'checkbox') {
       onEventDataChange({ [name]: checked });
+    } else if (type === 'radio') {
+      // Toggle table visibility
+      onEventDataChange({ [name]: value === 'public' });
     } else if (name === 'maxAttendees') {
       onEventDataChange({ [name]: parseInt(value, 10) || '' });
     } else {
       onEventDataChange({ [name]: value });
     }
   };
+
+  // Generate time options in half-hour increments
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      // Convert to 12-hour format
+      const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+      const ampm = hour < 12 ? 'AM' : 'PM';
+      
+      // Store in 24-hour format for backend, but display in 12-hour format
+      const hour24 = hour.toString().padStart(2, '0');
+      
+      options.push({
+        value: `${hour24}:00`,
+        label: `${displayHour}:00 ${ampm}`
+      });
+      options.push({
+        value: `${hour24}:30`,
+        label: `${displayHour}:30 ${ampm}`
+      });
+    }
+    return options;
+  };
+  
+  const timeOptions = generateTimeOptions();
 
   const handleTagsChange = (e) => {
     const tagText = e.target.value;
@@ -77,7 +105,7 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
   return (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-        <h2 className="text-xl font-medium text-gray-900">Create an Event</h2>
+        <h2 className="text-xl font-medium text-gray-900">Create a Table</h2>
         {selectedTemplate && (
           <div className="mt-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -92,7 +120,7 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
           {/* Title Field */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              Event Title*
+              Table Title*
             </label>
             <div className="mt-1">
               <input
@@ -136,7 +164,7 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
               )}
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Describe what your event is about and what participants can expect.
+              Describe what your table is about and what participants can expect.
             </p>
           </div>
 
@@ -178,8 +206,7 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
                 </span>
               </label>
               <div className="mt-1">
-                <input
-                  type="time"
+                <select
                   name="time"
                   id="time"
                   value={eventData.time}
@@ -189,7 +216,14 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                   }`}
-                />
+                >
+                  <option value="">Select a time</option>
+                  {timeOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
                 {errors.time && (
                   <p className="mt-1 text-sm text-red-600">{errors.time}</p>
                 )}
@@ -297,48 +331,46 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Add relevant tags to help people find your event
+              Add relevant tags to help people find your table
             </p>
           </div>
 
-          {/* Visibility Options */}
-          <div className="space-y-3">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
+          {/* Table Type Toggle */}
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Table Type</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Public */}
+              <label className="flex items-start cursor-pointer">
                 <input
-                  id="isPublic"
+                  type="radio"
+                  id="publicTable"
                   name="isPublic"
-                  type="checkbox"
+                  value="public"
                   checked={eventData.isPublic}
                   onChange={handleChange}
-                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                 />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="isPublic" className="font-medium text-gray-700">
-                  Public Event
-                </label>
-                <p className="text-gray-500">Make this event visible to everyone</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
+                <span className="ml-2">
+                  <span className="font-medium text-gray-700">Public Table</span>
+                  <p className="text-gray-500 text-sm">These tables will be visible on the Experience page after approval.</p>
+                </span>
+              </label>
+              {/* Private */}
+              <label className="flex items-start cursor-pointer">
                 <input
-                  id="isRecurring"
-                  name="isRecurring"
-                  type="checkbox"
-                  checked={eventData.isRecurring}
+                  type="radio"
+                  id="privateTable"
+                  name="isPublic"
+                  value="private"
+                  checked={!eventData.isPublic}
                   onChange={handleChange}
-                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                 />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="isRecurring" className="font-medium text-gray-700">
-                  Recurring Event
-                </label>
-                <p className="text-gray-500">This event repeats on a schedule</p>
-              </div>
+                <span className="ml-2">
+                  <span className="font-medium text-gray-700">Private Table</span>
+                  <p className="text-gray-500 text-sm">These are not shown to other community members but you can share the link to your table.</p>
+                </span>
+              </label>
             </div>
           </div>
         </div>
@@ -348,7 +380,7 @@ const EventCreationForm = ({ eventData, onEventDataChange, onSubmit, selectedTem
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Create Event
+            Create Table
           </button>
         </div>
       </form>

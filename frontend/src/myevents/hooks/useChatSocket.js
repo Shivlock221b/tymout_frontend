@@ -47,11 +47,6 @@ export function useChatSocket(eventId) {
     socketRef.current = socket;
     socket.emit('joinEvent', eventId);
     socket.on('newMessage', (msg) => {
-      // Skip if this is a message we just sent (to avoid duplicates)
-      if (user && msg.senderId === user._id && Date.now() - new Date(msg.timestamp).getTime() < 5000) {
-        return;
-      }
-      
       // Normalize message to ensure sender field exists and properly handle replyTo
       const normalizedMsg = {
         ...msg,
@@ -65,7 +60,31 @@ export function useChatSocket(eventId) {
           _senderId: String(msg.replyTo.sender || msg.replyTo.senderId || '').trim()
         } : null
       };
-      setMessages(prev => [...prev, normalizedMsg]);
+      
+      // Check if this message already exists in our messages array to avoid duplicates
+      setMessages(prev => {
+        // Check if we already have this message (by ID if available, or by matching content and sender)
+        const isDuplicate = prev.some(existingMsg => 
+          (msg._id && existingMsg._id === msg._id) || 
+          (msg.id && existingMsg.id === msg.id) ||
+          (existingMsg._senderId === normalizedMsg._senderId && 
+           existingMsg.text === msg.text && 
+           Math.abs(new Date(existingMsg.timestamp || existingMsg.createdAt || Date.now()) - 
+                   new Date(msg.timestamp || msg.createdAt || Date.now())) < 5000)
+        );
+        
+        if (isDuplicate) {
+          return prev; // Don't add duplicate messages
+        }
+        
+        // If this is a message we sent and it's pending, replace the pending message
+        const pendingIndex = prev.findIndex(m => m.pending && m._id.startsWith('temp-'));
+        if (pendingIndex !== -1 && normalizedMsg.senderId === user._id) {
+          return [...prev.slice(0, pendingIndex), normalizedMsg, ...prev.slice(pendingIndex + 1)];
+        }
+        
+        return [...prev, normalizedMsg];
+      });
     });
     // Listen for messageDeleted event
     socket.on('messageDeleted', ({ messageId }) => {
@@ -91,6 +110,24 @@ export function useChatSocket(eventId) {
       text: replyToMessage.text
     } : null;
     
+    // Create a temporary message object to show immediately in the UI
+    const tempMessage = {
+      _id: `temp-${Date.now()}`,
+      eventId,
+      sender: user._id,
+      senderId: user._id,
+      _senderId: String(user._id).trim(),
+      senderName: user.name,
+      senderAvatar: user.avatar,
+      text,
+      replyTo,
+      timestamp: new Date().toISOString(),
+      pending: true // Mark as pending until confirmed by server
+    };
+    
+    // Add the message to the local state immediately
+    setMessages(prev => [...prev, tempMessage]);
+    
     // Emit message with reply metadata
     socketRef.current.emit('sendMessage', {
       eventId,
@@ -101,9 +138,6 @@ export function useChatSocket(eventId) {
       text,
       replyTo
     });
-    
-    // Don't add the message locally anymore, as we'll receive it back from the socket
-    // This ensures we have the server-generated ID and consistent data
   }, [eventId, user]);
 
   // Delete message

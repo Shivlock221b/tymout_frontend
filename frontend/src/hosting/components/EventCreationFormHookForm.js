@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useForm, Controller } from 'react-hook-form';
 import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUpload, FaBuilding } from 'react-icons/fa';
@@ -16,10 +16,35 @@ import PlaceSearch from './PlaceSearch';
 const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmitting, selectedTemplate }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [selectedPlace, setSelectedPlace] = useState(null);
   const fileInputRef = useRef(null);
+  
+  // Generate time options in half-hour increments
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      // Convert to 12-hour format
+      const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+      const ampm = hour < 12 ? 'AM' : 'PM';
+      
+      // Store in 24-hour format for backend, but display in 12-hour format
+      const hour24 = hour.toString().padStart(2, '0');
+      
+      options.push({
+        value: `${hour24}:00`,
+        label: `${displayHour}:00 ${ampm}`
+      });
+      options.push({
+        value: `${hour24}:30`,
+        label: `${displayHour}:30 ${ampm}`
+      });
+    }
+    return options;
+  };
+  
+  const timeOptions = generateTimeOptions();
+  
   const { 
     control, 
     handleSubmit, 
@@ -44,7 +69,6 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
   });
   
   // Watch for changes
-  const isRecurring = watch('isRecurring');
   const selectedCity = watch('city');
   
   // Handle tags input (comma-separated)
@@ -175,8 +199,8 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
         <div className="space-y-6">
           {/* Title Field */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              Event Title*
+            <label htmlFor="title" className="block text-base font-medium text-gray-700">
+              Table Title*
             </label>
             <div className="mt-1">
               <Controller
@@ -187,7 +211,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                   <input
                     type="text"
                     id="title"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
                       errors.title 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
@@ -204,7 +228,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
           {/* Description Field */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="description" className="block text-base font-medium text-gray-700">
               Description*
             </label>
             <div className="mt-1">
@@ -216,7 +240,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                   <textarea
                     id="description"
                     rows="4"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
                       errors.description
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
@@ -230,7 +254,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
               )}
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Describe what your event is about and what participants can expect.
+              Describe what your table is about and what participants can expect.
             </p>
           </div>
 
@@ -238,7 +262,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Date Field */}
             <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="date" className="block text-base font-medium text-gray-700">
                 <span className="inline-flex items-center">
                   <FaCalendarAlt className="mr-2 text-gray-400" />
                   Date*
@@ -253,7 +277,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                     <input
                       type="date"
                       id="date"
-                      className={`block w-full rounded-md shadow-sm sm:text-sm ${
+                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
                         errors.date
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                           : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
@@ -270,7 +294,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
             {/* Time Field */}
             <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="time" className="block text-base font-medium text-gray-700">
                 <span className="inline-flex items-center">
                   <FaClock className="mr-2 text-gray-400" />
                   Time*
@@ -282,16 +306,22 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                   control={control}
                   rules={{ required: 'Time is required' }}
                   render={({ field }) => (
-                    <input
-                      type="time"
+                    <select
                       id="time"
-                      className={`block w-full rounded-md shadow-sm sm:text-sm ${
-                        errors.time
+                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                        errors.time 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                           : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                       }`}
                       {...field}
-                    />
+                    >
+                      <option value="">Select a time</option>
+                      {timeOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 />
                 {errors.time && (
@@ -305,7 +335,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Duration Field */}
             <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="duration" className="block text-base font-medium text-gray-700">
                 <span className="inline-flex items-center">
                   <FaClock className="mr-2 text-gray-400" />
                   Duration (minutes)
@@ -323,7 +353,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                       min="15"
                       step="15"
                       placeholder="e.g., 60"
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       {...field}
                     />
                   )}
@@ -336,7 +366,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
             {/* Max Attendees Field */}
             <div>
-              <label htmlFor="maxAttendees" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="maxAttendees" className="block text-base font-medium text-gray-700">
                 <span className="inline-flex items-center">
                   <FaUsers className="mr-2 text-gray-400" />
                   Max Attendees
@@ -353,7 +383,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                       id="maxAttendees"
                       min="1"
                       placeholder="e.g., 10"
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       {...field}
                     />
                   )}
@@ -367,7 +397,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
           {/* City Dropdown Field */}
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="city" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaBuilding className="mr-2 text-gray-400" />
                 City*
@@ -381,7 +411,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 render={({ field }) => (
                   <select
                     id="city"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
                       errors.city
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
@@ -402,7 +432,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
           
           {/* Place Search Field */}
           <div>
-            <label htmlFor="place" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="place" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaMapMarkerAlt className="mr-2 text-gray-400" />
                 Place*
@@ -443,7 +473,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
           {/* Category Field */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="category" className="block text-base font-medium text-gray-700">
               Category*
             </label>
             <div className="mt-1">
@@ -454,7 +484,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 render={({ field }) => (
                   <select
                     id="category"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
                       errors.category
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
@@ -486,7 +516,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
           {/* Event Image Upload */}
           <div>
-            <label htmlFor="eventImage" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="eventImage" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaImage className="mr-2 text-gray-400" />
                 Event Image
@@ -533,13 +563,13 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
               <p className="mt-1 text-sm text-red-600">{uploadError}</p>
             )}
             <p className="mt-1 text-sm text-gray-500">
-              Upload an image for your event (JPEG, PNG, max 5MB)
+              Upload an image for your table (JPEG, PNG, max 5MB)
             </p>
           </div>
           
           {/* Tags Field */}
           <div>
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="tags" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaTags className="mr-2 text-gray-400" />
                 Tags (comma separated)
@@ -556,67 +586,61 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                     value={value}
                     onChange={(e) => handleTagsChange(e, onChange)}
                     placeholder="e.g., coffee, networking, casual"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 )}
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Add relevant tags to help people find your event
+              Add relevant tags to help people find your table
             </p>
           </div>
 
-          {/* Visibility Options */}
-          <div className="space-y-3">
-            <div className="flex items-start">
-              <Controller
-                name="isPublic"
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <div className="flex items-center h-5">
+          {/* Table Type Toggle */}
+          <div className="space-y-4">
+            <label className="block text-base font-medium text-gray-700">Table Type</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Public */}
+              <label className="flex items-start cursor-pointer">
+                <Controller
+                  name="isPublic"
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
                     <input
-                      id="isPublic"
-                      type="checkbox"
-                      checked={value}
-                      onChange={onChange}
-                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      type="radio"
+                      id="publicTable"
+                      checked={value === true}
+                      onChange={() => onChange(true)}
+                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                     />
-                  </div>
-                )}
-              />
-              <div className="ml-3 text-sm">
-                <label htmlFor="isPublic" className="font-medium text-gray-700">
-                  Public Event
-                </label>
-                <p className="text-gray-500">Make this event visible to everyone</p>
-              </div>
-            </div>
-            
-            {/* Recurring event option commented out for now
-            <div className="flex items-start">
-              <Controller
-                name="isRecurring"
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <div className="flex items-center h-5">
+                  )}
+                />
+                <span className="ml-2">
+                  <span className="font-medium text-gray-700">Public Table</span>
+                  <p className="text-gray-500 text-sm">These tables will be visible on the Experience page after approval.</p>
+                </span>
+              </label>
+              {/* Private */}
+              <label className="flex items-start cursor-pointer">
+                <Controller
+                  name="isPublic"
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
                     <input
-                      id="isRecurring"
-                      type="checkbox"
-                      checked={value}
-                      onChange={onChange}
-                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      type="radio"
+                      id="privateTable"
+                      checked={value === false}
+                      onChange={() => onChange(false)}
+                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                     />
-                  </div>
-                )}
-              />
-              <div className="ml-3 text-sm">
-                <label htmlFor="isRecurring" className="font-medium text-gray-700">
-                  Recurring Event
-                </label>
-                <p className="text-gray-500">This event repeats on a schedule</p>
-              </div>
+                  )}
+                />
+                <span className="ml-2">
+                  <span className="font-medium text-gray-700">Private Table</span>
+                  <p className="text-gray-500 text-sm">These are not shown to other community members but you can share the link to your table.</p>
+                </span>
+              </label>
             </div>
-            */}
           </div>
         </div>
 
@@ -630,7 +654,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
             }`}
           >
-            {isSubmitting ? 'Creating...' : 'Create Event'}
+            {isSubmitting ? 'Creating...' : 'Create Table'}
           </button>
         </div>
       </form>

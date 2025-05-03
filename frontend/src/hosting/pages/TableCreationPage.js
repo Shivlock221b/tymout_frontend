@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaShare, FaCheck, FaCopy } from 'react-icons/fa';
+import { FaArrowLeft, FaCheck, FaCopy } from 'react-icons/fa';
 import EventCreationFormHookForm from '../components/EventCreationFormHookForm';
 import RecurringEventSchedulerHookForm from '../components/RecurringEventSchedulerHookForm';
 import { useLocations, useEventTemplates, useCreateEvent } from '../hooks/queries/useHostQueries';
@@ -237,7 +237,7 @@ const TableCreationPage = () => {
         
         <div className="bg-white shadow-md rounded-lg overflow-hidden mb-6">
           <div className="p-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Create a Table</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Create a Table</h1>
             <p className="text-gray-600 mb-6">
               Fill out the form below to create a new table experience for your guests
             </p>
