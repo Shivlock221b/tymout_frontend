@@ -37,37 +37,44 @@ const MyEventsPage = () => {
       <h1 className="text-2xl font-bold mb-6 text-primary">Messages</h1>
       
       {/* Tag-style category navigation */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab('upcoming')}
-          className={`px-4 py-2 rounded-full font-semibold text-base transition 
-            ${activeTab === 'upcoming'
-              ? 'bg-indigo-600 text-white shadow'
-              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
-            }`}
-        >
-          My Tables
-        </button>
-        <button
-          onClick={() => setActiveTab('archieve')}
-          className={`px-4 py-2 rounded-full font-semibold text-base transition 
-            ${activeTab === 'archieve'
-              ? 'bg-indigo-600 text-white shadow'
-              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
-            }`}
-        >
-          Archieve
-        </button>
-        <button
-          onClick={() => setActiveTab('pending')}
-          className={`px-4 py-2 rounded-full font-semibold text-base transition 
-            ${activeTab === 'pending'
-              ? 'bg-indigo-600 text-white shadow'
-              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
-            }`}
-        >
-          Pending
-        </button>
+      <div className="flex flex-col gap-2 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('upcoming')}
+            className={`px-3 py-1 rounded-full font-medium text-sm transition 
+              ${activeTab === 'upcoming'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+              }`}
+          >
+            My Tables
+          </button>
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`px-3 py-1 rounded-full font-medium text-sm transition 
+              ${activeTab === 'pending'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+              }`}
+          >
+            Pending
+          </button>
+        </div>
+        <div className="flex items-center">
+          <button
+            onClick={() => setActiveTab('archieve')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium text-sm transition 
+              ${activeTab === 'archieve'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+              }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0V5a2 2 0 00-2-2H6a2 2 0 00-2 2v2m16 0H4" />
+            </svg>
+            Archieve
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
