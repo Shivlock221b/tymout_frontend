@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef } from 'react';
 
 const LONG_PRESS_DURATION = 600; // ms
 
-const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete, onReplyTo }) => {
+const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onReplyTo }, ref) => {
   // Get initials from name for avatar fallback
   const getInitials = (fullName) => {
     if (!fullName) return '?';
@@ -73,9 +73,18 @@ const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete, onReplyTo }) =
         {/* Reply indicator */}
         {message.replyTo && (
           <div 
-            className={`rounded px-2 py-1 text-xs flex items-center gap-1 w-auto ${
+            className={`rounded px-2 py-1 text-xs flex items-center gap-1 w-auto cursor-pointer hover:bg-opacity-80 ${
               isOwn ? 'bg-indigo-700/30 ml-auto' : 'bg-gray-200/80 mr-auto'
             }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Get the original message ID and pass to parent for scrolling
+              const originalMessageId = message.replyTo.messageId;
+              if (originalMessageId && typeof onReplyTo === 'function') {
+                // Call special handler to scroll to message
+                onReplyTo(null, originalMessageId);
+              }
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 17 4 12 9 7"></polyline>
@@ -96,13 +105,18 @@ const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete, onReplyTo }) =
         
         {/* Message bubble */}
         <div
-          className={`rounded-lg px-3 py-2 text-sm shadow component-card break-words whitespace-pre-line ${isOwn ? 'bg-theme-accent text-white' : 'bg-gray-100 text-gray-900'}`}
+          className={`rounded-lg px-3 py-2 text-base shadow component-card break-words whitespace-pre-line ${isOwn ? 'bg-theme-accent text-white' : 'bg-gray-100 text-gray-900'}`}
           style={isOwn ? { color: '#fff', backgroundColor: 'var(--color-theme-accent, #2563eb)' } : {}}
           aria-label={isOwn ? 'Your message' : 'Member message'}
           onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          ref={touchRef}
+          ref={(el) => {
+            // Merge refs
+            touchRef.current = el;
+            if (typeof ref === 'function') ref(el);
+            else if (ref) ref.current = el;
+          }}
           onClick={handleReplyClick}
         >
           {/* Sender name above bubble */}
@@ -126,6 +140,6 @@ const ChatMessageBubble = ({ message, isOwn, userPhoto, onDelete, onReplyTo }) =
       </div>
     </div>
   );
-};
+});
 
 export default ChatMessageBubble;

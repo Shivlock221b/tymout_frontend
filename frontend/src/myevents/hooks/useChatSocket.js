@@ -24,6 +24,12 @@ export function useChatSocket(eventId) {
               sender: msg.sender || msg.senderId || msg.userId || '',
               // Ensure consistent sender ID format for comparison
               _senderId: String(msg.sender || msg.senderId || msg.userId || '').trim(),
+              // Normalize replyTo if it exists
+              replyTo: msg.replyTo ? {
+                ...msg.replyTo,
+                sender: msg.replyTo.sender || msg.replyTo.senderId || '',
+                _senderId: String(msg.replyTo.sender || msg.replyTo.senderId || '').trim()
+              } : null
             }))
           : [];
         setMessages(normalizedMsgs);
@@ -46,12 +52,18 @@ export function useChatSocket(eventId) {
         return;
       }
       
-      // Normalize message to ensure sender field exists
+      // Normalize message to ensure sender field exists and properly handle replyTo
       const normalizedMsg = {
         ...msg,
         sender: msg.sender || msg.senderId || msg.userId || '',
         // Ensure consistent sender ID format for comparison
         _senderId: String(msg.sender || msg.senderId || msg.userId || '').trim(),
+        // Normalize replyTo if it exists
+        replyTo: msg.replyTo ? {
+          ...msg.replyTo,
+          sender: msg.replyTo.sender || msg.replyTo.senderId || '',
+          _senderId: String(msg.replyTo.sender || msg.replyTo.senderId || '').trim()
+        } : null
       };
       setMessages(prev => [...prev, normalizedMsg]);
     });
@@ -74,7 +86,6 @@ export function useChatSocket(eventId) {
     // Prepare reply metadata if replying to a message
     const replyTo = replyToMessage ? {
       messageId: replyToMessage._id || replyToMessage.id,
-      sender: replyToMessage.sender,
       senderId: replyToMessage.senderId || replyToMessage.sender, 
       senderName: replyToMessage.senderName,
       text: replyToMessage.text
@@ -91,29 +102,22 @@ export function useChatSocket(eventId) {
       replyTo
     });
     
-    // Create local message representation including reply info
-    const newMessage = {
-      _id: Date.now().toString(), // Temporary ID until server assigns one
-      eventId,
-      sender: user._id,
-      senderId: user._id,
-      senderName: user.name,
-      senderPhoto: user.avatar,
-      text,
-      timestamp: new Date().toISOString(),
-      replyTo // Include reply metadata in the local message
-    };
-    
-    // Update messages locally
-    setMessages(prev => [...prev, newMessage]);
+    // Don't add the message locally anymore, as we'll receive it back from the socket
+    // This ensures we have the server-generated ID and consistent data
   }, [eventId, user]);
 
   // Delete message
   const deleteMessage = useCallback(async (messageId) => {
     if (!eventId || !messageId) return;
     try {
-      await axios.patch(`${API_URL}/${eventId}/${messageId}/delete`);
-      // UI will update via socket event
+      // Emit deleteMessage event to the socket
+      if (socketRef.current) {
+        socketRef.current.emit('deleteMessage', { eventId, messageId });
+      } else {
+        // Fallback to REST API if socket isn't available
+        await axios.patch(`${API_URL}/${eventId}/${messageId}/delete`);
+      }
+      // UI will update via socket 'messageDeleted' event
     } catch (err) {
       // Optionally handle error
       console.error('Failed to delete message', err);
@@ -123,6 +127,7 @@ export function useChatSocket(eventId) {
   return {
     messages,
     sendMessage,
+    deleteMessage,
     setMessages,
   };
 }

@@ -58,7 +58,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }
       <EmojiPickerButton onSelect={handleEmojiSelect} />
       <textarea
         ref={inputRef}
-        className="flex-1 min-w-0 px-3 py-2 rounded-2xl border border-gray-300 text-sm focus:outline-none resize-none min-h-[40px] max-h-32 overflow-auto"
+        className="flex-1 min-w-0 px-3 py-2 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[40px] max-h-32 overflow-auto"
         placeholder="Type a message..."
         value={value}
         maxLength={500}
