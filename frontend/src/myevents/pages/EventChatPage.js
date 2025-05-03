@@ -63,11 +63,23 @@ const EventChatPage = () => {
   // useChatSocket returns an array of message objects as per the backend structure
   const { messages, sendMessage } = useChatSocket(eventId);
   const [input, setInput] = useState('');
+  const [replyToMessage, setReplyToMessage] = useState(null);
 
   const handleSend = (text) => {
     if (!text.trim()) return;
-    sendMessage(text);
+    sendMessage(text, replyToMessage);
+    setReplyToMessage(null);
     setInput('');
+  };
+
+  const handleReplyTo = (message) => {
+    setReplyToMessage(message);
+    // Focus on input field after selecting a message to reply to
+    document.querySelector('textarea')?.focus();
+  };
+
+  const handleCancelReply = () => {
+    setReplyToMessage(null);
   };
 
   // Debug: Log the event object to inspect its structure
@@ -153,11 +165,22 @@ const EventChatPage = () => {
       
       {/* Chat messages with scrolling */}
       <div className="flex-1 overflow-y-auto pb-24 z-10">
-        <ChatMessageList messages={messages} currentUserId={user?._id} otherPhoto={event?.thumbnail} />
+        <ChatMessageList 
+          messages={messages} 
+          currentUserId={user?._id} 
+          otherPhoto={event?.thumbnail} 
+          onReplyTo={handleReplyTo}
+        />
       </div>
       {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
       <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-2 py-2 z-20 max-w-[600px] mx-auto">
-        <ChatInputBox onSend={handleSend} value={input} onChange={setInput} />
+        <ChatInputBox 
+          onSend={handleSend} 
+          value={input} 
+          onChange={setInput} 
+          replyToMessage={replyToMessage}
+          onCancelReply={handleCancelReply}
+        />
       </div>
     </div>
   );

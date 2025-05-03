@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import ChatMessageBubble from './ChatMessageBubble';
 import { useChatSocket } from '../../hooks/useChatSocket';
 
-const ChatMessageList = ({ messages: propMessages, currentUserId, eventId }) => {
+const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo }) => {
   const { deleteMessage } = useChatSocket(eventId);
   const listRef = useRef(null);
 
@@ -50,6 +50,7 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId }) => 
             isOwn={isOwn}
             userPhoto={msg.senderPhoto || msg.userPhoto || undefined}
             onDelete={deleteMessage}
+            onReplyTo={onReplyTo}
           />
         );
       })}

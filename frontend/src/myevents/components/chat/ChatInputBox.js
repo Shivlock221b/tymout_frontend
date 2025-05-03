@@ -1,7 +1,7 @@
 import React from 'react';
 import EmojiPickerButton from './EmojiPickerButton';
 
-const ChatInputBox = ({ onSend, value, onChange }) => {
+const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }) => {
   const inputRef = React.useRef();
   const handleSend = () => {
     onSend(value);
@@ -27,13 +27,41 @@ const ChatInputBox = ({ onSend, value, onChange }) => {
 
   return (
     <div className="flex w-full gap-2 items-end p-2 border-t border-gray-200 bg-white">
+      {/* Reply Preview */}
+      {replyToMessage && (
+        <div className="absolute left-0 right-0 bottom-full bg-gray-50 border-t border-gray-200 px-3 py-2 flex justify-between items-center">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-500">
+              Replying to <span className="font-medium text-gray-700">
+                {replyToMessage.senderName || 
+                (typeof replyToMessage.sender === 'object' && 
+                  (replyToMessage.sender.name || replyToMessage.sender.username)) || 
+                'Unknown'}
+              </span>
+            </div>
+            <div className="text-sm truncate text-gray-700 mt-1">
+              {replyToMessage.text || '[deleted]'}
+            </div>
+          </div>
+          <button 
+            onClick={onCancelReply}
+            className="ml-2 p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200"
+            aria-label="Cancel reply"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      )}
       <EmojiPickerButton onSelect={handleEmojiSelect} />
       <textarea
         ref={inputRef}
         className="flex-1 min-w-0 px-3 py-2 rounded-2xl border border-gray-300 text-sm focus:outline-none resize-none min-h-[40px] max-h-32 overflow-auto"
         placeholder="Type a message..."
         value={value}
-        maxLength={200}
+        maxLength={500}
         rows={1}
         onChange={e => {
           onChange(e.target.value);

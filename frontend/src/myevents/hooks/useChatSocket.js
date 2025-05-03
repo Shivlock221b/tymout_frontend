@@ -67,9 +67,20 @@ export function useChatSocket(eventId) {
     };
   }, [eventId, user]);
 
-  // Send message
-  const sendMessage = useCallback((text) => {
+  // Send message with support for replies
+  const sendMessage = useCallback((text, replyToMessage = null) => {
     if (!socketRef.current || !user || !text.trim()) return;
+    
+    // Prepare reply metadata if replying to a message
+    const replyTo = replyToMessage ? {
+      messageId: replyToMessage._id || replyToMessage.id,
+      sender: replyToMessage.sender,
+      senderId: replyToMessage.senderId || replyToMessage.sender, 
+      senderName: replyToMessage.senderName,
+      text: replyToMessage.text
+    } : null;
+    
+    // Emit message with reply metadata
     socketRef.current.emit('sendMessage', {
       eventId,
       sender: user._id, // Ensure sender field is present
@@ -77,9 +88,10 @@ export function useChatSocket(eventId) {
       senderName: user.name,
       senderAvatar: user.avatar,
       text,
+      replyTo
     });
-    // Instead of fetching all messages again, add the sent message to the local state
-    // This ensures consistent sender attribution
+    
+    // Create local message representation including reply info
     const newMessage = {
       _id: Date.now().toString(), // Temporary ID until server assigns one
       eventId,
@@ -89,6 +101,7 @@ export function useChatSocket(eventId) {
       senderPhoto: user.avatar,
       text,
       timestamp: new Date().toISOString(),
+      replyTo // Include reply metadata in the local message
     };
     
     // Update messages locally
