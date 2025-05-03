@@ -40,6 +40,7 @@ import EventPage from './myevents/pages/EventPage';
 import EventChatPage from './myevents/pages/EventChatPage';
 import EventAboutPage from './myevents/pages/EventAboutPage';
 import JoinRequestsPage from './myevents/pages/JoinRequestsPage';
+import EventGroupPage from './myevents/pages/EventGroupPage';
 import './styles/App.css';
 
 // Following Single Responsibility Principle - App component only handles setup
@@ -148,6 +149,16 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <EventAboutPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Event Group tabbed interface route */}
+            <Route 
+              path="/myevents/:eventId/group" 
+              element={
+                <ProtectedRoute>
+                  <EventGroupPage />
                 </ProtectedRoute>
               } 
             />

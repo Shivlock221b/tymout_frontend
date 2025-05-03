@@ -24,9 +24,6 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
     : 'Location not available'; // Fallback if location is missing
 
   const handleClick = () => {
-    // Don't navigate if the event is pending
-    if (isPending) return;
-    
     navigate(`/myevents/${event._id}/chat`);
   };
   const [copied, setCopied] = useState(false);

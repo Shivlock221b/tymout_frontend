@@ -34,33 +34,35 @@ const AboutTab = ({ event }) => {
   const mapsUrl = getGoogleMapsUrl();
 
   return (
-    <div className="p-4 text-gray-700">
-      <div className="font-semibold mb-2">About this event</div>
-      <div className="mb-4">{event.description || 'No description available.'}</div>
-      
-      {/* Event details */}
-      <div className="mt-4">
-        <div className="font-semibold mb-2">Event Details</div>
-        
-        {/* Location with Google Maps button */}
-        <div className="mb-4">
-          <div className="flex items-center mb-2">
-            <FaMapMarkerAlt className="text-indigo-600 mr-2" />
-            <span className="font-medium">Location</span>
+    <div className="p-4 text-gray-700 space-y-6 overflow-x-hidden">
+      {/* About section */}
+      <div>
+        <h2 className="font-semibold mb-2">About this event</h2>
+        <p className="whitespace-pre-line break-words break-all">{event.description || 'No description available.'}</p>
+      </div>
+
+      {/* Event Details */}
+      <div className="space-y-3">
+        <h3 className="font-semibold">Event Details</h3>
+
+        {/* Location */}
+        <div className="space-y-1">
+          <div className="flex items-start">
+            <FaMapMarkerAlt className="text-indigo-600 mr-2 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 break-words">
+              {event?.place?.name && (
+                <div className="font-medium">{event.place.name}</div>
+              )}
+              <div>{event?.place?.address || event.location?.city || 'Location not specified'}</div>
+            </div>
           </div>
-          <div className="ml-6 mb-2">
-            {event?.place?.name ? (
-              <div className="font-medium">{event.place.name}</div>
-            ) : null}
-            <div>{event?.place?.address || event.location?.city || 'Location not specified'}</div>
-          </div>
-          
+
           {mapsUrl && (
-            <a 
+            <a
               href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-6 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex flex-wrap items-center px-3 py-1.5 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 max-w-full break-words"
             >
               <FaMapMarkerAlt className="mr-1.5" />
               Open in Google Maps
@@ -68,18 +70,19 @@ const AboutTab = ({ event }) => {
             </a>
           )}
         </div>
-        
-        <div className="grid grid-cols-2 gap-2 text-sm">
+
+        {/* Basic info grid */}
+        <div className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-sm">
           <div className="text-gray-500">Date:</div>
-          <div>{event.date?.start ? new Date(event.date.start).toLocaleDateString() : (event.date || 'Not specified')}</div>
-          
+          <div className="min-w-0 break-words">{event.date?.start ? new Date(event.date.start).toLocaleDateString() : (event.date || 'Not specified')}</div>
+
           <div className="text-gray-500">Attendees:</div>
-          <div>{attendeeCount} {attendeeCount === 1 ? 'person' : 'people'}</div>
-          
+          <div className="min-w-0">{attendeeCount} {attendeeCount === 1 ? 'person' : 'people'}</div>
+
           {event.capacity && (
             <>
               <div className="text-gray-500">Capacity:</div>
-              <div>{event.capacity}</div>
+              <div className="min-w-0">{event.capacity}</div>
             </>
           )}
         </div>

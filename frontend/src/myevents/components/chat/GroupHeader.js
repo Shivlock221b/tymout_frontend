@@ -4,13 +4,12 @@ import React from 'react';
  * GroupHeader component displays the event (group) name and photo in the chat header.
  * @param {Object} props
  * @param {Object} props.event - The event object containing title and imageUrl
- * @param {Function} props.onClick - Function to call when header is clicked (e.g., to navigate to dashboard)
+ * @param {Function} props.onClick - Function to call when header is clicked
  */
 import { useNavigate } from 'react-router-dom';
 
-const GroupHeader = ({ event }) => {
+const GroupHeader = ({ event, onClick }) => {
   console.log('[GroupHeader] event:', event);
-  const navigate = useNavigate();
   if (!event) return null;
   // Get event ID (support both _id and id formats)
   const eventId = event._id || event.id;
@@ -24,7 +23,7 @@ const GroupHeader = ({ event }) => {
   return (
     <button
       className="flex items-center gap-2 group focus:outline-none"
-      onClick={() => navigate(`/myevents/about/${eventId}`)}
+      onClick={onClick}
       aria-label={`View details for ${eventTitle}`}
       type="button"
     >
