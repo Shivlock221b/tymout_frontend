@@ -105,7 +105,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         
         {/* Message bubble */}
         <div
-          className={`rounded-lg px-3 py-2 text-base shadow component-card break-words whitespace-pre-line ${isOwn ? 'bg-theme-accent text-white' : 'bg-gray-100 text-gray-900'}`}
+          className={`rounded-lg px-3 py-2 text-base shadow component-card break-words whitespace-pre-line ${isOwn ? 'bg-theme-accent text-white' : 'bg-gray-100 text-gray-900'} relative`}
           style={isOwn ? { color: '#fff', backgroundColor: 'var(--color-theme-accent, #2563eb)' } : {}}
           aria-label={isOwn ? 'Your message' : 'Member message'}
           onContextMenu={handleContextMenu}
@@ -130,7 +130,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
           </div>
           <div>
             {message.deleted
-              ? <span className="italic text-gray-400">This message was deleted.</span>
+              ? <span className="italic text-gray-400">This message was deleted</span>
               : (<span className="break-words">{message.text || <span className="text-red-500">[Empty]</span>}</span>)}
           </div>
           <div className="text-xs text-gray-400 mt-1 text-right">

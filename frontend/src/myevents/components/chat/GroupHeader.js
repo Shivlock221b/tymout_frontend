@@ -6,7 +6,6 @@ import React from 'react';
  * @param {Object} props.event - The event object containing title and imageUrl
  * @param {Function} props.onClick - Function to call when header is clicked
  */
-import { useNavigate } from 'react-router-dom';
 
 const GroupHeader = ({ event, onClick }) => {
   console.log('[GroupHeader] event:', event);
@@ -18,11 +17,16 @@ const GroupHeader = ({ event, onClick }) => {
   // Get event image (support multiple image field names)
   const eventImage = event.event_image || event.thumbnail || event.imageUrl || "/default-group.png";
   
+  // Truncate event title to 50 characters
+  const displayTitle = eventTitle.length > 21 
+    ? `${eventTitle.substring(0, 21)}...` 
+    : eventTitle;
+  
   console.log('[GroupHeader] Using eventId:', eventId, 'title:', eventTitle);
   
   return (
     <button
-      className="flex items-center gap-2 group focus:outline-none"
+      className="flex items-center gap-2 group focus:outline-none max-w-full"
       onClick={onClick}
       aria-label={`View details for ${eventTitle}`}
       type="button"
@@ -30,10 +34,13 @@ const GroupHeader = ({ event, onClick }) => {
       <img
         src={eventImage}
         alt={eventTitle}
-        className="w-10 h-10 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-90 group-focus:brightness-90 transition"
+        className="w-10 h-10 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-90 group-focus:brightness-90 transition flex-shrink-0"
       />
-      <span className="font-semibold text-base text-primary truncate group-hover:underline group-focus:underline">
-        {eventTitle}
+      <span 
+        className="font-semibold text-base text-primary group-hover:underline group-focus:underline overflow-hidden whitespace-nowrap max-w-[calc(100%-2.5rem)]"
+        title={eventTitle} // Show full title on hover
+      >
+        {displayTitle}
       </span>
     </button>
   );
