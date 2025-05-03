@@ -60,7 +60,7 @@ const MyEventsPage = () => {
             Pending
           </button>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center justify-end">
           <button
             onClick={() => setActiveTab('archieve')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium text-sm transition 
