@@ -135,9 +135,9 @@ const EventChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto">
-      {/* Header - static (flex-none) so it remains visible; avoids position issues in webviews */}
-      <div className="flex items-center gap-3 p-3 border-b border-gray-100 bg-white flex-none">
+    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative">
+      {/* Header - position sticky instead of fixed */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3">
         <button
           className="p-1 rounded-full hover:bg-gray-100 focus:outline-none"
           onClick={() => navigate('/myevents')}
@@ -151,12 +151,12 @@ const EventChatPage = () => {
         )}
       </div>
       
-      {/* Chat messages area; flex-1 scrollable */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 z-10">
+      {/* Chat messages with scrolling */}
+      <div className="flex-1 overflow-y-auto pb-24 z-10">
         <ChatMessageList messages={messages} currentUserId={user?._id} otherPhoto={event?.thumbnail} />
       </div>
-      {/* Input box - static flex-none (no position) for full webview compatibility */}
-      <div className="border-t border-gray-100 px-2 py-2 bg-white flex-none">
+      {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-2 py-2 z-20 max-w-[600px] mx-auto">
         <ChatInputBox onSend={handleSend} value={input} onChange={setInput} />
       </div>
     </div>
