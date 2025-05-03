@@ -18,7 +18,7 @@ const MyEventsPage = () => {
 
   // Filter events based on the active tab
   const filteredEvents = events.filter(event => {
-    if (activeTab === 'past') {
+    if (activeTab === 'archieve') {
       return isEventPast(event);
     }
     // For pending events, show events with status 'pending'
@@ -40,27 +40,27 @@ const MyEventsPage = () => {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab('upcoming')}
-          className={`px-2 py-0.5 rounded-full font-medium text-xs transition 
+          className={`px-4 py-2 rounded-full font-semibold text-base transition 
             ${activeTab === 'upcoming'
               ? 'bg-indigo-600 text-white shadow'
               : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
             }`}
         >
-          Upcoming Tables
+          My Tables
         </button>
         <button
-          onClick={() => setActiveTab('past')}
-          className={`px-2 py-0.5 rounded-full font-medium text-xs transition 
-            ${activeTab === 'past'
+          onClick={() => setActiveTab('archieve')}
+          className={`px-4 py-2 rounded-full font-semibold text-base transition 
+            ${activeTab === 'archieve'
               ? 'bg-indigo-600 text-white shadow'
               : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
             }`}
         >
-          Past Events
+          Archieve
         </button>
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-2 py-0.5 rounded-full font-medium text-xs transition 
+          className={`px-4 py-2 rounded-full font-semibold text-base transition 
             ${activeTab === 'pending'
               ? 'bg-indigo-600 text-white shadow'
               : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
@@ -75,7 +75,7 @@ const MyEventsPage = () => {
       ) : isError ? (
         <div className="text-red-500">Failed to load events.</div>
       ) : !filteredEvents.length ? (
-        <div className="text-gray-500">No {activeTab} events found.</div>
+        <div className="text-gray-500">No {activeTab === 'archieve' ? 'archieve' : activeTab} events found.</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Use event._id as the key, assuming it's the unique ID */}
