@@ -136,8 +136,8 @@ const EventChatPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative">
-      {/* Header - position sticky instead of fixed */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3">
+      {/* Header - fixed so it always stays visible */}
+      <div className="fixed top-0 inset-x-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3 max-w-[600px] mx-auto">
         <button
           className="p-1 rounded-full hover:bg-gray-100 focus:outline-none"
           onClick={() => navigate('/myevents')}
@@ -152,7 +152,7 @@ const EventChatPage = () => {
       </div>
       
       {/* Chat messages with scrolling */}
-      <div className="flex-1 overflow-y-auto pb-24 z-10">
+      <div className="flex-1 overflow-y-auto pt-20 pb-24 z-10">
         <ChatMessageList messages={messages} currentUserId={user?._id} otherPhoto={event?.thumbnail} />
       </div>
       {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
