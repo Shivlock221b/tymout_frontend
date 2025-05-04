@@ -80,14 +80,29 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
       // Always scroll to bottom on first render
       if (isFirstRender.current) {
         console.log('First render detected, scrolling to bottom');
-        listRef.current.scrollTop = listRef.current.scrollHeight;
+        // Add extra scroll to ensure the last message is fully visible
+        listRef.current.scrollTop = listRef.current.scrollHeight + 300;
+        
+        // Schedule additional scrolls to ensure visibility after layout
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.scrollTop = listRef.current.scrollHeight + 300;
+          }
+        }, 50);
+        
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.scrollTop = listRef.current.scrollHeight + 300;
+          }
+        }, 150);
+        
         isFirstRender.current = false;
       }
       
       // Also scroll when messages change and we're at the bottom
       if (isAtBottom) {
         console.log('At bottom and messages changed, scrolling to bottom');
-        listRef.current.scrollTop = listRef.current.scrollHeight;
+        listRef.current.scrollTop = listRef.current.scrollHeight + 300;
       }
     }
   }, [propMessages, isAtBottom]);
@@ -136,15 +151,16 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     const handleNewMessage = () => {
       console.log('ChatMessageList: New message event received, scrolling to bottom');
       
-      // Immediate scroll
+      // Immediate scroll with extra offset to ensure full visibility
       if (listRef.current) {
-        listRef.current.scrollTop = listRef.current.scrollHeight;
+        listRef.current.scrollTop = listRef.current.scrollHeight + 300;
       }
       
       // Multiple delayed scrolls to handle keyboard and layout shifts
       const scrollToBottom = () => {
         if (listRef.current) {
-          listRef.current.scrollTop = listRef.current.scrollHeight;
+          // Add extra scroll to ensure the last message is fully visible
+          listRef.current.scrollTop = listRef.current.scrollHeight + 300;
         }
       };
       
@@ -174,14 +190,16 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           // On initial mount, always scroll to bottom
           if (isFirstRender.current) {
             console.log('Initial mount detected in RAF, forcing scroll to bottom');
-            listRef.current.scrollTop = listRef.current.scrollHeight;
+            // Add extra scroll to ensure the last message is fully visible
+            listRef.current.scrollTop = listRef.current.scrollHeight + 300;
             isFirstRender.current = false;
             return;
           }
           
           // Otherwise, only scroll if we're at the bottom
           if (isAtBottom) {
-            listRef.current.scrollTop = listRef.current.scrollHeight;
+            // Add extra scroll to ensure the last message is fully visible
+            listRef.current.scrollTop = listRef.current.scrollHeight + 300;
           }
         }
       });
@@ -191,7 +209,8 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     const timeoutId = setTimeout(() => {
       if (listRef.current) {
         console.log('Delayed scroll check running');
-        listRef.current.scrollTop = listRef.current.scrollHeight;
+        // Add extra scroll to ensure the last message is fully visible
+        listRef.current.scrollTop = listRef.current.scrollHeight + 300;
       }
     }, 500);
     

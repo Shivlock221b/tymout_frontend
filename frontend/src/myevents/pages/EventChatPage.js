@@ -71,12 +71,23 @@ const EventChatPage = () => {
   useEffect(() => {
     if (messages && messages.length > 0 && chatContainerRef.current) {
       console.log('EventChatPage: Messages loaded, scrolling to bottom');
-      // Use a small delay to ensure DOM is fully rendered
-      setTimeout(() => {
+      
+      // Add extra padding to ensure the last message is fully visible
+      const scrollWithPadding = () => {
         if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          // Add extra scroll to ensure the last message is fully visible
+          // Using a larger offset to account for the input area height and any bottom UI elements
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 500;
         }
-      }, 100);
+      };
+      
+      // Immediate scroll
+      scrollWithPadding();
+      
+      // Multiple delayed scrolls to ensure the last message is visible after layout
+      setTimeout(scrollWithPadding, 100);
+      setTimeout(scrollWithPadding, 300);
+      setTimeout(scrollWithPadding, 500);
     }
   }, [messages]);
 
@@ -182,7 +193,10 @@ const EventChatPage = () => {
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto z-10" 
-        style={{ paddingBottom: '20px' }}
+        style={{ 
+          paddingBottom: '20px',
+          marginBottom: '80px' // Add specific margin to account for input area height
+        }}
       >
         <ChatMessageList 
           messages={messages} 
