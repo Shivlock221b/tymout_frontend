@@ -41,6 +41,9 @@ const EventChatPage = () => {
   // State for showing group tabbed interface
   const [showGroupTabs, setShowGroupTabs] = useState(false);
   
+  // Reference to the chat container
+  const chatContainerRef = React.useRef(null);
+  
   console.log('EventChatPage mounted.');
   const { eventId } = useParams();
   console.log('EventChatPage useParams eventId:', eventId);
@@ -63,6 +66,19 @@ const EventChatPage = () => {
   const { messages, sendMessage } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
+  
+  // Force scroll to bottom when messages are loaded
+  useEffect(() => {
+    if (messages && messages.length > 0 && chatContainerRef.current) {
+      console.log('EventChatPage: Messages loaded, scrolling to bottom');
+      // Use a small delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [messages]);
 
   const handleSend = (text) => {
     if (!text.trim()) return;
@@ -162,8 +178,12 @@ const EventChatPage = () => {
         )}
       </div>
       
-      {/* Chat messages with scrolling */}
-      <div className="flex-1 overflow-y-auto pb-16 z-10">
+      {/* Chat messages with scrolling - with improved padding for keyboard */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto z-10" 
+        style={{ paddingBottom: '20px' }}
+      >
         <ChatMessageList 
           messages={messages} 
           currentUserId={user?._id} 

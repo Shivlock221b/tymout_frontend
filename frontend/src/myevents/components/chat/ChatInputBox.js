@@ -3,8 +3,20 @@ import EmojiPickerButton from './EmojiPickerButton';
 
 const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }) => {
   const inputRef = React.useRef();
+  
+  // Enhanced send handler with focus management
   const handleSend = () => {
+    if (!value.trim()) return;
+    
+    // Send the message
     onSend(value);
+    
+    // Keep focus on the input after sending
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
   };
 
   // Insert emoji at cursor position
@@ -71,7 +83,17 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }
         onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            onSend(value);
+            if (value.trim()) {
+              // Send the message
+              onSend(value);
+              
+              // Ensure we maintain focus on the input
+              setTimeout(() => {
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }, 0);
+            }
           }
         }}
         style={{lineHeight: '1.5'}}

@@ -32,7 +32,8 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
   const handleScroll = () => {
     const scrollElement = listRef.current || document.documentElement;
     const { scrollTop, scrollHeight, clientHeight } = scrollElement;
-    const atBottom = scrollHeight - (scrollTop + clientHeight) < 100; // px threshold
+    // More generous threshold (200px) to consider "at bottom"
+    const atBottom = scrollHeight - (scrollTop + clientHeight) < 200; // px threshold
     setIsAtBottom(atBottom);
   };
 
@@ -49,48 +50,163 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
         if (!listRef.current) return;
         listRef.current.scrollTop = listRef.current.scrollHeight;
       };
-      // immediate scroll
+      
+      // Immediate scroll
       scrollToBottom();
-      // extra scroll after keyboard/layout settles
+      
+      // Multiple delayed scrolls to handle keyboard appearance and layout shifts
+      // These timings ensure we catch the scroll position after keyboard appears
       setTimeout(scrollToBottom, 50);
       setTimeout(scrollToBottom, 150);
-      console.log('Auto-scrolling to new message (with keyboard-safe retries)');
+      setTimeout(scrollToBottom, 300);
+      setTimeout(scrollToBottom, 500);
+      
+      // For iOS specifically, which can have delayed keyboard animations
+      setTimeout(scrollToBottom, 800);
+      
+      console.log('Auto-scrolling to new message (with enhanced keyboard-safe retries)');
     }
   }, [propMessages]);
 
   // Reset firstRender when event changes
   useEffect(() => {
     isFirstRender.current = true;
+    console.log('Event changed, resetting firstRender flag');
   }, [eventId]);
 
   // Ensure view starts at bottom on first render (before paint)
   useLayoutEffect(() => {
-    if (isFirstRender.current && listRef.current && Array.isArray(propMessages) && propMessages.length > 0) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-      isFirstRender.current = false;
+    if (listRef.current && Array.isArray(propMessages) && propMessages.length > 0) {
+      // Always scroll to bottom on first render
+      if (isFirstRender.current) {
+        console.log('First render detected, scrolling to bottom');
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+        isFirstRender.current = false;
+      }
+      
+      // Also scroll when messages change and we're at the bottom
+      if (isAtBottom) {
+        console.log('At bottom and messages changed, scrolling to bottom');
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      }
     }
-  }, [propMessages]);
+  }, [propMessages, isAtBottom]);
 
   // Handle virtual keyboard resize on mobile browsers
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return; // fallback for desktop
+    
     const onVVResize = () => {
       // When keyboard opens the viewport height shrinks; keep last msg visible
-      if (isAtBottom && listRef.current) {
-        listRef.current.scrollTop = listRef.current.scrollHeight;
+      if (listRef.current) {
+        // Always scroll to bottom during keyboard resize events if we were near bottom
+        // Using a more generous threshold for "near bottom" during keyboard events
+        const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+        const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+        
+        // More generous 150px threshold during keyboard events
+        if (distanceFromBottom < 150 || isAtBottom) {
+          listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
       }
     };
+    
+    // Handle both resize and scroll events
     viewport.addEventListener('resize', onVVResize);
-    return () => viewport.removeEventListener('resize', onVVResize);
+    
+    // Also listen for keyboard show/hide events on iOS
+    window.addEventListener('focusin', () => {
+      // When input gets focus (keyboard likely to appear)
+      setTimeout(() => {
+        if (listRef.current && isAtBottom) {
+          listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
+      }, 300); // Delay to account for keyboard animation
+    });
+    
+    return () => {
+      viewport.removeEventListener('resize', onVVResize);
+      window.removeEventListener('focusin', onVVResize);
+    };
+  }, [isAtBottom]);
+
+  // Listen for new message events from useChatSocket
+  useEffect(() => {
+    const handleNewMessage = () => {
+      console.log('ChatMessageList: New message event received, scrolling to bottom');
+      
+      // Immediate scroll
+      if (listRef.current) {
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      }
+      
+      // Multiple delayed scrolls to handle keyboard and layout shifts
+      const scrollToBottom = () => {
+        if (listRef.current) {
+          listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
+      };
+      
+      // Schedule multiple scrolls to catch any layout shifts
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      setTimeout(scrollToBottom, 300);
+      setTimeout(scrollToBottom, 500);
+    };
+    
+    // Listen for the custom event
+    window.addEventListener('newMessageReceived', handleNewMessage);
+    
+    return () => {
+      window.removeEventListener('newMessageReceived', handleNewMessage);
+    };
+  }, []);
+  
+  // Force scroll to bottom when component mounts or updates
+  useEffect(() => {
+    // This effect runs on every render, but we only want to scroll
+    // when we're at the bottom or there are new messages
+    if (listRef.current) {
+      // Use RAF to ensure we scroll after layout is complete
+      requestAnimationFrame(() => {
+        if (listRef.current) {
+          // On initial mount, always scroll to bottom
+          if (isFirstRender.current) {
+            console.log('Initial mount detected in RAF, forcing scroll to bottom');
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+            isFirstRender.current = false;
+            return;
+          }
+          
+          // Otherwise, only scroll if we're at the bottom
+          if (isAtBottom) {
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+          }
+        }
+      });
+    }
+    
+    // Also set up a delayed scroll to handle any layout shifts
+    const timeoutId = setTimeout(() => {
+      if (listRef.current) {
+        console.log('Delayed scroll check running');
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
   }, [isAtBottom]);
 
   return (
     <div
       ref={listRef}
       onScroll={handleScroll}
-      className="flex flex-col gap-1 px-2 w-full pb-16 overflow-y-auto flex-1 relative"
-      style={{scrollPaddingBottom: '90px'}}
+      className="flex flex-col gap-1 px-2 w-full overflow-y-auto flex-1 relative"
+      style={{
+        scrollPaddingBottom: '60px',
+        paddingBottom: '20px' // Reduced padding now that we have reliable auto-scrolling
+      }}
     >
       {Array.isArray(propMessages) && propMessages.map((msg, idx) => {
         let senderId = '';
