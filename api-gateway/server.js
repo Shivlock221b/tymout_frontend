@@ -11,7 +11,7 @@ dotenv.config({ path: '../.env' });
 
 // Following Single Responsibility Principle - server.js only handles server setup and routing
 const app = express();
-const PORT = process.env.API_GATEWAY_PORT || 3000;
+const PORT = process.env.PORT || process.env.API_GATEWAY_PORT || 3000;
 
 // Get service ports from environment variables
 const USER_SERVICE_PORT = process.env.USER_SERVICE_PORT || 3001;

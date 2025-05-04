@@ -173,7 +173,7 @@ const EventChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative">
+    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative overflow-hidden">
       {/* Header - position sticky instead of fixed */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3">
         <button
@@ -192,10 +192,9 @@ const EventChatPage = () => {
       {/* Chat messages with scrolling - with improved padding for keyboard */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto z-10" 
+        className="flex-1 overflow-y-auto z-10 bg-white" 
         style={{ 
-          paddingBottom: '20px',
-          marginBottom: '80px' // Add specific margin to account for input area height
+          paddingBottom: '10px'
         }}
       >
         <ChatMessageList 

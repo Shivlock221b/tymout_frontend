@@ -112,17 +112,51 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     const viewport = window.visualViewport;
     if (!viewport) return; // fallback for desktop
     
+    // Store original viewport height to detect keyboard open/close
+    let originalHeight = viewport.height;
+    let keyboardOpen = false;
+    
     const onVVResize = () => {
-      // When keyboard opens the viewport height shrinks; keep last msg visible
-      if (listRef.current) {
+      // Detect if keyboard is opening or closing
+      const isKeyboardOpening = viewport.height < originalHeight && !keyboardOpen;
+      const isKeyboardClosing = viewport.height > originalHeight - 100 && keyboardOpen;
+      
+      // Update keyboard state
+      if (isKeyboardOpening) {
+        keyboardOpen = true;
+        console.log('Keyboard opening detected');
+      } else if (isKeyboardClosing) {
+        keyboardOpen = false;
+        console.log('Keyboard closing detected');
+        
+        // When keyboard closes, restore the original scroll position
+        // with a slight delay to allow layout to settle
+        setTimeout(() => {
+          if (listRef.current) {
+            // Ensure we're showing the full chat list
+            listRef.current.style.height = '100%';
+            
+            // If we were at the bottom, scroll to bottom
+            if (isAtBottom) {
+              listRef.current.scrollTop = listRef.current.scrollHeight + 300;
+            }
+          }
+        }, 100);
+        
+        // Update original height for future comparisons
+        originalHeight = viewport.height;
+        return;
+      }
+      
+      // When keyboard is open and resizing, handle scroll position
+      if (keyboardOpen && listRef.current) {
         // Always scroll to bottom during keyboard resize events if we were near bottom
-        // Using a more generous threshold for "near bottom" during keyboard events
         const { scrollTop, scrollHeight, clientHeight } = listRef.current;
         const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
         
         // More generous 150px threshold during keyboard events
         if (distanceFromBottom < 150 || isAtBottom) {
-          listRef.current.scrollTop = listRef.current.scrollHeight;
+          listRef.current.scrollTop = listRef.current.scrollHeight + 300;
         }
       }
     };
@@ -133,16 +167,38 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     // Also listen for keyboard show/hide events on iOS
     window.addEventListener('focusin', () => {
       // When input gets focus (keyboard likely to appear)
+      keyboardOpen = true;
       setTimeout(() => {
         if (listRef.current && isAtBottom) {
-          listRef.current.scrollTop = listRef.current.scrollHeight;
+          listRef.current.scrollTop = listRef.current.scrollHeight + 300;
         }
       }, 300); // Delay to account for keyboard animation
+    });
+    
+    // Listen for blur events to detect when keyboard might close
+    window.addEventListener('focusout', () => {
+      // Check if the active element is not an input or textarea
+      const activeElement = document.activeElement;
+      if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+        keyboardOpen = false;
+        console.log('Focus lost, keyboard likely closing');
+        
+        // When keyboard closes, restore the original layout
+        setTimeout(() => {
+          if (listRef.current) {
+            // If we were at the bottom, scroll to bottom
+            if (isAtBottom) {
+              listRef.current.scrollTop = listRef.current.scrollHeight + 300;
+            }
+          }
+        }, 100);
+      }
     });
     
     return () => {
       viewport.removeEventListener('resize', onVVResize);
       window.removeEventListener('focusin', onVVResize);
+      window.removeEventListener('focusout', onVVResize);
     };
   }, [isAtBottom]);
 
@@ -223,8 +279,7 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
       onScroll={handleScroll}
       className="flex flex-col gap-1 px-2 w-full overflow-y-auto flex-1 relative"
       style={{
-        scrollPaddingBottom: '60px',
-        paddingBottom: '20px' // Reduced padding now that we have reliable auto-scrolling
+        scrollPaddingBottom: '70px' // Increased to account for the white block at the end
       }}
     >
       {Array.isArray(propMessages) && propMessages.map((msg, idx) => {
@@ -275,12 +330,16 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
             if (el) {
               el.scrollTop = el.scrollHeight;
             }
+            setIsAtBottom(true);
           }}
-          aria-label="Scroll to latest"
+          aria-label="Scroll to bottom"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
       )}
+      
+      {/* Add a small white block at the end to prevent the last message from being cut off */}
+      <div className="w-full h-16" aria-hidden="true"></div>
     </div>
   );
 };
