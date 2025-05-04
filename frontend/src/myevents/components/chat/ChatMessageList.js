@@ -1,12 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import ChatMessageBubble from './ChatMessageBubble';
 import { useChatSocket } from '../../hooks/useChatSocket';
 
 const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo }) => {
   const { deleteMessage } = useChatSocket(eventId);
   const listRef = useRef(null);
+  // internal state to track if user is near the bottom
+  const [isAtBottom, setIsAtBottom] = useState(true);
   // Store refs to message elements for scrolling
   const messageRefs = useRef({});
+  // Keep track of previous message count to detect new messages
+  const prevMessageCount = useRef(0);
+  // Track first render per event
+  const isFirstRender = useRef(true);
 
   // Function to scroll to a specific message by ID
   const scrollToMessage = (messageId) => {
@@ -22,30 +28,70 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     }
   };
 
+  // Scroll handler to flag bottom proximity
+  const handleScroll = () => {
+    const scrollElement = listRef.current || document.documentElement;
+    const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+    const atBottom = scrollHeight - (scrollTop + clientHeight) < 100; // px threshold
+    setIsAtBottom(atBottom);
+  };
+
   useEffect(() => {
     if (!propMessages || propMessages.length === 0) return;
-    const lastMsg = propMessages[propMessages.length - 1];
-    if (!lastMsg) return;
-    // Only scroll if the last message was sent by the current user
-    let lastSenderId = '';
-    if (lastMsg.sender === undefined || lastMsg.sender === null) {
-      lastSenderId = '';
-    } else if (typeof lastMsg.sender === 'object') {
-      lastSenderId = lastMsg.sender._id || lastMsg.sender.id || lastMsg.sender.username || lastMsg.sender.email || '';
-    } else {
-      lastSenderId = lastMsg.sender;
+    
+    // Detect if new messages arrived
+    const newMessagesArrived = propMessages.length > prevMessageCount.current;
+    prevMessageCount.current = propMessages.length;
+
+    // Force scroll on new messages
+    if (newMessagesArrived && listRef.current) {
+      const scrollToBottom = () => {
+        if (!listRef.current) return;
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      };
+      // immediate scroll
+      scrollToBottom();
+      // extra scroll after keyboard/layout settles
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      console.log('Auto-scrolling to new message (with keyboard-safe retries)');
     }
-    if (String(lastSenderId).trim() === String(currentUserId).trim()) {
-      // Scroll to bottom
-      if (listRef.current) {
+  }, [propMessages]);
+
+  // Reset firstRender when event changes
+  useEffect(() => {
+    isFirstRender.current = true;
+  }, [eventId]);
+
+  // Ensure view starts at bottom on first render (before paint)
+  useLayoutEffect(() => {
+    if (isFirstRender.current && listRef.current && Array.isArray(propMessages) && propMessages.length > 0) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+      isFirstRender.current = false;
+    }
+  }, [propMessages]);
+
+  // Handle virtual keyboard resize on mobile browsers
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return; // fallback for desktop
+    const onVVResize = () => {
+      // When keyboard opens the viewport height shrinks; keep last msg visible
+      if (isAtBottom && listRef.current) {
         listRef.current.scrollTop = listRef.current.scrollHeight;
       }
-    }
-  }, [propMessages, currentUserId]);
-
+    };
+    viewport.addEventListener('resize', onVVResize);
+    return () => viewport.removeEventListener('resize', onVVResize);
+  }, [isAtBottom]);
 
   return (
-    <div ref={listRef} className="flex flex-col gap-1 px-2 w-full pb-20">
+    <div
+      ref={listRef}
+      onScroll={handleScroll}
+      className="flex flex-col gap-1 px-2 w-full pb-16 overflow-y-auto flex-1 relative"
+      style={{scrollPaddingBottom: '90px'}}
+    >
       {Array.isArray(propMessages) && propMessages.map((msg, idx) => {
         let senderId = '';
         if (msg.sender === undefined || msg.sender === null) {
@@ -84,6 +130,22 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           />
         );
       })}
+      {/* scroll-to-bottom button */}
+      {!isAtBottom && (
+        <button
+          type="button"
+          className="fixed right-4 bottom-28 bg-theme-accent text-white p-2 rounded-full shadow-lg hover:bg-theme-accent/90 focus:outline-none z-40"
+          onClick={() => {
+            const el = listRef.current || document.documentElement;
+            if (el) {
+              el.scrollTop = el.scrollHeight;
+            }
+          }}
+          aria-label="Scroll to latest"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      )}
     </div>
   );
 };

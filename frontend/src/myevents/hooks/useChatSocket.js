@@ -2,9 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useAuthStore } from '../../stores/authStore';
+import { v4 as uuidv4 } from 'uuid';
 
 const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'; // Change to your backend address if needed
 const API_URL = `${process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'}/api/messages`;
+
+// util for sessionStorage key
+const cacheKey = (eventId) => `chat-${eventId}`;
 
 // useChatSocket: Real-time messaging with REST history
 export function useChatSocket(eventId) {
@@ -40,6 +44,15 @@ export function useChatSocket(eventId) {
     return () => setMessages([]);
   }, [eventId]);
 
+  // Load from session cache first for instant render
+  useEffect(() => {
+    if (!eventId) return;
+    const cached = sessionStorage.getItem(cacheKey(eventId));
+    if (cached) {
+      try { setMessages(JSON.parse(cached)); } catch { /* ignore */ }
+    }
+  }, [eventId]);
+
   // Setup socket connection
   useEffect(() => {
     if (!eventId || !user) return;
@@ -47,6 +60,7 @@ export function useChatSocket(eventId) {
     socketRef.current = socket;
     socket.emit('joinEvent', eventId);
     socket.on('newMessage', (msg) => {
+      if (!msg) return; // safeguard
       // Normalize message to ensure sender field exists and properly handle replyTo
       const normalizedMsg = {
         ...msg,
@@ -85,15 +99,56 @@ export function useChatSocket(eventId) {
         
         return [...prev, normalizedMsg];
       });
+      
+      // send delivered ack if message from others
+      if (msg && msg._id && msg.senderId !== user?._id) {
+        socket.emit('deliveredAck', { eventId, messageId: msg._id });
+      }
     });
+    
     // Listen for messageDeleted event
     socket.on('messageDeleted', ({ messageId }) => {
       setMessages(prev => prev.map(m =>
-        (m._id === messageId || m.id === messageId) ? { ...m, deleted: true, text: '' } : m
+        (m._id === messageId || m.id === messageId) ? { ...m, isDeleted: true, deleted: true, text: '' } : m
       ));
     });
+
+    // Ack from server with final stored message
+    socket.on('sentAck', (storedMsgRaw) => {
+      // Normalize like in newMessage handler to ensure sender/_senderId exist
+      const storedMsg = storedMsgRaw ? {
+        ...storedMsgRaw,
+        sender: storedMsgRaw.sender || storedMsgRaw.senderId || storedMsgRaw.userId || '',
+        _senderId: String(storedMsgRaw.sender || storedMsgRaw.senderId || storedMsgRaw.userId || '').trim(),
+        replyTo: storedMsgRaw.replyTo ? {
+          ...storedMsgRaw.replyTo,
+          sender: storedMsgRaw.replyTo.sender || storedMsgRaw.replyTo.senderId || '',
+          _senderId: String(storedMsgRaw.replyTo.sender || storedMsgRaw.replyTo.senderId || '').trim()
+        } : null
+      } : null;
+      if (!storedMsg || !storedMsg.clientMsgId) return; // guard
+      setMessages(prev => {
+        const idx = prev.findIndex(m => m.clientMsgId && m.clientMsgId === storedMsg.clientMsgId);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...storedMsg, pending: false, status: 'sent' };
+          return updated;
+        }
+        // if we didn't find pending, push it (in case user opened in second tab)
+        return [...prev, storedMsg];
+      });
+    });
+
+    // statusUpdate (e.g., delivered)
+    socket.on('statusUpdate', ({ messageId, status }) => {
+      if (!messageId || !status) return;
+      setMessages(prev => prev.map(m => (m._id === messageId || m.id === messageId) ? { ...m, status } : m));
+    });
+
     return () => {
       socket.off('messageDeleted');
+      socket.off('sentAck');
+      socket.off('statusUpdate');
       socket.disconnect();
     };
   }, [eventId, user]);
@@ -101,6 +156,8 @@ export function useChatSocket(eventId) {
   // Send message with support for replies
   const sendMessage = useCallback((text, replyToMessage = null) => {
     if (!socketRef.current || !user || !text.trim()) return;
+    
+    const clientMsgId = uuidv4();
     
     // Prepare reply metadata if replying to a message
     const replyTo = replyToMessage ? {
@@ -112,7 +169,7 @@ export function useChatSocket(eventId) {
     
     // Create a temporary message object to show immediately in the UI
     const tempMessage = {
-      _id: `temp-${Date.now()}`,
+      _id: `temp-${clientMsgId}`,
       eventId,
       sender: user._id,
       senderId: user._id,
@@ -120,9 +177,11 @@ export function useChatSocket(eventId) {
       senderName: user.name,
       senderAvatar: user.avatar,
       text,
+      clientMsgId,
       replyTo,
       timestamp: new Date().toISOString(),
-      pending: true // Mark as pending until confirmed by server
+      pending: true, // Mark as pending until confirmed by server
+      status: 'pending'
     };
     
     // Add the message to the local state immediately
@@ -136,7 +195,8 @@ export function useChatSocket(eventId) {
       senderName: user.name,
       senderAvatar: user.avatar,
       text,
-      replyTo
+      replyTo,
+      clientMsgId,
     });
   }, [eventId, user]);
 
@@ -157,6 +217,14 @@ export function useChatSocket(eventId) {
       console.error('Failed to delete message', err);
     }
   }, [eventId]);
+
+  // Persist messages to sessionStorage whenever they change
+  useEffect(() => {
+    if (!eventId) return;
+    try {
+      sessionStorage.setItem(cacheKey(eventId), JSON.stringify(messages));
+    } catch {}
+  }, [messages, eventId]);
 
   return {
     messages,
