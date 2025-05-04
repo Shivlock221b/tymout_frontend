@@ -109,7 +109,7 @@ export function useChatSocket(eventId) {
     // Listen for messageDeleted event
     socket.on('messageDeleted', ({ messageId }) => {
       setMessages(prev => prev.map(m =>
-        (m._id === messageId || m.id === messageId) ? { ...m, deleted: true, text: '' } : m
+        (m._id === messageId || m.id === messageId) ? { ...m, isDeleted: true, deleted: true, text: '' } : m
       ));
     });
 

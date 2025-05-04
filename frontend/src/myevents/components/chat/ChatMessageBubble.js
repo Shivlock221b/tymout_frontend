@@ -18,7 +18,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
 
   // Long press for mobile
   const handleTouchStart = () => {
-    if (!isOwn || message.deleted) return;
+    if (!isOwn || message.isDeleted || message.deleted) return;
     setPressTimer(setTimeout(() => {
       onDelete && onDelete(message._id);
     }, LONG_PRESS_DURATION));
@@ -30,7 +30,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
 
   // Right click for desktop
   const handleContextMenu = (e) => {
-    if (!isOwn || message.deleted) return;
+    if (!isOwn || message.isDeleted || message.deleted) return;
     e.preventDefault();
     onDelete && onDelete(message._id);
   };
@@ -38,7 +38,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
   // Handle reply to this message
   const handleReplyClick = (e) => {
     e.stopPropagation();
-    if (message.deleted) return;
+    if (message.isDeleted || message.deleted) return;
     onReplyTo && onReplyTo(message);
   };
 
@@ -129,13 +129,13 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
             )}
           </div>
           <div>
-            {message.deleted
+            {(message.isDeleted || message.deleted)
               ? <span className="italic text-gray-400">This message was deleted</span>
               : (<span className="break-words">{message.text || <span className="text-red-500">[Empty]</span>}</span>)}
           </div>
           <div className="text-xs text-gray-400 mt-1 text-right flex items-center gap-1 justify-end">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            {isOwn && !message.deleted && (
+            {isOwn && !(message.isDeleted || message.deleted) && (
               message.pending || message.status === 'pending' ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
