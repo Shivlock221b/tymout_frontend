@@ -10,7 +10,6 @@ import AboutTab from '../components/chat/AboutTab';
 import { useMyEvents } from '../hooks/queries/useMyEventsQueries';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatSocket } from '../hooks/useChatSocket';
-import { useEventsQuery } from '../hooks/queries/useEventsQuery';
 import { useEventMembersQuery } from '../hooks/queries/useEventMembersQuery';
 
 
@@ -164,12 +163,13 @@ const EventChatPage = () => {
       </div>
       
       {/* Chat messages with scrolling */}
-      <div className="flex-1 overflow-y-auto pb-24 z-10">
+      <div className="flex-1 overflow-y-auto pb-16 z-10">
         <ChatMessageList 
           messages={messages} 
           currentUserId={user?._id} 
           otherPhoto={event?.thumbnail} 
           onReplyTo={handleReplyTo}
+          eventId={eventId}
         />
       </div>
       {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}

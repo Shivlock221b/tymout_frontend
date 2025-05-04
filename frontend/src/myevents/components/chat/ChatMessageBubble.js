@@ -133,8 +133,28 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
               ? <span className="italic text-gray-400">This message was deleted</span>
               : (<span className="break-words">{message.text || <span className="text-red-500">[Empty]</span>}</span>)}
           </div>
-          <div className="text-xs text-gray-400 mt-1 text-right">
+          <div className="text-xs text-gray-400 mt-1 text-right flex items-center gap-1 justify-end">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {isOwn && !message.deleted && (
+              message.pending || message.status === 'pending' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : message.status === 'sent' || !message.status ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M13.485 1.929a.75.75 0 010 1.06L6.06 10.414a.75.75 0 01-1.06 0L2.515 7.93a.75.75 0 111.06-1.06l2.004 2.003 6.36-6.36a.75.75 0 011.06 0z" />
+                </svg>
+              ) : message.status === 'delivered' ? (
+                <span className="flex items-center gap-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M13.485 1.929a.75.75 0 010 1.06L6.06 10.414a.75.75 0 01-1.06 0L2.515 7.93a.75.75 0 111.06-1.06l2.004 2.003 6.36-6.36a.75.75 0 011.06 0z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 -ml-1" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M13.485 1.929a.75.75 0 010 1.06L6.06 10.414a.75.75 0 01-1.06 0L2.515 7.93a.75.75 0 111.06-1.06l2.004 2.003 6.36-6.36a.75.75 0 011.06 0z" />
+                  </svg>
+                </span>
+              ) : null
+            )}
           </div>
         </div>
       </div>
