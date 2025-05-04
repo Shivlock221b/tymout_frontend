@@ -3,16 +3,36 @@ const Message = require('../models/Message');
 // Get all messages for an event (with optional pagination)
 exports.getMessages = async (req, res) => {
   const { eventId } = req.params;
-  const { limit = 50, skip = 0 } = req.query;
+  const { limit, skip = 0 } = req.query;
   try {
     const chat = await Message.findOne({ eventId });
     if (!chat) return res.json([]);
-    // Return paginated messages (oldest first)
-    const paginated = chat.messages
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .slice(Number(skip), Number(skip) + Number(limit));
+    // Sort oldest→newest
+    let sortedMsgs = chat.messages.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Ensure all messages have consistent isDeleted flag
+    sortedMsgs = sortedMsgs.map(msg => {
+      // Create a plain JavaScript object from the Mongoose document
+      const plainMsg = msg.toObject();
+      
+      // Ensure deleted field is also set for backward compatibility
+      if (plainMsg.isDeleted) {
+        plainMsg.deleted = true;
+      }
+      
+      return plainMsg;
+    });
+    
+    // Apply pagination only if limit is provided
+    if (limit !== undefined) {
+      const nLimit = Number(limit);
+      const nSkip = Number(skip);
+      sortedMsgs = sortedMsgs.slice(nSkip, nSkip + nLimit);
+    }
+    const paginated = sortedMsgs;
     res.json(paginated);
   } catch (err) {
+    console.error('Error fetching messages:', err);
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 };
@@ -20,16 +40,24 @@ exports.getMessages = async (req, res) => {
 // Create a new message
 exports.createMessage = async (req, res) => {
   try {
-    const { eventId, senderId, senderName, senderAvatar, text, replyTo } = req.body;
+    const { eventId, senderId, senderName, senderAvatar, text, replyTo, clientMsgId } = req.body;
     const messageObj = { 
       senderId, 
       senderName, 
       senderAvatar, 
       text, 
       timestamp: new Date(),
-      replyTo: replyTo || null 
+      replyTo: replyTo || null,
+      clientMsgId,
     };
     let chat = await Message.findOne({ eventId });
+    if (chat) {
+      // Deduplicate by clientMsgId
+      const existing = chat.messages.find(msg => msg.clientMsgId === clientMsgId);
+      if (existing) {
+        return res.status(200).json(existing);
+      }
+    }
     if (chat) {
       chat.messages.push(messageObj);
       await chat.save();
@@ -37,8 +65,10 @@ exports.createMessage = async (req, res) => {
       chat = new Message({ eventId, messages: [messageObj] });
       await chat.save();
     }
-    res.status(201).json(messageObj);
+    const savedMessage = chat.messages[chat.messages.length - 1];
+    res.status(201).json(savedMessage);
   } catch (err) {
+    console.error('Error createMessage:', err);
     res.status(400).json({ error: 'Failed to send message' });
   }
 };

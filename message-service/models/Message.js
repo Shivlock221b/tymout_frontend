@@ -14,7 +14,9 @@ const messageItemSchema = new mongoose.Schema({
   senderName: { type: String, required: true },
   senderAvatar: { type: String },
   text: { type: String, required: true },
+  status: { type: String, enum: ['sent', 'delivered'], default: 'sent' },
   replyTo: replyToSchema,
+  clientMsgId: { type: String, index: true },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
   timestamp: { type: Date, default: Date.now }
