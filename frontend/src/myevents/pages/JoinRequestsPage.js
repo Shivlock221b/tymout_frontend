@@ -1,8 +1,8 @@
 import React from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useEventPendingRequests, useApproveJoinRequest, useRejectJoinRequest } from '../hooks/queries/useMyEventsQueries';
-import { useEventsQuery } from '../hooks/queries/useEventsQuery';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useEventPendingRequests, useApproveJoinRequest, useRejectJoinRequest, useMyEvents } from '../hooks/queries/useMyEventsQueries';
 import { useAuthStore } from '../../stores/authStore';
+import GroupHeader from '../components/chat/GroupHeader';
 
 // Get initials from user ID for avatar fallback
 const getIdInitials = (userId) => {
@@ -75,6 +75,10 @@ const JoinRequestsPage = () => {
     return () => console.log('JoinRequestsPage unmounted');
   }, [eventId]);
   
+  // Get event data for the GroupHeader
+  const { data: events = [] } = useMyEvents();
+  const event = events.find(e => String(e._id || e.id) === String(eventId));
+  
   // Get pending requests directly without host check
   const { 
     data: requests = [], 
@@ -99,7 +103,9 @@ const JoinRequestsPage = () => {
   
   // Handle back button
   const handleBack = () => {
-    navigate(`/myevents/${eventId}`);
+    // Use browser history to go back instead of hardcoded navigation
+    // This will ensure we don't create circular navigation
+    navigate(-1);
   };
   
   // Loading state
@@ -142,18 +148,24 @@ const JoinRequestsPage = () => {
   
   return (
     <div className="flex flex-col h-screen">
-      {/* Header - sticky positioning */}
+      {/* Header with GroupHeader component */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center">
         <button onClick={handleBack} className="mr-4">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-        <h1 className="text-lg font-semibold">Join Requests</h1>
-        {requests.length > 0 && (
-          <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-            {requests.length}
-          </span>
+        {event ? (
+          <div className="flex-1 flex items-center justify-between">
+            <GroupHeader event={event} onClick={() => navigate(`/myevents/${eventId}`)} />
+            {requests.length > 0 && (
+              <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {requests.length}
+              </span>
+            )}
+          </div>
+        ) : (
+          <h1 className="text-lg font-semibold">Join Requests</h1>
         )}
       </div>
       
