@@ -80,11 +80,63 @@ const eventDetailService = {
       if (type === 'events' && action === 'join') {
         // Import dynamically to avoid circular dependencies
         const eventService = (await import('./eventService')).default;
-        const userData = {
-          // In a real app, this would come from the auth store
-          userId: localStorage.getItem('userId') || '1',
-          name: localStorage.getItem('userName') || 'Anonymous User'
-        };
+        
+        // Get user data directly from the user service
+        let userData = { userId: '', name: '' };
+        
+        try {
+          // Make a direct API call to get current user data
+          const token = localStorage.getItem('auth-storage') ? 
+            JSON.parse(localStorage.getItem('auth-storage'))?.state?.token : null;
+          
+          if (token) {
+            console.log('[eventDetailService] Found token, fetching current user data');
+            
+            // Import axios dynamically
+            const axios = (await import('axios')).default;
+            
+            // Make a request to get current user data
+            const response = await axios.get(
+              `${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'}/api/users/current`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (response.data && response.data.data) {
+              const user = response.data.data;
+              console.log('[eventDetailService] Got user data from API:', user);
+              
+              userData = {
+                userId: user._id,
+                name: user.name || ''
+              };
+            }
+          }
+        } catch (e) {
+          console.error('[eventDetailService] Error fetching current user:', e);
+          
+          // Fallback to localStorage
+          try {
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage) {
+              const authState = JSON.parse(authStorage);
+              if (authState?.state?.user) {
+                userData = {
+                  userId: authState.state.user._id,
+                  name: authState.state.user.name || ''
+                };
+              }
+            }
+          } catch (storageError) {
+            console.error('[eventDetailService] Error reading from localStorage:', storageError);
+          }
+        }
+        
+        // Final fallback
+        if (!userData.userId) {
+          userData.userId = localStorage.getItem('userId') || '1';
+        }
+        
+        console.log('[eventDetailService] Joining event with user data:', userData);
         
         try {
           const result = await eventService.joinEvent(id, userData);

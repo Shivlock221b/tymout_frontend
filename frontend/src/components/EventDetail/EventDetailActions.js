@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaShare, FaCheck, FaCopy } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
 
 /**
  * EventDetailActions Component
@@ -14,6 +16,9 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
   const [isRequested, setIsRequested] = useState(false);
   // Add a local state to persist the requested state even if the API response doesn't include it
   const [hasRequestedLocally, setHasRequestedLocally] = useState(false);
+  // Get authentication state and navigation
+  const { isAuthenticated, user } = useAuthStore();
+  const navigate = useNavigate();
   
   // Effect to check if the user has requested to join or is already joined
   useEffect(() => {
@@ -144,6 +149,17 @@ const EventDetailActions = ({ item, type, handleMainAction }) => {
       {/* Action Button */}
       <button
         onClick={() => {
+          // Check if user is authenticated
+          if (!isAuthenticated) {
+            // Redirect to login page with a return URL that includes the event ID
+            const returnUrl = window.location.pathname;
+            // Store the event ID in localStorage so we can retrieve it after authentication
+            localStorage.setItem('pendingEventId', item.id);
+            console.log('[EventDetailActions] User not authenticated, redirecting to login with return URL:', returnUrl);
+            navigate(`/login?returnTo=${encodeURIComponent(returnUrl)}`);
+            return;
+          }
+          
           // If not already joined or requested, handle the action
           if (!isJoined && !isRequested) {
             // Immediately update both UI states before API call

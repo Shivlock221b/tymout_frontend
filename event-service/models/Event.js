@@ -126,6 +126,10 @@ const eventSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    name: {
+      type: String,
+      trim: true
+    },
     joinedAt: {
       type: Date,
       default: Date.now
@@ -135,6 +139,10 @@ const eventSchema = new mongoose.Schema({
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    },
+    name: {
+      type: String,
+      trim: true
     },
     status: {
       type: String,
@@ -286,6 +294,26 @@ eventSchema.methods.addAttendee = function(userId, name) {
     status: 'pending',
     joinedAt: new Date()
   });
+};
+
+// Method to remove attendee
+eventSchema.methods.removeAttendee = async function(userId) {
+  // Find if the user is an attendee
+  const attendeeIndex = this.attendees.findIndex(a => {
+    return a.userId.toString() === userId.toString();
+  });
+  
+  if (attendeeIndex === -1) {
+    throw new Error('User is not an attendee of this event');
+  }
+  
+  // Remove the attendee
+  this.attendees.splice(attendeeIndex, 1);
+  
+  // Save the updated event
+  await this.save();
+  
+  return this;
 };
 
 const Event = mongoose.model('Event', eventSchema);

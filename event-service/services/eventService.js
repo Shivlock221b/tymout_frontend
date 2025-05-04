@@ -568,6 +568,7 @@ class EventService {
       // Add user to requests array with pending status
       event.requests.push({
         userId: userData.userId,
+        name: userData.name || 'Unknown User', // Include user's name
         status: 'pending',
         createdAt: new Date()
       });
@@ -715,6 +716,7 @@ class EventService {
       if (!isAttendee) {
         event.attendees.push({
           userId: request.userId,
+          name: request.name || 'Unknown User', // Include user's name from the request
           joinedAt: new Date()
         });
       }

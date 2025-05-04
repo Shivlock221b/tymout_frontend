@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaShare, FaCheck, FaStar, FaRegStar, FaComment } from 'react-icons/fa';
+import { FaShare, FaCheck, FaStar, FaRegStar, FaComment, FaTrash } from 'react-icons/fa';
+import { useAuthStore } from '../../stores/authStore';
 import { isPast } from 'date-fns';
 import eventService from '../../services/eventService';
 
 // Only use global CSS classes!
 const MyEventTicketCard = ({ event, isPending = false }) => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  
+  // Check if current user is the host
+  // The host ID can be in either host.id or host.userId depending on the API response format
+  const isHost = user && event.host && (event.host.id === user._id || event.host.userId === user._id);
+  
+  // Debug logging to help troubleshoot host detection
+  console.log('Host check:', {
+    userID: user?._id,
+    hostID: event.host?.id,
+    hostUserID: event.host?.userId,
+    isHost
+  });
 
   // Format the date object into a readable string
   const formattedDate = event.date && event.date.start 
@@ -28,10 +42,12 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
   };
   const [copied, setCopied] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [hostRating, setHostRating] = useState(0);
   const [eventRating, setEventRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Generate the shareable event URL
   const eventUrl = `${window.location.origin}/events/${event._id}`;
@@ -48,6 +64,36 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
       .catch(err => {
         console.error('Failed to copy: ', err);
       });
+  };
+  
+  // Handle showing delete confirmation
+  const handleShowDeleteConfirmation = (e) => {
+    e.stopPropagation(); // Prevent card click
+    setShowDeleteModal(true);
+  };
+  
+  // Handle delete event
+  const handleDeleteEvent = async () => {
+    try {
+      setIsDeleting(true);
+      
+      // Call the API to delete the event
+      await eventService.deleteEvent(event._id);
+      
+      // Close modal
+      setShowDeleteModal(false);
+      
+      // Show success message
+      alert('Event has been deleted successfully!');
+      
+      // Redirect to my events page
+      navigate('/myevents');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
   
   // Handle opening the feedback modal
@@ -152,36 +198,49 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
       </div>
       
       {/* Show different buttons based on event status */}
-      {isPending ? (
-        <div className="mt-2 self-end flex items-center justify-center py-1 px-3 rounded text-sm font-medium bg-yellow-100 text-yellow-700">
-          {event.status === 'rejected' ? 'Rejected' : 'Pending Approval'}
-        </div>
-      ) : isPastEvent ? (
-        <button
-          onClick={handleOpenFeedback}
-          className="mt-2 self-end flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition bg-indigo-100 hover:bg-indigo-200 text-indigo-700"
-        >
-          <FaComment className="mr-1" size={12} />
-          Give Feedback
-        </button>
-      ) : (
-        <button
-          onClick={handleCopyLink}
-          className={`mt-2 self-end flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-        >
-          {copied ? (
-            <>
-              <FaCheck className="mr-1" size={12} />
-              Copied!
-            </>
-          ) : (
-            <>
-              <FaShare className="mr-1" size={12} />
-              Share Link
-            </>
-          )}
-        </button>
-      )}
+      <div className="mt-2 self-end flex items-center gap-2">
+        {/* Delete button - only visible to host */}
+        {isHost && !isPending && (
+          <button
+            onClick={handleShowDeleteConfirmation}
+            className="flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition bg-red-100 hover:bg-red-200 text-red-700"
+          >
+            <FaTrash className="mr-1" size={12} />
+            Delete Event
+          </button>
+        )}
+        
+        {isPending ? (
+          <div className="flex items-center justify-center py-1 px-3 rounded text-sm font-medium bg-yellow-100 text-yellow-700">
+            {event.status === 'rejected' ? 'Rejected' : 'Pending Approval'}
+          </div>
+        ) : isPastEvent ? (
+          <button
+            onClick={handleOpenFeedback}
+            className="flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition bg-indigo-100 hover:bg-indigo-200 text-indigo-700"
+          >
+            <FaComment className="mr-1" size={12} />
+            Give Feedback
+          </button>
+        ) : (
+          <button
+            onClick={handleCopyLink}
+            className={`flex items-center justify-center py-1 px-3 rounded text-sm font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+          >
+            {copied ? (
+              <>
+                <FaCheck className="mr-1" size={12} />
+                Copied!
+              </>
+            ) : (
+              <>
+                <FaShare className="mr-1" size={12} />
+                Share Link
+              </>
+            )}
+          </button>
+        )}
+      </div>
       
       {/* Feedback Modal */}
       {showFeedbackModal && (
@@ -229,6 +288,36 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Event</h2>
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to delete <span className="font-semibold">{event.title}</span>? This action cannot be undone and all attendees will lose access to the event.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteEvent}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-300 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Event'}
+              </button>
+            </div>
           </div>
         </div>
       )}

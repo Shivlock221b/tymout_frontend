@@ -20,8 +20,15 @@ exports.getMessages = async (req, res) => {
 // Create a new message
 exports.createMessage = async (req, res) => {
   try {
-    const { eventId, senderId, senderName, senderAvatar, text } = req.body;
-    const messageObj = { senderId, senderName, senderAvatar, text, timestamp: new Date() };
+    const { eventId, senderId, senderName, senderAvatar, text, replyTo } = req.body;
+    const messageObj = { 
+      senderId, 
+      senderName, 
+      senderAvatar, 
+      text, 
+      timestamp: new Date(),
+      replyTo: replyTo || null 
+    };
     let chat = await Message.findOne({ eventId });
     if (chat) {
       chat.messages.push(messageObj);

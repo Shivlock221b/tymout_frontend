@@ -421,9 +421,37 @@ class EventController {
   async requestToJoinEvent(req, res) {
     try {
       const eventId = req.params.id;
+      
+      // Try to get user's name from the request or user object
+      let userName = req.body.name || req.user.name;
+      
+      // If name is still not available, try to fetch it from the user service
+      if (!userName) {
+        try {
+          // Make a request to the user service to get the user's profile
+          const axios = require('axios');
+          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:3001';
+          
+          console.log(`[Event Controller] Fetching user profile from user service for ID: ${req.user.id}`);
+          const userResponse = await axios.get(`${userServiceUrl}/users/${req.user.id}`, {
+            headers: {
+              'Authorization': req.headers.authorization
+            }
+          });
+          
+          if (userResponse.data && userResponse.data.data) {
+            userName = userResponse.data.data.name || userResponse.data.data.fullName;
+            console.log(`[Event Controller] Retrieved user name from user service: ${userName}`);
+          }
+        } catch (userError) {
+          console.error(`[Event Controller] Error fetching user profile:`, userError.message);
+          // Continue with the process even if we can't get the user name
+        }
+      }
+      
       const userData = {
         userId: req.user.id,
-        name: req.body.name || req.user.name || 'Anonymous'
+        name: userName || 'Anonymous User'
       };
 
       console.log(`[Event Controller] User ${userData.userId} requesting to join event ${eventId}`);

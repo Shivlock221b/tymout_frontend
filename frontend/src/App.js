@@ -106,11 +106,7 @@ const App = () => {
 
             <Route 
               path="/explore" 
-              element={
-                <ProtectedRoute>
-                  <ExplorePage />
-                </ProtectedRoute>
-              } 
+              element={<ExplorePage />} 
             />
             {/* MyEvents route */}
             <Route 
@@ -176,11 +172,7 @@ const App = () => {
             {/* Event detail routes */}
             <Route 
               path="/events/:id" 
-              element={
-                <ProtectedRoute>
-                  <EventDetailPage type="events" />
-                </ProtectedRoute>
-              } 
+              element={<EventDetailPage type="events" />} 
             />
             <Route 
               path="/tables/:id" 

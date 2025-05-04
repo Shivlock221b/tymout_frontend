@@ -38,9 +38,10 @@ const ExplorePage = () => {
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
   
-  // Fetch user interests when component mounts
+  // Fetch user interests when component mounts or use defaults for unauthenticated users
   useEffect(() => {
     const fetchUserInterests = async () => {
+      // Check if user is authenticated
       if (user && user._id) {
         try {
           console.log('Fetching user interests for user:', user._id);
@@ -48,6 +49,10 @@ const ExplorePage = () => {
           if (user.interests && Array.isArray(user.interests) && user.interests.length > 0) {
             setUserInterests(user.interests);
             console.log('Using interests from user object:', user.interests);
+          } else {
+            // Set default interests if user has no interests
+            setUserInterests(['Food', 'Tech', 'Networking']);
+            console.log('User has no interests, using defaults');
           }
         } catch (error) {
           console.error('Error fetching user interests:', error);
@@ -55,7 +60,10 @@ const ExplorePage = () => {
           setUserInterests(['Food', 'Tech', 'Networking']);
         }
       } else {
-        console.log('No user logged in or missing user ID');
+        // For unauthenticated users, set default interests
+        const defaultInterests = ['Networking', 'Food', 'Coffee'];
+        setUserInterests(defaultInterests);
+        console.log('User not authenticated, using default interests:', defaultInterests);
       }
     };
     
@@ -191,10 +199,12 @@ const ExplorePage = () => {
       
       if (tag === 'Only For You') {
         // For 'Only For You', pass user interests to the backend
-        console.log('Filtering by user interests:', userInterests);
+        // If user is not authenticated, we'll use default interests
+        const interestsToUse = userInterests.length > 0 ? userInterests : ['Food', 'Coffee', 'Networking'];
+        console.log('Filtering by interests:', interestsToUse, 'User authenticated:', !!user);
         updateFilters({ 
           view: tag, 
-          userInterests: userInterests.length > 0 ? userInterests : ['Food', 'Tech', 'Networking'], 
+          userInterests: interestsToUse, 
           city: selectedCity,
           tags: [] // Clear any category filters
         });

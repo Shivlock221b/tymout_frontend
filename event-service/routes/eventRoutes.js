@@ -32,20 +32,23 @@ const attendeeValidation = [
 
 // Event routes
 router.post('/events', [auth, eventValidation], eventController.createEvent);
-router.get('/events/:id', auth, eventController.getEvent);
+// Public routes for event details and search
+router.get('/events/:id', eventController.getEvent);
 router.put('/events/:id', [auth, eventValidation], eventController.updateEvent);
 router.delete('/events/:id', auth, eventController.deleteEvent);
 router.get('/events/host/me', auth, eventController.getHostEvents);
-router.get('/events/upcoming', auth, eventController.getUpcomingEvents);
-router.get('/events/category/:category', auth, eventController.getEventsByCategory);
+router.get('/events/upcoming', eventController.getUpcomingEvents);
+router.get('/events/category/:category', eventController.getEventsByCategory);
 
 // Circle routes
 router.post('/circles', [auth, circleValidation], eventController.createCircle);
-router.get('/circles/:id', auth, eventController.getCircle);
+// Public route for circle details
+router.get('/circles/:id', eventController.getCircle);
 router.put('/circles/:id', [auth, circleValidation], eventController.updateCircle);
 router.delete('/circles/:id', auth, eventController.deleteCircle);
 router.get('/circles/creator/me', auth, eventController.getCreatorCircles);
-router.get('/circles/search', auth, eventController.searchCircles);
+// Public route for circle search
+router.get('/circles/search', eventController.searchCircles);
 
 // Member management routes
 router.post('/circles/:id/members', [auth, memberValidation], eventController.addMember);

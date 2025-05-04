@@ -495,6 +495,52 @@ router.post('/:eventId/requests/:requestId/reject', auth, async (req, res) => {
   }
 });
 
+// @route   DELETE /events/:id/attendees
+// @desc    Remove an attendee from an event
+// @access  Private
+router.delete('/:id/attendees', auth, async (req, res) => {
+  console.log(`[Event Service:Step 1] Removing attendee from event ${req.params.id}`);
+  console.log(`[Event Service:Step 2] Request body:`, req.body);
+  
+  try {
+    if (!req.body.userId) {
+      return res.status(400).json({ success: false, error: 'userId is required in request body' });
+    }
+    
+    const event = await eventController.getEvent(req.params.id);
+    if (!event) {
+      return res.status(404).json({ success: false, error: 'Event not found' });
+    }
+    
+    // Check if user is authorized (must be host)
+    // The auth middleware sets req.user.id, but the event host is stored as event.host.userId
+    console.log(`[Event Service:Step 3] Auth check - User ID: ${req.user.id}, Host ID: ${event.host.userId}`);
+    
+    // Convert both IDs to strings for proper comparison
+    const userIdStr = String(req.user.id);
+    const hostIdStr = String(event.host.userId);
+    
+    console.log(`[Event Service:Step 3.1] String comparison - User ID: ${userIdStr}, Host ID: ${hostIdStr}`);
+    
+    // Only the host can remove attendees
+    if (userIdStr !== hostIdStr) {
+      console.log(`[Event Service:Step 4] Authorization failed - User is not the host`);
+      return res.status(403).json({ success: false, error: 'Not authorized to remove attendees - must be event host' });
+    }
+    
+    console.log(`[Event Service:Step 4] Authorization successful - User is the host`);
+    
+    // Remove attendee from event
+    const updatedEvent = await event.removeAttendee(req.body.userId);
+    
+    console.log(`[Event Service:Step 3] Successfully removed attendee ${req.body.userId} from event ${req.params.id}`);
+    res.json({ success: true, data: updatedEvent });
+  } catch (error) {
+    console.error(`[Event Service:Step 4] Error removing attendee:`, error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // @route   POST /events/:eventId/feedback
 // @desc    Submit feedback for an event
 // @access  Private

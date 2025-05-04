@@ -15,6 +15,8 @@ const MembersTab = ({ members = [], event }) => {
   const queryClient = useQueryClient();
   const [processingMember, setProcessingMember] = useState(null);
   const [localMembers, setLocalMembers] = useState(members);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
   
   // Update local members when props change
   React.useEffect(() => {
@@ -60,12 +62,32 @@ const MembersTab = ({ members = [], event }) => {
     navigate(`/profile/${userId}`);
   };
   
-  // Handle remove member
-  const handleRemoveMember = (e, userId) => {
+  // Show confirmation modal before removing member
+  const handleShowRemoveConfirmation = (e, userId) => {
     e.stopPropagation(); // Prevent profile navigation
     if (!userId || !event?._id) return;
     
+    // Find member name for confirmation message
+    const memberToRemove = localMembers.find(member => {
+      const memberId = member.userId || member.id;
+      return memberId === userId;
+    });
+    
+    setMemberToRemove({
+      id: userId,
+      name: memberToRemove?.name || userId.substring(0, 8)
+    });
+    setShowConfirmModal(true);
+  };
+  
+  // Handle actual member removal after confirmation
+  const handleRemoveMember = () => {
+    if (!memberToRemove?.id || !event?._id) return;
+    
+    const userId = memberToRemove.id;
     setProcessingMember(userId);
+    setShowConfirmModal(false);
+    
     removeAttendee(
       { eventId: event._id, userId },
       {
@@ -81,16 +103,50 @@ const MembersTab = ({ members = [], event }) => {
           queryClient.invalidateQueries({ queryKey: ['eventDetails', event._id] });
           
           setProcessingMember(null);
+          setMemberToRemove(null);
         },
         onError: (error) => {
           console.error('Error removing member:', error);
           setProcessingMember(null);
+          setMemberToRemove(null);
         }
       }
     );
   };
+  
+  // Cancel member removal
+  const handleCancelRemove = () => {
+    setShowConfirmModal(false);
+    setMemberToRemove(null);
+  };
   return (
   <div className="p-4">
+    {/* Confirmation Modal */}
+    {showConfirmModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Remove Member</h3>
+          <p className="mb-6 text-gray-600">
+            Are you sure you want to remove <span className="font-medium">{memberToRemove?.name}</span> from this event?
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={handleCancelRemove}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRemoveMember}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    
     {/* Join Requests Link (only visible to host) */}
     {isHost && eventId && (
       <Link 
@@ -122,8 +178,9 @@ const MembersTab = ({ members = [], event }) => {
     ) : (
       <ul className="space-y-2">
         {localMembers.map((attendee, idx) => {
-          // Handle both formats: {userId, joinedAt} or {id, name, avatar}
+          // Handle both formats: {userId, joinedAt, name} or {id, name, avatar}
           const userId = attendee.userId || attendee.id;
+          const memberName = attendee.name || null; // Explicitly check for name field
           const joinDate = attendee.joinedAt ? new Date(attendee.joinedAt).toLocaleDateString() : '';
           
           return (
@@ -136,19 +193,19 @@ const MembersTab = ({ members = [], event }) => {
                 {attendee.avatar ? (
                   <img
                     src={attendee.avatar}
-                    alt={attendee.name || `${userId?.substring(0, 8)}`}
+                    alt={memberName || `${userId?.substring(0, 8)}`}
                     className="w-8 h-8 rounded-full object-cover border border-gray-200 bg-white"
                   />
                 ) : (
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 text-xs font-bold border border-gray-200"
                   >
-                    {attendee.name ? getInitials(attendee.name) : getIdInitials(userId)}
+                    {memberName ? getInitials(memberName) : getIdInitials(userId)}
                   </div>
                 )}
                 <div className="flex flex-col">
                   <span className="font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    {attendee.name || `${userId?.substring(0, 8)}`}
+                    {memberName || `${userId?.substring(0, 8)}`}
                   </span>
                   {joinDate && (
                     <span className="text-xs text-gray-500">Joined {joinDate}</span>
@@ -159,7 +216,7 @@ const MembersTab = ({ members = [], event }) => {
                 {/* Remove member button - only visible to host and not for the host's own entry */}
                 {isHost && userId !== user?._id && (
                   <button
-                    onClick={(e) => handleRemoveMember(e, userId)}
+                    onClick={(e) => handleShowRemoveConfirmation(e, userId)}
                     disabled={processingMember === userId || isRemoving}
                     className="p-2 rounded-full text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Remove member"
