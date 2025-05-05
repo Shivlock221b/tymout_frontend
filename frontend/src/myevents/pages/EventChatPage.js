@@ -91,6 +91,9 @@ const EventChatPage = () => {
     styleElement.innerHTML = `
       .chat-background-container {
         position: relative;
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
       }
       
       .chat-background-container::before {
@@ -104,7 +107,7 @@ const EventChatPage = () => {
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        opacity: 0.50;
+        opacity: 0.70;
         z-index: 0;
         pointer-events: none;
       }
@@ -138,6 +141,28 @@ const EventChatPage = () => {
         gap: 12px;
         width: 100%;
         padding: 0 4px;
+      }
+      
+      .chat-input-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        max-width: 600px;
+        width: 100%;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+      }
+      
+      .chat-input-glass {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+        padding: 12px;
+        transition: all 0.3s ease;
       }
     `;
     
@@ -235,48 +260,52 @@ const EventChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative chat-background-container">
-      {/* Header with glassy effect */}
-      <div className="chat-header-container">
-        <div className="chat-header-glass">
-          <div className="chat-header-content">
-            <button
-              className="p-1 rounded-full hover:bg-gray-100 focus:outline-none flex-shrink-0"
-              onClick={() => navigate('/myevents')}
-              aria-label="Back"
-              type="button"
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            {event && (
-              <GroupHeader event={event} onClick={() => setShowGroupTabs(true)} />
-            )}
+    <div className="flex flex-col h-screen bg-white relative chat-background-container">
+      <div className="max-w-[600px] mx-auto w-full flex flex-col h-full relative z-10">
+        {/* Header with glassy effect */}
+        <div className="chat-header-container">
+          <div className="chat-header-glass">
+            <div className="chat-header-content">
+              <button
+                className="p-1 rounded-full hover:bg-gray-100 focus:outline-none flex-shrink-0"
+                onClick={() => navigate('/myevents')}
+                aria-label="Back"
+                type="button"
+              >
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              {event && (
+                <GroupHeader event={event} onClick={() => setShowGroupTabs(true)} />
+              )}
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Add padding to account for fixed header */}
-      <div className="pt-16"></div>
-      
-      {/* Chat messages with scrolling */}
-      <div className="flex-1 overflow-y-auto pb-16 z-10 relative">
-        <ChatMessageList 
-          messages={messages} 
-          currentUserId={user?._id} 
-          otherPhoto={event?.thumbnail} 
-          onReplyTo={handleReplyTo}
-          eventId={eventId}
-        />
-      </div>
-      {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-2 py-2 z-20 max-w-[600px] mx-auto">
-        <ChatInputBox 
-          onSend={handleSend} 
-          value={input} 
-          onChange={setInput} 
-          replyToMessage={replyToMessage}
-          onCancelReply={handleCancelReply}
-        />
+        
+        {/* Add padding to account for fixed header */}
+        <div className="pt-16"></div>
+        
+        {/* Chat messages with scrolling */}
+        <div className="flex-1 overflow-y-auto pb-16 relative">
+          <ChatMessageList 
+            messages={messages} 
+            currentUserId={user?._id} 
+            otherPhoto={event?.thumbnail} 
+            onReplyTo={handleReplyTo}
+            eventId={eventId}
+          />
+        </div>
+        {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
+        <div className="chat-input-container">
+          <div className="chat-input-glass">
+            <ChatInputBox 
+              onSend={handleSend} 
+              value={input} 
+              onChange={setInput} 
+              replyToMessage={replyToMessage}
+              onCancelReply={handleCancelReply}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

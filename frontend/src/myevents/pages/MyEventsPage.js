@@ -84,7 +84,7 @@ const MyEventsPage = () => {
       ) : !filteredEvents.length ? (
         <div className="text-gray-500">No {activeTab === 'archieve' ? 'archieve' : activeTab} events found.</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col divide-y divide-gray-200">
           {/* Use event._id as the key, assuming it's the unique ID */}
           {filteredEvents.map(event => (
             <MyEventTicketCard 
