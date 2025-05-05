@@ -19,21 +19,6 @@ export function useChatSocket(eventId) {
   // Fetch chat history on mount/eventId change
   useEffect(() => {
     if (!eventId) return;
-    
-    // First, try to load from session cache for immediate display
-    const cached = sessionStorage.getItem(cacheKey(eventId));
-    if (cached) {
-      try { 
-        const cachedMessages = JSON.parse(cached);
-        console.log(`[useChatSocket] Loaded ${cachedMessages.length} cached messages for event ${eventId}`);
-        setMessages(cachedMessages); 
-      } catch (e) { 
-        console.error('[useChatSocket] Error parsing cached messages:', e);
-      }
-    }
-    
-    // Then fetch fresh data from API
-    console.log(`[useChatSocket] Fetching messages for event ${eventId}`);
     axios.get(`${API_URL}/${eventId}`)
       .then(res => {
         // Normalize all messages to ensure sender field exists
@@ -51,28 +36,22 @@ export function useChatSocket(eventId) {
               } : null
             }))
           : [];
-        
-        console.log(`[useChatSocket] Fetched ${normalizedMsgs.length} messages from API for event ${eventId}`);
         setMessages(normalizedMsgs);
-        
-        // Update session cache with fresh data
-        try {
-          sessionStorage.setItem(cacheKey(eventId), JSON.stringify(normalizedMsgs));
-        } catch (e) {
-          console.error('[useChatSocket] Error caching messages:', e);
-        }
       })
-      .catch(error => {
-        console.error('[useChatSocket] Error fetching messages:', error);
-        if (!cached) setMessages([]);
-      });
+      .catch(() => setMessages([]));
     
     // Clear messages when changing events
     return () => setMessages([]);
   }, [eventId]);
 
-  // This effect is no longer needed as we're loading from cache in the main fetch effect
-  // Keeping this comment for reference
+  // Load from session cache first for instant render
+  useEffect(() => {
+    if (!eventId) return;
+    const cached = sessionStorage.getItem(cacheKey(eventId));
+    if (cached) {
+      try { setMessages(JSON.parse(cached)); } catch { /* ignore */ }
+    }
+  }, [eventId]);
 
   // Setup socket connection
   useEffect(() => {
@@ -115,29 +94,10 @@ export function useChatSocket(eventId) {
         // If this is a message we sent and it's pending, replace the pending message
         const pendingIndex = prev.findIndex(m => m.pending && m._id.startsWith('temp-'));
         if (pendingIndex !== -1 && normalizedMsg.senderId === user._id) {
-          const newMessages = [...prev.slice(0, pendingIndex), normalizedMsg, ...prev.slice(pendingIndex + 1)];
-          
-          // Trigger a custom event to notify components that a new message was received
-          setTimeout(() => {
-            const event = new CustomEvent('newMessageReceived', { detail: { isNewMessage: true } });
-            window.dispatchEvent(event);
-            console.log('[useChatSocket] Dispatched newMessageReceived event (replaced pending)');
-          }, 0);
-          
-          return newMessages;
+          return [...prev.slice(0, pendingIndex), normalizedMsg, ...prev.slice(pendingIndex + 1)];
         }
         
-        // This is a completely new message
-        const newMessages = [...prev, normalizedMsg];
-        
-        // Trigger a custom event to notify components that a new message was received
-        setTimeout(() => {
-          const event = new CustomEvent('newMessageReceived', { detail: { isNewMessage: true } });
-          window.dispatchEvent(event);
-          console.log('[useChatSocket] Dispatched newMessageReceived event (new message)');
-        }, 0);
-        
-        return newMessages;
+        return [...prev, normalizedMsg];
       });
       
       // send delivered ack if message from others
@@ -226,13 +186,6 @@ export function useChatSocket(eventId) {
     
     // Add the message to the local state immediately
     setMessages(prev => [...prev, tempMessage]);
-    
-    // Trigger a custom event to notify components that a new message was sent
-    setTimeout(() => {
-      const event = new CustomEvent('newMessageReceived', { detail: { isNewMessage: true, isSent: true } });
-      window.dispatchEvent(event);
-      console.log('[useChatSocket] Dispatched newMessageReceived event (message sent)');
-    }, 0);
     
     // Emit message with reply metadata
     socketRef.current.emit('sendMessage', {

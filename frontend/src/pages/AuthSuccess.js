@@ -42,19 +42,10 @@ const AuthSuccess = () => {
       console.log('Authentication successful, checking profile completeness');
       const user = useAuthStore.getState().user;
       
-      // Check if there's a pending event ID from a join request
-      const pendingEventId = localStorage.getItem('pendingEventId');
-      
       // Check if this is a new user or profile is incomplete
       if (user && user.completeness < 50) {
         console.log('Profile incomplete, redirecting to onboarding');
         navigate('/onboarding');
-      } else if (pendingEventId) {
-        // If there was a pending event join request, redirect to that event
-        console.log('Redirecting to pending event:', pendingEventId);
-        // Clear the pending event ID
-        localStorage.removeItem('pendingEventId');
-        navigate(`/events/${pendingEventId}`);
       } else {
         console.log('Profile complete, redirecting to explore');
         navigate('/explore');

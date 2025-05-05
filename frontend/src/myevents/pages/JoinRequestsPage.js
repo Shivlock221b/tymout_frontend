@@ -20,27 +20,14 @@ const JoinRequestCard = ({ request, onApprove, onReject, isProcessing }) => {
     navigate(`/profile/${request.userId}`);
   };
   
-  // Get initials from name for avatar
-  const getNameInitials = (name) => {
-    if (!name) return '?';
-    
-    const names = name.split(' ');
-    if (names.length >= 2) {
-      return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  };
-  
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-100">
       <div className="flex items-center gap-3 cursor-pointer" onClick={handleProfileClick}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 text-sm font-bold border border-gray-200">
-          {request.name ? getNameInitials(request.name) : getIdInitials(request.userId)}
+          {getIdInitials(request.userId)}
         </div>
         <div>
-          <div className="font-medium hover:text-indigo-600 transition-colors">
-            {request.name || `${request.userId.substring(0, 8)}...`}
-          </div>
+          <div className="font-medium hover:text-indigo-600 transition-colors">{request.userId.substring(0, 8)}...</div>
           <div className="text-sm text-gray-500">
             Requested {new Date(request.createdAt).toLocaleString()}
           </div>

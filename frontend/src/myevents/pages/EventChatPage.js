@@ -41,9 +41,6 @@ const EventChatPage = () => {
   // State for showing group tabbed interface
   const [showGroupTabs, setShowGroupTabs] = useState(false);
   
-  // Reference to the chat container
-  const chatContainerRef = React.useRef(null);
-  
   console.log('EventChatPage mounted.');
   const { eventId } = useParams();
   console.log('EventChatPage useParams eventId:', eventId);
@@ -66,30 +63,6 @@ const EventChatPage = () => {
   const { messages, sendMessage } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
-  
-  // Force scroll to bottom when messages are loaded
-  useEffect(() => {
-    if (messages && messages.length > 0 && chatContainerRef.current) {
-      console.log('EventChatPage: Messages loaded, scrolling to bottom');
-      
-      // Add extra padding to ensure the last message is fully visible
-      const scrollWithPadding = () => {
-        if (chatContainerRef.current) {
-          // Add extra scroll to ensure the last message is fully visible
-          // Using a larger offset to account for the input area height and any bottom UI elements
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 500;
-        }
-      };
-      
-      // Immediate scroll
-      scrollWithPadding();
-      
-      // Multiple delayed scrolls to ensure the last message is visible after layout
-      setTimeout(scrollWithPadding, 100);
-      setTimeout(scrollWithPadding, 300);
-      setTimeout(scrollWithPadding, 500);
-    }
-  }, [messages]);
 
   const handleSend = (text) => {
     if (!text.trim()) return;
@@ -110,6 +83,41 @@ const EventChatPage = () => {
 
   // Debug: Log the event object to inspect its structure
   console.log('EventChatPage event:', event);
+
+  // Add global styles for the chat background
+  useEffect(() => {
+    // Create a style element
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+      .chat-background-container {
+        position: relative;
+      }
+      
+      .chat-background-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('/hero/jap0.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.08;
+        z-index: 0;
+        pointer-events: none;
+      }
+    `;
+    
+    // Append the style element to the head
+    document.head.appendChild(styleElement);
+    
+    // Clean up function
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   if (showGroupTabs) {
     return (
@@ -173,9 +181,9 @@ const EventChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative overflow-hidden">
-      {/* Header - position sticky instead of fixed */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3">
+    <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative chat-background-container">
+      {/* Header - changed from sticky to fixed positioning */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 p-3 flex items-center gap-3 max-w-[600px] mx-auto">
         <button
           className="p-1 rounded-full hover:bg-gray-100 focus:outline-none"
           onClick={() => navigate('/myevents')}
@@ -189,14 +197,11 @@ const EventChatPage = () => {
         )}
       </div>
       
-      {/* Chat messages with scrolling - with improved padding for keyboard */}
-      <div 
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto z-10 bg-white" 
-        style={{ 
-          paddingBottom: '10px'
-        }}
-      >
+      {/* Add padding to account for fixed header */}
+      <div className="pt-16"></div>
+      
+      {/* Chat messages with scrolling */}
+      <div className="flex-1 overflow-y-auto pb-16 z-10 relative">
         <ChatMessageList 
           messages={messages} 
           currentUserId={user?._id} 

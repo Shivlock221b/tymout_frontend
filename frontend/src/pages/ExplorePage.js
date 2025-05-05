@@ -30,6 +30,20 @@ const ExplorePage = () => {
   // State for user interests
   const [userInterests, setUserInterests] = useState([]);
   
+  // State for hero image loading
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  
+  // Hero images array
+  const heroImages = [
+    "/hero/hero0.jpg",
+    "/hero/hero1.jpg",
+    "/hero/hero2.jpg",
+    "/hero/hero3.jpg"
+  ];
+  
+  // Current image index
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   // Extract filter parameters from URL
   const searchQuery = searchParams.get('q') || '';
   const selectedTags = searchParams.getAll('tag');
@@ -38,10 +52,9 @@ const ExplorePage = () => {
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
   
-  // Fetch user interests when component mounts or use defaults for unauthenticated users
+  // Fetch user interests when component mounts
   useEffect(() => {
     const fetchUserInterests = async () => {
-      // Check if user is authenticated
       if (user && user._id) {
         try {
           console.log('Fetching user interests for user:', user._id);
@@ -49,10 +62,6 @@ const ExplorePage = () => {
           if (user.interests && Array.isArray(user.interests) && user.interests.length > 0) {
             setUserInterests(user.interests);
             console.log('Using interests from user object:', user.interests);
-          } else {
-            // Set default interests if user has no interests
-            setUserInterests(['Food', 'Tech', 'Networking']);
-            console.log('User has no interests, using defaults');
           }
         } catch (error) {
           console.error('Error fetching user interests:', error);
@@ -60,10 +69,7 @@ const ExplorePage = () => {
           setUserInterests(['Food', 'Tech', 'Networking']);
         }
       } else {
-        // For unauthenticated users, set default interests
-        const defaultInterests = ['Networking', 'Food', 'Coffee'];
-        setUserInterests(defaultInterests);
-        console.log('User not authenticated, using default interests:', defaultInterests);
+        console.log('No user logged in or missing user ID');
       }
     };
     
@@ -199,12 +205,10 @@ const ExplorePage = () => {
       
       if (tag === 'Only For You') {
         // For 'Only For You', pass user interests to the backend
-        // If user is not authenticated, we'll use default interests
-        const interestsToUse = userInterests.length > 0 ? userInterests : ['Food', 'Coffee', 'Networking'];
-        console.log('Filtering by interests:', interestsToUse, 'User authenticated:', !!user);
+        console.log('Filtering by user interests:', userInterests);
         updateFilters({ 
           view: tag, 
-          userInterests: interestsToUse, 
+          userInterests: userInterests.length > 0 ? userInterests : ['Food', 'Tech', 'Networking'], 
           city: selectedCity,
           tags: [] // Clear any category filters
         });
@@ -219,6 +223,50 @@ const ExplorePage = () => {
       }
     }
   };
+
+  // Handle hero image load
+  const handleHeroImageLoad = () => {
+    setHeroImageLoaded(true);
+  };
+
+  // Preload all hero images
+  useEffect(() => {
+    // Preload all images
+    heroImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+    
+    // Set initial image as loaded if it's already cached
+    const initialImg = new Image();
+    initialImg.src = heroImages[currentImageIndex];
+    initialImg.onload = handleHeroImageLoad;
+    
+    if (initialImg.complete) {
+      setHeroImageLoaded(true);
+    }
+    
+    // Set up image rotation interval
+    const rotationInterval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+      // Reset loading state for smooth transition
+      setHeroImageLoaded(false);
+    }, 7000); // Change image every 7 seconds
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(rotationInterval);
+  }, []);
+  
+  // Handle image change and preload next image
+  useEffect(() => {
+    const img = new Image();
+    img.src = heroImages[currentImageIndex];
+    img.onload = handleHeroImageLoad;
+    
+    if (img.complete) {
+      setHeroImageLoaded(true);
+    }
+  }, [currentImageIndex]);
 
   return (
     <>
@@ -262,26 +310,126 @@ const ExplorePage = () => {
           margin-right: 0.5rem;
           flex-shrink: 0;
         }
+
+        /* Hero image skeleton loader */
+        .skeleton-loader {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
+        .hero-image {
+          opacity: 0;
+          transition: opacity 0.5s ease-in-out;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        .hero-image.loaded {
+          opacity: 1;
+        }
+        
+        .hero-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+        
+        /* Image transition indicators */
+        .image-indicators {
+          position: absolute;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          z-index: 10;
+        }
+        
+        .indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.5);
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .indicator.active {
+          background-color: white;
+          width: 24px;
+          border-radius: 4px;
+        }
+        
+        /* City selector overlay styles */
+        .city-selector-container {
+          background-color: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(8px);
+          border-radius: 12px;
+          padding: 6px 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          display: inline-block;
+          transition: all 0.3s ease;
+          color: #000000;
+        }
+        
+        .city-selector-container:hover {
+          background-color: rgba(255, 255, 255, 0.25);
+        }
       `}</style>
       
       {/* City Selector - positioned at the very top of the page */}
       <div className="w-full bg-transparent py-2 px-4 mb-2 sticky top-0 z-50">
         <div className="flex justify-start">
-          <CitySelector 
-            currentCity={selectedCity}
-            onCityChange={handleCityChange}
-          />
+          <div className="city-selector-container">
+            <CitySelector 
+              currentCity={selectedCity}
+              onCityChange={handleCityChange}
+            />
+          </div>
         </div>
       </div>
       
       {/* Hero image with overlayed search bar - FORCED VIEWPORT WIDTH AND TOP POSITION */}
       <div className="hero-full-bleed hero-section relative aspect-square overflow-hidden">
-        <img
-          src="/hero/hero0.jpg"
-          alt="Explore Hero"
-          className="object-cover w-full h-full block"
-          style={{ margin: 0, padding: 0, display: 'block' }}
-        />
+        {/* Skeleton loader shown while image is loading */}
+        {!heroImageLoaded && (
+          <div className="skeleton-loader w-full h-full absolute inset-0"></div>
+        )}
+        
+        <div className="hero-container">
+          {heroImages.map((src, index) => (
+            <img
+              key={src}
+              src={src}
+              alt={`Explore Hero ${index + 1}`}
+              className={`object-cover hero-image ${currentImageIndex === index && heroImageLoaded ? 'loaded' : ''}`}
+              style={{ margin: 0, padding: 0, display: 'block' }}
+              onLoad={() => currentImageIndex === index && handleHeroImageLoad()}
+            />
+          ))}
+        </div>
+        
+        {/* Image indicators */}
+        <div className="image-indicators">
+          {heroImages.map((_, index) => (
+            <div 
+              key={index}
+              className={`indicator ${currentImageIndex === index ? 'active' : ''}`}
+              onClick={() => setCurrentImageIndex(index)}
+            />
+          ))}
+        </div>
+        
         {/* Dark gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent"></div>
         <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4 pt-8">

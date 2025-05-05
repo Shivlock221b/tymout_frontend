@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaChevronDown } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
 
 /**
  * CitySelector Component
@@ -13,8 +12,8 @@ const CitySelector = ({ currentCity, onCityChange }) => {
   
   // Available cities - limited to Gurugram and Agra as requested
   const cities = [
-    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-white" /> },
-    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-white" /> }
+    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-black" /> },
+    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-black" /> }
   ];
   
   const handleCitySelect = (city) => {
@@ -26,12 +25,12 @@ const CitySelector = ({ currentCity, onCityChange }) => {
     <div className="relative">
       {/* Current City Display */}
       <div 
-        className="flex items-center cursor-pointer py-2 text-white"
+        className="flex items-center cursor-pointer py-2 text-black"
         onClick={() => setShowCityModal(!showCityModal)}
       >
-        <FaMapMarkerAlt className="text-white mr-2" />
+        <FaMapMarkerAlt className="text-black mr-2" />
         <span className="text-base font-medium mr-2">{currentCity || 'Select City'}</span>
-        <FaChevronDown className="text-white" />
+        <FaChevronDown className="text-black" />
       </div>
       
       {/* City Selection Modal */}

@@ -158,7 +158,6 @@ const myEventsService = {
    */
   removeAttendee: async (eventId, userId) => {
     try {
-      // Using the correct route structure as defined in the event service routes
       const response = await eventServiceClient.delete(`/events/${eventId}/attendees`, {
         data: { userId }
       });

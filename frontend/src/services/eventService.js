@@ -247,47 +247,6 @@ const eventService = {
       console.error(`[eventService] Error submitting feedback:`, error.response ? error.response.data : error.message);
       throw error;
     }
-  },
-  /**
-   * Delete an event (host only)
-   * @param {string} eventId - Event ID
-   * @returns {Promise<Object>} Response data
-   */
-  deleteEvent: async (eventId) => {
-    try {
-      console.log('[eventService] Deleting event:', eventId);
-      
-      // Get token from auth-storage in localStorage
-      const authStorage = localStorage.getItem('auth-storage');
-      let token = null;
-      
-      if (authStorage) {
-        try {
-          const parsed = JSON.parse(authStorage);
-          token = parsed.state?.token;
-        } catch (e) {
-          console.error('[eventService] Error parsing auth storage:', e);
-        }
-      }
-      
-      // Add authorization header (required for this operation)
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log('[eventService] Added authorization header');
-      } else {
-        console.log('[eventService] No token found, request will be unauthorized');
-        throw new Error('Authentication required to delete an event');
-      }
-      
-      // The route in the backend is /:id (not /events/:id)
-      const response = await axios.delete(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, { headers });
-      console.log('[eventService] Delete event response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error(`[eventService] Error deleting event:`, error.response ? error.response.data : error.message);
-      throw error;
-    }
   }
 };
 

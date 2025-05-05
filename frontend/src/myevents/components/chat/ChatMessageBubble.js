@@ -105,8 +105,12 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         
         {/* Message bubble */}
         <div
-          className={`rounded-lg px-3 py-2 text-base shadow component-card break-words whitespace-pre-line ${isOwn ? 'bg-theme-accent text-white' : 'bg-gray-100 text-gray-900'} relative`}
-          style={isOwn ? { color: '#fff', backgroundColor: 'var(--color-theme-accent, #2563eb)' } : {}}
+          className={`rounded-lg px-3 py-2 text-base shadow-md break-words whitespace-pre-line relative ${
+            isOwn 
+              ? 'bg-indigo-600 text-white backdrop-blur-sm' 
+              : 'bg-white bg-opacity-90 text-gray-900 backdrop-blur-sm border border-gray-100'
+          }`}
+          style={isOwn ? { boxShadow: '0 4px 6px rgba(37, 99, 235, 0.1)' } : { boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)' }}
           aria-label={isOwn ? 'Your message' : 'Member message'}
           onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
@@ -120,7 +124,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
           onClick={handleReplyClick}
         >
           {/* Sender name above bubble */}
-          <div className={`text-xs mb-1 font-medium ${isOwn ? 'text-right text-theme-accent' : 'text-left text-gray-700'}`}>
+          <div className={`text-xs mb-1 font-medium ${isOwn ? 'text-right text-indigo-200' : 'text-left text-gray-700'}`}>
             {isOwn ? 'You' : (
               message.senderName ||
               (typeof message.sender === 'object' && (message.sender.name || message.sender.username || message.sender.email || message.sender._id || message.sender.id)) ||
@@ -133,11 +137,11 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
               ? <span className="italic text-gray-400">This message was deleted</span>
               : (<span className="break-words">{message.text || <span className="text-red-500">[Empty]</span>}</span>)}
           </div>
-          <div className="text-xs text-gray-400 mt-1 text-right flex items-center gap-1 justify-end">
+          <div className={`text-xs mt-1 text-right flex items-center gap-1 justify-end ${isOwn ? 'text-indigo-200' : 'text-gray-500'}`}>
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             {isOwn && !(message.isDeleted || message.deleted) && (
               message.pending || message.status === 'pending' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : message.status === 'sent' || !message.status ? (
