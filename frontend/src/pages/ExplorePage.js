@@ -271,23 +271,19 @@ const ExplorePage = () => {
   return (
     <>
       <style>{`
-        /* Hero image edge-to-edge styles */
+        /* Hero image styles */
         .hero-full-bleed {
-          width: 100vw !important;
-          max-width: 100vw !important;
-          margin-left: calc(50% - 50vw) !important;
-          margin-right: calc(50% - 50vw) !important;
+          width: calc(100% - 0.001rem) !important;
+          max-width: 100% !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
           margin-top: -80px !important; /* Negative margin to offset header height */
           padding-top: 0 !important;
           z-index: 1 !important;
-          left: 0 !important;
-          right: 0 !important;
-          top: 0 !important;
           padding: 0 !important;
           position: relative !important;
           box-sizing: border-box !important;
-          border-bottom-left-radius: 12px !important;
-          border-bottom-right-radius: 12px !important;
+          border-radius: 12px !important;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
           overflow: hidden !important;
         }
@@ -381,7 +377,7 @@ const ExplorePage = () => {
         </div>
       </div>
       
-      {/* Hero image with overlayed search bar - FORCED VIEWPORT WIDTH AND TOP POSITION */}
+      {/* Hero image with overlayed search bar */}
       <div className="hero-full-bleed hero-section relative aspect-square overflow-hidden">
         {/* Skeleton loader shown while image is loading */}
         {!heroImageLoaded && (
