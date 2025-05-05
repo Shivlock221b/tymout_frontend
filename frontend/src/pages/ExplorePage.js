@@ -286,6 +286,10 @@ const ExplorePage = () => {
           padding: 0 !important;
           position: relative !important;
           box-sizing: border-box !important;
+          border-bottom-left-radius: 12px !important;
+          border-bottom-right-radius: 12px !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+          overflow: hidden !important;
         }
         
         /* Base page resets */
@@ -345,52 +349,28 @@ const ExplorePage = () => {
           height: 100%;
         }
         
-        /* Image transition indicators */
-        .image-indicators {
-          position: absolute;
-          bottom: 80px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 8px;
-          z-index: 10;
-        }
-        
-        .indicator {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.5);
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .indicator.active {
-          background-color: white;
-          width: 24px;
-          border-radius: 4px;
-        }
-        
         /* City selector overlay styles */
         .city-selector-container {
           background-color: rgba(255, 255, 255, 0.15);
           backdrop-filter: blur(8px);
-          border-radius: 12px;
-          padding: 6px 12px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          display: inline-block;
+          border-radius: 24px;
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
           transition: all 0.3s ease;
           color: #000000;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
         .city-selector-container:hover {
           background-color: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
       `}</style>
       
       {/* City Selector - positioned at the very top of the page */}
-      <div className="w-full bg-transparent py-2 px-4 mb-2 sticky top-0 z-50">
+      <div className="w-full bg-transparent py-1 px-4 mb-0 sticky top-0 z-30">
         <div className="flex justify-start">
           <div className="city-selector-container">
             <CitySelector 
@@ -421,20 +401,9 @@ const ExplorePage = () => {
           ))}
         </div>
         
-        {/* Image indicators */}
-        <div className="image-indicators">
-          {heroImages.map((_, index) => (
-            <div 
-              key={index}
-              className={`indicator ${currentImageIndex === index ? 'active' : ''}`}
-              onClick={() => setCurrentImageIndex(index)}
-            />
-          ))}
-        </div>
-        
         {/* Dark gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent"></div>
-        <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4 pt-8">
+        <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4 pt-4">
           <div className="w-full max-w-md">
             <ExploreSearch 
               query={searchQuery} 
