@@ -143,7 +143,7 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
         <img
           src={event.event_image}
           alt={event.title}
-          className="w-12 h-12 rounded object-cover border border-gray-200 bg-gray-50"
+          className="w-14 h-14 rounded object-cover border border-gray-200 bg-gray-50"
           loading="lazy"
         />
         <div className="flex-1">
@@ -155,16 +155,16 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
                   e.stopPropagation(); // Prevent card click
                   handleCopyLink(e);
                 }}
-                className={`flex items-center justify-center py-0.5 px-2 rounded text-xs font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                className={`flex items-center justify-center py-1 px-2.5 rounded text-sm font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
               >
                 {copied ? (
                   <>
-                    <FaCheck className="mr-1" size={10} />
+                    <FaCheck className="mr-1" size={12} />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <FaShare className="mr-1" size={10} />
+                    <FaShare className="mr-1" size={12} />
                     Share
                   </>
                 )}
