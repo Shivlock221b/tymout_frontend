@@ -275,8 +275,8 @@ const ExplorePage = () => {
         .hero-full-bleed {
           width: 100vw !important;
           max-width: 100vw !important;
-          margin-left: calc(-50vw + 50%) !important;
-          margin-right: calc(-50vw + 50%) !important;
+          margin-left: calc(50% - 50vw) !important;
+          margin-right: calc(50% - 50vw) !important;
           margin-top: -80px !important; /* Negative margin to offset header height */
           padding-top: 0 !important;
           z-index: 1 !important;
@@ -284,6 +284,8 @@ const ExplorePage = () => {
           right: 0 !important;
           top: 0 !important;
           padding: 0 !important;
+          position: relative !important;
+          box-sizing: border-box !important;
         }
         
         /* Base page resets */

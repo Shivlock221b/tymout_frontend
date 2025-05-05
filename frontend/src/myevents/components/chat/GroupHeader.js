@@ -17,31 +17,39 @@ const GroupHeader = ({ event, onClick }) => {
   // Get event image (support multiple image field names)
   const eventImage = event.event_image || event.thumbnail || event.imageUrl || "/default-group.png";
   
-  // Truncate event title to 50 characters
-  const displayTitle = eventTitle.length > 21 
-    ? `${eventTitle.substring(0, 21)}...` 
+  // Truncate event title to 25 characters (increased from 21)
+  const displayTitle = eventTitle.length > 25 
+    ? `${eventTitle.substring(0, 25)}...` 
     : eventTitle;
   
   console.log('[GroupHeader] Using eventId:', eventId, 'title:', eventTitle);
   
   return (
     <button
-      className="flex items-center gap-2 group focus:outline-none max-w-full"
+      className="flex items-center gap-3 group focus:outline-none w-full transition-all duration-300 justify-start"
       onClick={onClick}
       aria-label={`View details for ${eventTitle}`}
       type="button"
     >
-      <img
-        src={eventImage}
-        alt={eventTitle}
-        className="w-10 h-10 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-90 group-focus:brightness-90 transition flex-shrink-0"
-      />
-      <span 
-        className="font-semibold text-base text-primary group-hover:underline group-focus:underline overflow-hidden whitespace-nowrap max-w-[calc(100%-2.5rem)]"
-        title={eventTitle} // Show full title on hover
-      >
-        {displayTitle}
-      </span>
+      <div className="relative flex-shrink-0">
+        <img
+          src={eventImage}
+          alt={eventTitle}
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm"
+        />
+        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+      </div>
+      <div className="flex flex-col items-start flex-grow min-w-0 text-left">
+        <span 
+          className="font-semibold text-base text-gray-800 group-hover:text-indigo-600 group-focus:text-indigo-600 transition-colors duration-300 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left"
+          title={eventTitle} // Show full title on hover
+        >
+          {displayTitle}
+        </span>
+        <span className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left">
+          {event.memberCount || event.members?.length || 2} members • Active now
+        </span>
+      </div>
     </button>
   );
 };
