@@ -94,6 +94,9 @@ const EventChatPage = () => {
         width: 100vw;
         margin-left: calc(50% - 50vw);
         margin-right: calc(50% - 50vw);
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: hidden;
       }
       
       .chat-background-container::before {
@@ -107,7 +110,7 @@ const EventChatPage = () => {
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        opacity: 0.70;
+        opacity: 0.60;
         z-index: 0;
         pointer-events: none;
       }
@@ -163,6 +166,11 @@ const EventChatPage = () => {
         box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
         padding: 12px;
         transition: all 0.3s ease;
+      }
+      
+      .chat-content-wrapper {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
       }
     `;
     
@@ -261,7 +269,7 @@ const EventChatPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-white relative chat-background-container">
-      <div className="max-w-[600px] mx-auto w-full flex flex-col h-full relative z-10">
+      <div className="max-w-[600px] mx-auto w-full flex flex-col h-full relative z-10 chat-content-wrapper">
         {/* Header with glassy effect */}
         <div className="chat-header-container">
           <div className="chat-header-glass">
