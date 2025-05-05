@@ -91,11 +91,11 @@ const EventChatPage = () => {
     styleElement.innerHTML = `
       .chat-background-container {
         position: relative;
-        width: 100vw;
-        margin-left: calc(50% - 50vw);
-        margin-right: calc(50% - 50vw);
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-left: auto;
+        margin-right: auto;
         overflow-x: hidden;
       }
       
@@ -169,8 +169,9 @@ const EventChatPage = () => {
       }
       
       .chat-content-wrapper {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+        max-width: 100%;
       }
     `;
     

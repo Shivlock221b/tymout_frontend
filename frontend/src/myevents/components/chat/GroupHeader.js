@@ -47,7 +47,7 @@ const GroupHeader = ({ event, onClick }) => {
           {displayTitle}
         </span>
         <span className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left">
-          {event.memberCount || event.members?.length || 2} members • Active now
+          Active now
         </span>
       </div>
     </button>
