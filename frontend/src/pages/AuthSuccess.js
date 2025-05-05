@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useOAuthVerification } from '../hooks/queries/useAuthQueries';
 import { useAuthStore } from '../stores/authStore';
 
-// Following Single Responsibility Principle - this component only handles auth callback
+// Following Single Responsibility Principle - this component only handles auth commit callback
 const AuthSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
