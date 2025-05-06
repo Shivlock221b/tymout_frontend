@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../hooks/queries/useAuthQueries';
+import SkeletonLoader from '../ui/SkeletonLoader';
 
 // Following Single Responsibility Principle - this component only handles route protection
 // Accept ...rest to forward all extra props to the child
@@ -13,18 +14,21 @@ const ProtectedRoute = ({ children, ...rest }) => {
     console.log('ProtectedRoute state:', { isAuthenticated, loading, user });
   }, [isAuthenticated, loading, user]);
 
-  // If authentication is still loading, show a loading spinner
+  // If authentication is still loading, show a skeleton loader based on the current route
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="p-8 bg-white shadow-md rounded-lg">
-          <h2 className="text-2xl font-bold mb-4 text-center">Loading...</h2>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        </div>
-      </div>
-    );
+    // Determine which skeleton type to show based on the current path
+    const path = location.pathname;
+    let skeletonType = 'default';
+    
+    if (path.includes('/profile')) {
+      skeletonType = 'profile';
+    } else if (path.includes('/feed')) {
+      skeletonType = 'feed';
+    } else if (path.includes('/chat') || path.includes('/messages')) {
+      skeletonType = 'chat';
+    }
+    
+    return <SkeletonLoader type={skeletonType} />;
   }
 
   // If there's an error or not authenticated, redirect to login page with the return URL
