@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaMapMarkerAlt, FaStar, FaCalendarAlt, FaUser } from 'react-icons/fa';
 import { useProfileById } from '../../hooks/queries/useProfileQueries';
+import SkeletonLoader from '../../components/ui/SkeletonLoader';
 
 /**
  * UserProfilePage Component
@@ -50,9 +51,7 @@ const UserProfilePage = () => {
           <h1 className="text-2xl font-bold">User Profile</h1>
         </div>
         
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        </div>
+        <SkeletonLoader type="userProfile" />
       </div>
     );
   }
