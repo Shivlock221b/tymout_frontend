@@ -29,6 +29,7 @@ const preferencesValidation = [
 // Authentication routes
 router.post('/register', registerValidation, userController.register);
 router.post('/login', loginValidation, userController.login);
+router.post('/refresh-token', userController.refreshToken);
 
 // Protected routes
 router.get('/me', auth, userController.getCurrentUser);

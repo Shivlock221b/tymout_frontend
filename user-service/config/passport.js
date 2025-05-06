@@ -59,9 +59,12 @@ passport.use(
       callbackURL: CALLBACK_URL,
       proxy: true,
       accessType: 'offline',
-      prompt: 'consent'
+      prompt: 'consent',
+      // Add these options to help with token issues
+      passReqToCallback: true,
+      userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (req, accessToken, refreshToken, profile, done) => {
       try {
         console.log('Google profile received:', profile.id);
         console.log('Google profile details:', {

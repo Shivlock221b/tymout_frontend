@@ -749,11 +749,11 @@ class EventService {
         throw new Error('Request not found');
       }
       
-      // Update request status to rejected
-      event.requests[requestIndex].status = 'rejected';
+      // Update request status to cancelled (since 'rejected' is not a valid enum value)
+      event.requests[requestIndex].status = 'cancelled';
       
       await event.save();
-      console.log(`[Event Service] Successfully rejected join request ${requestId}`);
+      console.log(`[Event Service] Successfully cancelled join request ${requestId}`);
       return event;
     } catch (error) {
       console.error(`[Event Service] Error rejecting join request ${requestId}:`, error);
