@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import ChatMessageBubble from './ChatMessageBubble';
+import TypingIndicator from './TypingIndicator';
 import { useChatSocket } from '../../hooks/useChatSocket';
+import './typing-indicator.css';
 
-const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo }) => {
+const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo, typingUsers = [] }) => {
   const { deleteMessage } = useChatSocket(eventId);
   const listRef = useRef(null);
   // internal state to track if user is near the bottom
@@ -244,6 +246,15 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
+      )}
+      
+      {/* Typing indicator - shown at the bottom of the chat */}
+      {typingUsers && typingUsers.length > 0 && (
+        <div className="sticky bottom-0 w-full z-10 animate-fadeIn">
+          <div className="mx-2 mb-2 rounded-full shadow-sm overflow-hidden transform transition-all duration-300 ease-in-out">
+            <TypingIndicator typingUsers={typingUsers} currentUserId={currentUserId} />
+          </div>
+        </div>
       )}
     </div>
   );

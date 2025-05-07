@@ -60,7 +60,7 @@ const EventChatPage = () => {
   
   console.log('Resolved event from events list:', event);
   // useChatSocket returns an array of message objects as per the backend structure
-  const { messages, sendMessage } = useChatSocket(eventId);
+  const { messages, sendMessage, typingUsers, updateTypingStatus } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
 
@@ -97,22 +97,7 @@ const EventChatPage = () => {
         margin-left: auto;
         margin-right: auto;
         overflow-x: hidden;
-      }
-      
-      .chat-background-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url('/hero/jap0.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.60;
-        z-index: 0;
-        pointer-events: none;
+        background-color: #f8fafc;
       }
       
       .chat-header-container {
@@ -294,24 +279,25 @@ const EventChatPage = () => {
         <div className="pt-16"></div>
         
         {/* Chat messages with scrolling */}
-        <div className="flex-1 overflow-y-auto pb-16 relative">
-          <ChatMessageList 
-            messages={messages} 
-            currentUserId={user?._id} 
-            otherPhoto={event?.thumbnail} 
-            onReplyTo={handleReplyTo}
+        <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden">
+          <ChatMessageList
+            messages={messages}
+            currentUserId={user?._id}
             eventId={eventId}
+            onReplyTo={handleReplyTo}
+            typingUsers={typingUsers}
           />
         </div>
         {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}
         <div className="chat-input-container">
           <div className="chat-input-glass">
-            <ChatInputBox 
-              onSend={handleSend} 
-              value={input} 
-              onChange={setInput} 
+            <ChatInputBox
+              onSend={handleSend}
+              value={input}
+              onChange={setInput}
               replyToMessage={replyToMessage}
               onCancelReply={handleCancelReply}
+              onTyping={updateTypingStatus}
             />
           </div>
         </div>

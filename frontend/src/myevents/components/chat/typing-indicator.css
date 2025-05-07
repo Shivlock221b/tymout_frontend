@@ -1,0 +1,102 @@
+/* Modern typing indicator animation styles */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 4px;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: #6366f1; /* Indigo color to match app theme */
+  border-radius: 50%;
+  margin: 0 2px;
+  display: inline-block;
+  transform-origin: center;
+  will-change: transform, opacity; /* Performance optimization */
+  transition: background-color 0.3s ease;
+}
+
+/* Use transform: scale instead of translateY for smoother animation */
+.typing-indicator span:nth-child(1) {
+  animation: pulse 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation: pulse 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: 0.15s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation: pulse 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: 0.3s;
+}
+
+/* Use scale transform for smoother animation */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Add a subtle glow effect */
+@supports (backdrop-filter: blur(4px)) {
+  .typing-indicator span {
+    box-shadow: 0 0 4px rgba(99, 102, 241, 0.5);
+  }
+  
+  .typing-indicator span:nth-child(1):hover,
+  .typing-indicator span:nth-child(2):hover,
+  .typing-indicator span:nth-child(3):hover {
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.8);
+  }
+}
+
+/* Fade-in animation for the typing indicator container */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Glass effect styles */
+.shadow-glass {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05),
+              0 1px 3px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Apply glass effect to chat bubbles */
+.chat-bubble-glass {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03),
+              0 1px 2px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.chat-bubble-glass-own {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border: 2px solid rgba(99, 102, 241, 0.8);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1),
+              0 1px 2px rgba(99, 102, 241, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}

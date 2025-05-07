@@ -48,7 +48,7 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
                 tag-item flex-1 px-5 py-3 text-lg font-medium transition-all duration-200 flex items-center justify-center border-none !ml-0 !mr-0
                 ${(selectedTags.includes(tag) || (tag === 'Only For You' && activeSpecialTag === 'Only For You') || (tag === 'All' && activeSpecialTag === 'All'))
                   ? 'bg-white/30 text-white border-b-2 border-white rounded-t-lg' 
-                  : 'bg-transparent text-white hover:bg-white/20'}
+                  : 'bg-transparent text-white hover:bg-white/20 hover:rounded-t-lg'}
               `}
             >
               {tag}
