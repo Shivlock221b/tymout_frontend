@@ -39,8 +39,7 @@ const ExplorePage = () => {
   const heroImages = useMemo(() => [
     "/hero/hero0.jpg",
     "/hero/hero1.jpg",
-    "/hero/hero2.jpg",
-    "/hero/hero3.jpg"
+    "/hero/hero2.jpg"
   ], []);
 
   // Extract filter parameters from URL

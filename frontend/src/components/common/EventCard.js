@@ -300,33 +300,37 @@ const EventCard = ({
               </div>
             )}
             
-            {/* Location */}
-            <div className="flex items-center mb-2">
-              <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
-                {place?.name ? place.name : location}
-                {distance && (
-                  <span className="ml-1 text-gray-500">• {distance} km</span>
-                )}
-              </span>
+            {/* Date, Time and Location - Combined in one row */}
+            <div className="flex flex-wrap gap-3 mb-2 mt-3 pt-3 border-t border-gray-100">
+              {/* Date */}
+              {date && (
+                <div className="flex items-center">
+                  <FaCalendarAlt className="h-3 w-3 text-gray-500 mr-1" />
+                  <span className="text-xs text-gray-600">{date}</span>
+                </div>
+              )}
+              
+              {/* Time */}
+              {time && (
+                <div className="flex items-center">
+                  <FaClock className="h-3 w-3 text-gray-500 mr-1" />
+                  <span className="text-xs text-gray-600">{time}</span>
+                </div>
+              )}
+              
+              {/* Location */}
+              {(location || place?.name) && (
+                <div className="flex items-center bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  <FaMapMarkerAlt className="h-3.5 w-3.5 text-red-500 mr-1" />
+                  <span>
+                    {place?.name ? place.name : location}
+                    {distance && (
+                      <span className="ml-1 text-gray-500">• {distance} km</span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
-            
-            {/* Date and Time - Only show if available */}
-            {(date || time) && (
-              <div className="flex flex-wrap gap-3 mb-2">
-                {date && (
-                  <div className="flex items-center">
-                    <FaCalendarAlt className="h-3 w-3 text-gray-500 mr-1" />
-                    <span className="text-xs text-gray-600">{date}</span>
-                  </div>
-                )}
-                {time && (
-                  <div className="flex items-center">
-                    <FaClock className="h-3 w-3 text-gray-500 mr-1" />
-                    <span className="text-xs text-gray-600">{time}</span>
-                  </div>
-                )}
-              </div>
-            )}
             
             {/* Participants/Attendees - Only show if available */}
             {getParticipantCount() > 0 && (
