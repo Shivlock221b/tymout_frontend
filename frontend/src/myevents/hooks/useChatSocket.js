@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useAuthStore } from '../../stores/authStore';
@@ -225,31 +225,45 @@ export function useChatSocket(eventId) {
     } catch {}
   }, [messages, eventId]);
 
-  // Create debounced function with useMemo to avoid recreation on each render
-  const stopTypingDebounced = useMemo(() => {
-    return debounce((socket, eventId, userId, userName, typingRef) => {
-      if (!socket || !typingRef.current) return;
+  // Create a ref to store the debounced function instance
+  const debouncedFnRef = useRef(null);
+  
+  // Initialize the debounced function once
+  useEffect(() => {
+    // Create the debounced function
+    const debouncedFn = debounce((socket, eventId, userId, userName, typingRef) => {
+      if (!socket || !typingRef?.current) return;
       socket.emit('typing', {
         eventId,
         userId,
         userName,
         isTyping: false
       });
-      typingRef.current = false;
+      if (typingRef) typingRef.current = false;
     }, 2000);
-  }, []); // Empty dependency array ensures this is only created once
+    
+    // Store it in the ref
+    debouncedFnRef.current = debouncedFn;
+    
+    // Clean up on unmount
+    return () => {
+      if (debouncedFnRef.current?.cancel) {
+        debouncedFnRef.current.cancel();
+      }
+    };
+  }, []);
   
   // Send typing status - debounced to avoid flooding
   const debouncedStopTyping = useCallback(() => {
-    if (!socketRef.current || !user || !isTypingRef.current) return;
-    stopTypingDebounced(
+    if (!socketRef.current || !user || !isTypingRef.current || !debouncedFnRef.current) return;
+    debouncedFnRef.current(
       socketRef.current, 
       eventId, 
-      user._id, 
-      user.name, 
+      user?._id, 
+      user?.name, 
       isTypingRef
     );
-  }, [eventId, user, stopTypingDebounced]);
+  }, [eventId, user]);
 
   // Update typing status
   const updateTypingStatus = useCallback((isTyping) => {
@@ -271,7 +285,9 @@ export function useChatSocket(eventId) {
       debouncedStopTyping();
     } else if (isTypingRef.current) {
       // Immediately stop typing indicator if explicitly set to false
-      debouncedStopTyping.cancel();
+      if (debouncedFnRef.current?.cancel) {
+        debouncedFnRef.current.cancel();
+      }
       socketRef.current.emit('typing', {
         eventId,
         userId: user._id,

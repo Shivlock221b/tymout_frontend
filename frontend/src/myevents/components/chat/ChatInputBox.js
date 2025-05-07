@@ -39,7 +39,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
                 'Unknown'}
               </span>
             </div>
-            <div className="text-sm truncate text-gray-700 mt-1">
+            <div className="text-sm text-gray-700 mt-1 max-h-20 overflow-y-auto break-words whitespace-pre-wrap">
               {replyToMessage.text || '[deleted]'}
             </div>
           </div>

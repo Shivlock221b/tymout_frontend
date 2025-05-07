@@ -102,16 +102,17 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
               <polyline points="9 17 4 12 9 7"></polyline>
               <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
             </svg>
-            <span className="truncate max-w-[180px]">
+            <div className="flex flex-col w-full overflow-hidden">
               <span className="font-medium">
                 {message.replyTo.senderName || 
                   (typeof message.replyTo.sender === 'object' && 
                     (message.replyTo.sender.name || message.replyTo.sender.username)) || 
                   'Unknown'}:
-              </span>{' '}
-              {message.replyTo.text?.substring(0, 30) || '[deleted]'}
-              {message.replyTo.text?.length > 30 ? '...' : ''}
-            </span>
+              </span>
+              <span className="text-xs whitespace-normal break-words">
+                {message.replyTo.text || '[deleted]'}
+              </span>
+            </div>
           </div>
         )}
         
