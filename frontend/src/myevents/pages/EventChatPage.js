@@ -97,7 +97,7 @@ const EventChatPage = () => {
         margin-left: auto;
         margin-right: auto;
         overflow-x: hidden;
-        background-color: #f8fafc;
+        background-color: #ffffff;
       }
       
       .chat-header-container {
