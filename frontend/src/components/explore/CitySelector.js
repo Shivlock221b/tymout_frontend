@@ -12,8 +12,8 @@ const CitySelector = ({ currentCity, onCityChange }) => {
   
   // Available cities - limited to Gurugram and Agra as requested
   const cities = [
-    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-black" /> },
-    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-black" /> }
+    { id: 'gurugram', name: 'Gurugram', icon: <FaMapMarkerAlt className="text-indigo-600" /> },
+    { id: 'agra', name: 'Agra', icon: <FaMapMarkerAlt className="text-indigo-600" /> }
   ];
   
   const handleCitySelect = (city) => {
@@ -25,12 +25,12 @@ const CitySelector = ({ currentCity, onCityChange }) => {
     <div className="relative">
       {/* Current City Display */}
       <div 
-        className="flex items-center cursor-pointer py-2 text-black"
+        className="flex items-center cursor-pointer py-2 text-indigo-600"
         onClick={() => setShowCityModal(!showCityModal)}
       >
-        <FaMapMarkerAlt className="text-black mr-2" />
+        <FaMapMarkerAlt className="text-indigo-600 mr-2" />
         <span className="text-base font-medium mr-2">{currentCity || 'Select City'}</span>
-        <FaChevronDown className="text-black" />
+        <FaChevronDown className="text-indigo-600" />
       </div>
       
       {/* City Selection Modal */}

@@ -8,6 +8,7 @@ import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import SocialLinks from '../components/profile/SocialLinks';
 import VerificationBadges from '../components/profile/VerificationBadges';
 import ProfileAvatar from '../components/profile/ProfileAvatar';
+import SkeletonLoader from '../components/ui/SkeletonLoader';
 
 // Following Single Responsibility Principle - this component only handles the profile page layout
 const ProfilePage = () => {
@@ -16,16 +17,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="p-8 bg-white shadow-md rounded-lg">
-          <h2 className="text-2xl font-bold mb-4 text-center">Loading Profile...</h2>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader type="mainProfile" />;
   }
 
   if (error) {

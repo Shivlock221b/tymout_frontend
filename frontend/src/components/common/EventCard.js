@@ -1,8 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar, FaCheck, FaDirections } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar } from 'react-icons/fa';
 import useEventCard from '../../hooks/useEventCard';
 
 /**
@@ -27,7 +25,6 @@ const EventCard = ({
   customActions = null,
   disableNavigation = false
 }) => {
-  const navigate = useNavigate();
   // Using our custom hook instead of direct navigation and state management
   const { 
     handleCardClick, 
@@ -185,33 +182,41 @@ const EventCard = ({
         {/* Host/Admin Information - At the very top (explore variant) */}
         {getPerson() && Object.keys(getPerson()).length > 0 && (
           <div 
-            className="py-4 px-5 bg-gray-50 flex items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+            className="py-2 px-4 bg-gray-50 flex items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
             onClick={onProfileClick}
           >
             <img 
               src={getPerson().image} 
               alt={getPerson().name} 
-              className="w-10 h-10 rounded-full object-cover mr-3"
+              className="w-8 h-8 rounded-full object-cover mr-2"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://via.placeholder.com/32?text=User'; // Fallback image
               }}
             />
-            <div>
-              <p className="text-sm font-medium mb-0.5">{getPerson().name}</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium">{getPerson().name}</p>
               <p className="text-xs text-gray-500">{getPersonTitle()} {getPerson().verified && '✓'}</p>
+            </div>
+            {/* More options (three dots) */}
+            <div className="text-gray-400 hover:text-gray-600 p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
             </div>
           </div>
         )}
-        <div className="flex flex-col md:flex-row">
-          {/* Card Image */}
-          <div className="md:w-1/3 h-48 md:h-auto relative">
+        
+        {/* Main Card Content - Horizontal Layout */}
+        <div className="flex p-3">
+          {/* Left: Card Image */}
+          <div className="w-1/3 relative">
             {displayImage ? (
               <>
                 <img
                   src={displayImage}
                   alt={(type || "Item") + " Image"}
-                  className="w-full h-full object-cover"
+                  className="w-full h-40 object-cover rounded-lg"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.style.display = 'none';
@@ -222,23 +227,13 @@ const EventCard = ({
                     e.target.parentNode.appendChild(textElement);
                   }}
                 />
-                {/* Event name overlay */}
-                <div
-                  className="absolute bottom-0 left-0 w-full px-3 py-2 flex items-end rounded-b-lg text-white"
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,0.9) 100%)',
-                    color: '#fff',
-                    fontSize: '1.25rem', // ~text-lg
-                    fontWeight: 700, // bold
-                    textShadow: '0 2px 8px rgba(0,0,0,0.8)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.2,
-                    zIndex: 2,
-                  }}
-                  aria-label="Event title overlay"
-                >
-                  <span className="truncate w-full" title={title}>{title}</span>
-                </div>
+                {/* Discount/Deal Overlay */}
+                {recommendation && (
+                  <div className="absolute bottom-0 left-0 w-full px-3 py-2 bg-black bg-opacity-70 text-white font-bold text-lg">
+                    {Math.round(recommendation.score * 100)}% OFF
+                  </div>
+                )}
+                {/* No heart icon */}
               </>
             ) : (
               // If no image is provided, show a colored background with text
@@ -246,119 +241,106 @@ const EventCard = ({
                 <span className="text-indigo-500 font-medium">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
               </div>
             )}
-            {/* Recommendation badge if applicable */}
-            {recommendation && (
-              <div className="absolute top-10 right-2 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                {Math.round(recommendation.score * 100)}% Match
-              </div>
-            )}
             {activity && (
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+              <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                 <span className="font-medium">{activity}</span>
               </div>
             )}
           </div>
           
-          {/* Content Section */}
-          <div className="p-3 md:w-2/3 flex flex-col">
-            <div className="flex-grow">
-              {/* Header with rating */}
-              <div className="flex justify-between items-start">
-                {rating && (
-                  <div className="flex items-center text-yellow-500">
-                    <FaStar className="h-4 w-4" />
-                    <span className="ml-1 text-sm font-medium">{rating}</span>
-                  </div>
-                )}
+          {/* Right: Content Section */}
+          <div className="w-2/3 pl-4 flex flex-col">
+            {/* Title */}
+            <h3 className="text-base font-semibold mb-1 line-clamp-2">{title}</h3>
+            
+            {/* Rating */}
+            {rating && (
+              <div className="flex items-center mb-2">
+                <div className="flex items-center text-green-600 bg-green-100 rounded-full px-2 py-0.5">
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="ml-1 text-xs font-medium">{rating}</span>
+                  <span className="mx-1 text-xs">•</span>
+                  <span className="text-xs">25-30 mins</span>
+                </div>
               </div>
-              
-              {/* Description */}
-              {showDescription && (
-                <p className={`${classes.description} text-gray-600 mb-3 overflow-hidden`}>
-                  {getShortDescription(description)}
-                </p>
-              )}
-              
-              {/* Date and Time */}
-              <div className="flex flex-wrap mb-4 gap-4">
-                {date && (
-                  <div className="flex items-center">
-                    <FaCalendarAlt className="h-4 w-4 text-indigo-500 mr-2" />
-                    <span className="text-sm">{date}</span>
-                  </div>
-                )}
-                {time && (
-                  <div className="flex items-center">
-                    <FaClock className="h-4 w-4 text-indigo-500 mr-2" />
-                    <span className="text-sm">{time}</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Tags */}
-              {tags && tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {tags.map((tag, index) => (
+            )}
+            
+            {/* Categories/Tags */}
+            {tags && tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {tags.slice(0, 2).map((tag, index) => {
+                  // Array of tag color combinations
+                  const tagColors = [
+                    { bg: 'bg-blue-100', text: 'text-blue-700' },
+                    { bg: 'bg-green-100', text: 'text-green-700' },
+                    { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+                    { bg: 'bg-purple-100', text: 'text-purple-700' },
+                    { bg: 'bg-pink-100', text: 'text-pink-700' },
+                    { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+                  ];
+                  
+                  // Select a color based on the tag string to ensure consistency
+                  const colorIndex = tag.length % tagColors.length;
+                  const { bg, text } = tagColors[colorIndex];
+                  
+                  return (
                     <span
                       key={`tag-${index}`}
-                      className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full"
+                      className={`${bg} ${text} text-xs px-2 py-0.5 rounded-full`}
                     >
                       {tag}
                     </span>
-                  ))}
+                  );
+                })}
+                {tags.length > 2 && (
+                  <span className="text-gray-500 text-xs">+{tags.length - 2} more</span>
+                )}
+              </div>
+            )}
+            
+            {/* Date, Time and Location - Combined in one row */}
+            <div className="flex flex-wrap gap-3 mb-2 mt-3 pt-3 border-t border-gray-100">
+              {/* Date */}
+              {date && (
+                <div className="flex items-center">
+                  <FaCalendarAlt className="h-3 w-3 text-gray-500 mr-1" />
+                  <span className="text-xs text-gray-600">{date}</span>
+                </div>
+              )}
+              
+              {/* Time */}
+              {time && (
+                <div className="flex items-center">
+                  <FaClock className="h-3 w-3 text-gray-500 mr-1" />
+                  <span className="text-xs text-gray-600">{time}</span>
+                </div>
+              )}
+              
+              {/* Location */}
+              {(location || place?.name) && (
+                <div className="flex items-center bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  <FaMapMarkerAlt className="h-3.5 w-3.5 text-red-500 mr-1" />
+                  <span>
+                    {place?.name ? place.name : location}
+                    {distance && (
+                      <span className="ml-1 text-gray-500">• {distance} km</span>
+                    )}
+                  </span>
                 </div>
               )}
             </div>
             
-            {/* Location and Participants */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 pt-2 border-t border-gray-100">
-              <div className="flex items-center space-x-4 mb-2 sm:mb-0">
-                <div className="flex items-center">
-                  <FaMapMarkerAlt className="h-4 w-4 text-gray-500" />
-                  <span className="ml-1 text-sm text-gray-600">
-                    {place?.name ? place.name : location}
-                  </span>
-                </div>
-                {distance && (
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                    {distance} km
-                  </span>
-                )}
+            {/* Participants/Attendees - Only show if available */}
+            {getParticipantCount() > 0 && (
+              <div className="flex items-center text-gray-600 text-xs">
+                <FaUsers className="h-3 w-3 mr-1" />
+                <span>{getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants</span>
               </div>
-              
-              {/* Host Info (hide at bottom for explore variant) */}
-              {variant !== 'explore' && getPerson() && Object.keys(getPerson()).length > 0 && (
-                <div className="flex items-center">
-                  <img
-                    src={getPerson().image || "https://via.placeholder.com/40?text=User"}
-                    alt={getPerson().name || "User"}
-                    className="w-6 h-6 rounded-full mr-2"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://via.placeholder.com/32?text=User';
-                    }}
-                  />
-                  <span className="text-sm font-medium">{getPerson().name || "User"}</span>
-                  {getPerson().verified && (
-                    <FaCheck className="ml-1 h-3 w-3 text-green-500" title={`Verified ${getPersonTitle()}`} />
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        {/* View Details Button (bottom right for explore variant) */}
-        {variant === 'explore' && (
-          <div className="flex justify-center p-4 pt-0">
-            <button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-2 rounded transition-colors duration-200 mt-1 text-sm"
-              onClick={onCardClick}
-              aria-label="View details"
-            >
-              View Details
-            </button>
-          </div>
-        )}
       </div>
     );
   }

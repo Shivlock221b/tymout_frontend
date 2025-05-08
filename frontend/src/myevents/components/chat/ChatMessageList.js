@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import ChatMessageBubble from './ChatMessageBubble';
+import TypingIndicator from './TypingIndicator';
 import { useChatSocket } from '../../hooks/useChatSocket';
+import './typing-indicator.css';
 
-const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo }) => {
+const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo, typingUsers = [] }) => {
   const { deleteMessage } = useChatSocket(eventId);
   const listRef = useRef(null);
   // internal state to track if user is near the bottom
@@ -85,63 +87,142 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     return () => viewport.removeEventListener('resize', onVVResize);
   }, [isAtBottom]);
 
+  // Group messages by date
+  const groupMessagesByDate = (messages) => {
+    if (!Array.isArray(messages) || messages.length === 0) return [];
+    
+    const groups = [];
+    let currentDate = null;
+    let currentGroup = [];
+    
+    messages.forEach(msg => {
+      const messageDate = new Date(msg.timestamp || msg.createdAt || Date.now());
+      const messageDay = new Date(
+        messageDate.getFullYear(),
+        messageDate.getMonth(),
+        messageDate.getDate()
+      ).toISOString();
+      
+      if (messageDay !== currentDate) {
+        // If we have messages in the current group, save it
+        if (currentGroup.length > 0) {
+          groups.push({
+            date: currentDate,
+            messages: currentGroup
+          });
+        }
+        
+        // Start a new group
+        currentDate = messageDay;
+        currentGroup = [msg];
+      } else {
+        // Add to current group
+        currentGroup.push(msg);
+      }
+    });
+    
+    // Add the last group
+    if (currentGroup.length > 0) {
+      groups.push({
+        date: currentDate,
+        messages: currentGroup
+      });
+    }
+    
+    return groups;
+  };
+  
+  // Format date for display
+  const formatMessageDate = (dateString) => {
+    const messageDate = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Reset hours to compare just the date
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const yesterdayDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    const messageDateOnly = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
+    
+    if (messageDateOnly.getTime() === todayDate.getTime()) {
+      return 'Today';
+    } else if (messageDateOnly.getTime() === yesterdayDate.getTime()) {
+      return 'Yesterday';
+    } else {
+      // Format as Month Day, Year for older dates
+      return messageDate.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric',
+        year: messageDate.getFullYear() !== today.getFullYear() ? 'numeric' : undefined 
+      });
+    }
+  };
+  
+  // Group messages by date
+  const messageGroups = groupMessagesByDate(propMessages);
+
   return (
     <div
       ref={listRef}
       onScroll={handleScroll}
-      className="flex flex-col gap-2 px-3 w-full pb-16 overflow-y-auto flex-1 relative"
+      className="flex flex-col gap-2 w-full pb-16 overflow-y-auto flex-1 relative"
       style={{
         scrollPaddingBottom: '90px'
       }}
     >
-      {/* Chat date separator - can be added for message grouping by date */}
-      <div className="sticky top-0 z-10 flex justify-center my-2">
-        <div className="bg-white bg-opacity-80 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm">
-          Today
-        </div>
-      </div>
-      
-      {Array.isArray(propMessages) && propMessages.map((msg, idx) => {
-        let senderId = '';
-        if (msg.sender === undefined || msg.sender === null) {
-          senderId = '';
-        } else if (typeof msg.sender === 'object') {
-          senderId = msg.sender._id || msg.sender.id || msg.sender.username || msg.sender.email || '';
-        } else {
-          senderId = msg.sender;
-        }
-        // Check if the message has a pre-processed _senderId field
-        const isOwn = msg._senderId 
-          ? msg._senderId === String(currentUserId).trim()
-          : String(senderId).trim() === String(currentUserId).trim();
-        return (
-          <ChatMessageBubble
-            key={msg._id || msg.id || idx}
-            message={msg}
-            isOwn={isOwn}
-            userPhoto={msg.senderPhoto || msg.userPhoto || undefined}
-            onDelete={deleteMessage}
-            onReplyTo={(message, scrollToId) => {
-              if (scrollToId) {
-                // Handle scrolling to original message
-                scrollToMessage(scrollToId);
-              } else if (message && onReplyTo) {
-                // Handle normal reply action
-                onReplyTo(message);
+      {messageGroups.length > 0 ? (
+        messageGroups.map((group, groupIndex) => (
+          <div key={group.date || `group-${groupIndex}`} className="flex flex-col gap-2">
+            {/* Date separator for each group */}
+            <div className="sticky top-0 z-10 flex justify-center my-2">
+              <div className="bg-white bg-opacity-80 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm">
+                {formatMessageDate(group.date)}
+              </div>
+            </div>
+            
+            {/* Messages in this date group */}
+            {group.messages.map((msg, idx) => {
+              let senderId = '';
+              if (msg.sender === undefined || msg.sender === null) {
+                senderId = '';
+              } else if (typeof msg.sender === 'object') {
+                senderId = msg.sender._id || msg.sender.id || msg.sender.username || msg.sender.email || '';
+              } else {
+                senderId = msg.sender;
               }
-            }}
-            ref={(el) => {
-              if (el) {
-                // Store ref to this message's DOM element
-                messageRefs.current[msg._id || msg.id || `msg-${idx}`] = el;
-              }
-            }}
-          />
-        );
-      })}
-      
-      {/* Empty state when no messages */}
-      {(!propMessages || propMessages.length === 0) && (
+              // Check if the message has a pre-processed _senderId field
+              const isOwn = msg._senderId 
+                ? msg._senderId === String(currentUserId).trim()
+                : String(senderId).trim() === String(currentUserId).trim();
+              return (
+                <ChatMessageBubble
+                  key={msg._id || msg.id || `${group.date}-${idx}`}
+                  message={msg}
+                  isOwn={isOwn}
+                  userPhoto={msg.senderPhoto || msg.userPhoto || undefined}
+                  onDelete={deleteMessage}
+                  onReplyTo={(message, scrollToId) => {
+                    if (scrollToId) {
+                      // Handle scrolling to original message
+                      scrollToMessage(scrollToId);
+                    } else if (message && onReplyTo) {
+                      // Handle normal reply action
+                      onReplyTo(message);
+                    }
+                  }}
+                  ref={(el) => {
+                    if (el) {
+                      // Store ref to this message's DOM element
+                      messageRefs.current[msg._id || msg.id || `msg-${idx}`] = el;
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        ))
+      ) : (
+        /* Empty state when no messages */
         <div className="flex flex-col items-center justify-center h-64 text-gray-500">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -166,6 +247,16 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
       )}
+      
+      {/* Typing indicator - shown at the bottom of the chat */}
+      {typingUsers && typingUsers.length > 0 && (
+        <div className="sticky bottom-0 w-full z-10 animate-fadeIn">
+          <div className="mx-2 mb-2 rounded-full shadow-sm overflow-hidden transform transition-all duration-300 ease-in-out">
+            <TypingIndicator typingUsers={typingUsers} currentUserId={currentUserId} />
+          </div>
+        </div>
+      )}
+      <div className="h-20 w-full flex-shrink-0 pb-16" id="chat-end-spacer" aria-hidden="true"></div>
     </div>
   );
 };

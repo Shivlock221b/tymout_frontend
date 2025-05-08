@@ -1,7 +1,7 @@
 import React from 'react';
 import EmojiPickerButton from './EmojiPickerButton';
 
-const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }) => {
+const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, onTyping }) => {
   const inputRef = React.useRef();
   const handleSend = (e) => {
     // Prevent default to avoid keyboard dismissal
@@ -45,7 +45,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }
                 'Unknown'}
               </span>
             </div>
-            <div className="text-sm truncate text-gray-700 mt-1">
+            <div className="text-sm text-gray-700 mt-1 max-h-20 overflow-y-auto break-words whitespace-pre-wrap">
               {replyToMessage.text || '[deleted]'}
             </div>
           </div>
@@ -73,6 +73,12 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply }
           onChange(e.target.value);
           e.target.style.height = 'auto';
           e.target.style.height = e.target.scrollHeight + 'px';
+          // Trigger typing indicator when user types
+          if (onTyping) onTyping(e.target.value.length > 0);
+        }}
+        onBlur={() => {
+          // Stop typing indicator when input loses focus
+          if (onTyping) onTyping(false);
         }}
         onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
