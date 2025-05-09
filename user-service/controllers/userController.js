@@ -17,15 +17,16 @@ class UserController {
       console.log(`[User Controller:Step 5] Validation passed`);
 
       console.log(`[User Controller:Step 6] Calling userService.register`);
-      const { user, token } = await userService.register(req.body);
+      const { user, token, refreshToken } = await userService.register(req.body);
       console.log(`[User Controller:Step 7] User created successfully:`, { userId: user._id, email: user.email });
-      console.log(`[User Controller:Step 8] JWT token generated`);
+      console.log(`[User Controller:Step 8] JWT tokens generated`);
 
       res.status(201).json({
         success: true,
         data: {
           user,
-          token
+          token,
+          refreshToken
         }
       });
       console.log(`[User Controller:Step 9] Registration response sent`);
@@ -59,15 +60,16 @@ class UserController {
       const { email, password } = req.body;
       console.log(`[User Controller:Step 6] Calling userService.login for email:`, email);
       
-      const { user, token } = await userService.login(email, password);
+      const { user, token, refreshToken } = await userService.login(email, password);
       console.log(`[User Controller:Step 7] Login successful for user:`, { userId: user._id, email: user.email });
-      console.log(`[User Controller:Step 8] JWT token generated`);
+      console.log(`[User Controller:Step 8] JWT tokens generated`);
       
       res.status(200).json({
         success: true,
         data: {
           user,
-          token
+          token,
+          refreshToken
         }
       });
       console.log(`[User Controller:Step 9] Login response sent`);
@@ -109,6 +111,46 @@ class UserController {
       res.status(404).json({
         success: false,
         error: error.message
+      });
+    }
+  }
+  
+  /**
+   * Refresh the user's access token using a refresh token
+   * @param {object} req - Express request object with refreshToken in body
+   * @param {object} res - Express response object
+   */
+  async refreshToken(req, res) {
+    console.log(`[User Controller:Step 1] Starting refreshToken process`);
+    
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        console.log(`[User Controller:Step 2] No refresh token provided`);
+        return res.status(400).json({
+          success: false,
+          error: 'Refresh token is required'
+        });
+      }
+      
+      console.log(`[User Controller:Step 3] Calling userService.refreshUserToken`);
+      const { user, token } = await userService.refreshUserToken(refreshToken);
+      console.log(`[User Controller:Step 4] Token refreshed for user:`, { userId: user._id, email: user.email });
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          user,
+          token
+        }
+      });
+      console.log(`[User Controller:Step 5] Response sent with new token`);
+    } catch (error) {
+      console.error(`[User Controller:Step 6] Token refresh error:`, error.message);
+      res.status(401).json({
+        success: false,
+        error: 'Invalid refresh token'
       });
     }
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ChatMessageList from '../components/chat/ChatMessageList';
 import ChatInputBox from '../components/chat/ChatInputBox';
@@ -41,6 +41,9 @@ const EventChatPage = () => {
   // State for showing group tabbed interface
   const [showGroupTabs, setShowGroupTabs] = useState(false);
   
+  // Ref for the chat container to control scrolling
+  const chatContainerRef = useRef(null);
+  
   console.log('EventChatPage mounted.');
   const { eventId } = useParams();
   console.log('EventChatPage useParams eventId:', eventId);
@@ -63,6 +66,23 @@ const EventChatPage = () => {
   const { messages, sendMessage, typingUsers, updateTypingStatus } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messages && messages.length > 0 && chatContainerRef.current) {
+      // Scroll to bottom immediately
+      const scrollToBottom = () => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      };
+      
+      // Execute scroll immediately and after a short delay to handle layout adjustments
+      scrollToBottom();
+      setTimeout(scrollToBottom, 100);
+      setTimeout(scrollToBottom, 300); // Additional delay for slower devices
+    }
+  }, [messages]);
 
   const handleSend = (text) => {
     if (!text.trim()) return;
@@ -279,10 +299,11 @@ const EventChatPage = () => {
         <div className="pt-16"></div>
         
         {/* Chat messages with scrolling */}
-        <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden">
+        <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden" ref={chatContainerRef}>
           <ChatMessageList
             messages={messages}
             currentUserId={user?._id}
+            otherPhoto={event?.thumbnail}
             eventId={eventId}
             onReplyTo={handleReplyTo}
             typingUsers={typingUsers}

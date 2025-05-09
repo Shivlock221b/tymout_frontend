@@ -24,10 +24,11 @@ class UserService {
       });
       await preferences.save();
 
-      // Generate JWT token
+      // Generate JWT tokens
       const token = this.generateToken(user);
+      const refreshToken = this.generateRefreshToken(user);
 
-      return { user, token };
+      return { user, token, refreshToken };
     } catch (error) {
       throw error;
     }
@@ -46,7 +47,9 @@ class UserService {
       }
 
       const token = this.generateToken(user);
-      return { user, token };
+      const refreshToken = this.generateRefreshToken(user);
+      
+      return { user, token, refreshToken };
     } catch (error) {
       throw error;
     }
@@ -199,11 +202,20 @@ class UserService {
   }
 
   // Helper Methods
-  generateToken(user) {
+  generateToken(user, expiresIn = '24h') {
     return jwt.sign(
       { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn }
+    );
+  }
+
+  generateRefreshToken(user) {
+    // Refresh tokens have a longer lifespan
+    return jwt.sign(
+      { id: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
     );
   }
 
@@ -217,6 +229,35 @@ class UserService {
       return user;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async refreshUserToken(refreshToken) {
+    try {
+      // Verify the refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+      
+      // Check if it's a refresh token
+      if (!decoded.tokenType || decoded.tokenType !== 'refresh') {
+        throw new Error('Invalid refresh token');
+      }
+      
+      // Get the user
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Generate a new access token
+      const newAccessToken = this.generateToken(user);
+      
+      return {
+        user,
+        token: newAccessToken
+      };
+    } catch (error) {
+      console.error('Token refresh error:', error.message);
+      throw new Error('Failed to refresh token');
     }
   }
 }

@@ -272,6 +272,7 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           </div>
         </div>
       )}
+      <div className="h-20 w-full flex-shrink-0 pb-16" id="chat-end-spacer" aria-hidden="true"></div>
     </div>
   );
 };

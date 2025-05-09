@@ -50,17 +50,24 @@ router.get(
         return res.redirect(`${FRONTEND_URL}/login?error=no_user`);
       }
 
-      // Create JWT with user ID
+      // Create access token with user ID
       const token = jwt.sign(
-        { id: req.user.id },
+        { id: req.user.id, email: req.user.email, role: req.user.role },
         JWT_SECRET,
-        { expiresIn: '1d' }
+        { expiresIn: '24h' }
+      );
+      
+      // Create refresh token with longer expiration
+      const refreshToken = jwt.sign(
+        { id: req.user.id, tokenType: 'refresh' },
+        JWT_SECRET,
+        { expiresIn: '30d' }
       );
 
-      console.log('JWT token created, redirecting to frontend');
+      console.log('JWT tokens created, redirecting to frontend');
       
-      // Redirect to frontend with token
-      res.redirect(`${FRONTEND_URL}/auth/success?token=${token}`);
+      // Redirect to frontend with both tokens
+      res.redirect(`${FRONTEND_URL}/auth/success?token=${token}&refreshToken=${refreshToken}`);
     } catch (err) {
       console.error('Error in Google callback:', err);
       res.redirect(`${FRONTEND_URL}/login?error=server_error`);
