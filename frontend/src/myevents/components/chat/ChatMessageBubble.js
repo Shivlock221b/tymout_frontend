@@ -120,7 +120,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         <div
           className={`rounded-lg px-3 py-2 text-base break-words whitespace-pre-line relative ${
             isOwn 
-              ? 'chat-bubble-glass-own bg-gray-100 text-gray-900' 
+              ? 'chat-bubble-glass-own text-white' 
               : 'chat-bubble-glass text-gray-900'
           }`}
           aria-label={isOwn ? 'Your message' : 'Member message'}
@@ -136,7 +136,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
           onClick={handleReplyClick}
         >
           {/* Sender name above bubble */}
-          <div className={`text-xs mb-1 font-medium ${isOwn ? 'text-right text-gray-600' : `text-left ${senderColorClass}`}`}>
+          <div className={`text-xs mb-1 font-medium ${isOwn ? 'text-right text-indigo-100' : `text-left ${senderColorClass}`}`}>
             {isOwn ? 'You' : (
               message.senderName ||
               (typeof message.sender === 'object' && (message.sender.name || message.sender.username || message.sender.email || message.sender._id || message.sender.id)) ||
@@ -149,7 +149,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
               ? <span className="italic text-gray-400">This message was deleted</span>
               : (<span className="break-words">{message.text || <span className="text-red-500">[Empty]</span>}</span>)}
           </div>
-          <div className={`text-xs mt-1 text-right flex items-center gap-1 justify-end ${isOwn ? 'text-gray-600' : 'text-gray-500'}`}>
+          <div className={`text-xs mt-1 text-right flex items-center gap-1 justify-end ${isOwn ? 'text-indigo-100' : 'text-gray-500'}`}>
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             {isOwn && !(message.isDeleted || message.deleted) && (
               message.pending || message.status === 'pending' ? (

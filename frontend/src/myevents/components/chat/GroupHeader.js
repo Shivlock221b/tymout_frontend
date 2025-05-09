@@ -47,7 +47,7 @@ const GroupHeader = ({ event, onClick }) => {
           {displayTitle}
         </span>
         <span className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left">
-          Click here for Group Info
+          Active now
         </span>
       </div>
     </button>

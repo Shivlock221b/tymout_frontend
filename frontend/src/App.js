@@ -81,9 +81,7 @@ const App = () => {
         <main className={`flex-1 p-2 md:p-4 pb-16 md:pb-0 ${isAuthenticated ? 'md:ml-64' : ''}`}> 
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={
-              isAuthenticated ? <Navigate to="/explore" replace /> : <HomePage />
-            } />
+            <Route path="/" element={<Navigate to="/explore" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/auth/success" element={<AuthSuccess />} />
