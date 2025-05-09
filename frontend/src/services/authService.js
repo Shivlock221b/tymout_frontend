@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Configure axios defaults for cross-origin requests
+axios.defaults.withCredentials = true;
+
 /**
  * Service for managing authentication-related API requests
  * Following Single Responsibility Principle - this service only handles auth operations

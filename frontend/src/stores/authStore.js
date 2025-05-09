@@ -22,10 +22,21 @@ const configureAxiosAuthInterceptor = (token) => {
   // Add request interceptor to include token in all requests
   const requestInterceptorId = axios.interceptors.request.use(
     (config) => {
+      // Always enable credentials for cross-origin requests
+      config.withCredentials = true;
+      
       if (token) {
+        // Set the Authorization header for all requests
         config.headers['Authorization'] = `Bearer ${token}`;
-        // Ensure credentials are included in cross-origin requests
-        config.withCredentials = true;
+        
+        // Ensure token is included in localStorage for persistence
+        localStorage.setItem('auth_token', token);
+      } else {
+        // Try to recover token from localStorage if it exists
+        const storedToken = localStorage.getItem('auth_token');
+        if (storedToken) {
+          config.headers['Authorization'] = `Bearer ${storedToken}`;
+        }
       }
       return config;
     },
@@ -111,8 +122,10 @@ export const useAuthStore = create(
         error: null
       });
       
-      // Configure axios headers when token changes
+      // Save token directly to localStorage for extra persistence
       if (token) {
+        localStorage.setItem('auth_token', token);
+        // Configure axios headers when token changes
         configureAxiosAuthInterceptor(token);
       }
     },
@@ -159,6 +172,9 @@ export const useAuthStore = create(
           loading: false,
           error: null
         });
+        
+        // Remove token from localStorage
+        localStorage.removeItem('auth_token');
         
         // Remove auth header from axios
         configureAxiosAuthInterceptor(null);
