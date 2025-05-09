@@ -170,6 +170,22 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
         scrollPaddingBottom: '90px'
       }}
     >
+      {/* Encryption Notice Banner */}
+      <div className="w-full px-3 pt-2 pb-1">
+        <div className="w-full bg-white/90 backdrop-blur-sm rounded-xl shadow-sm p-3 border border-gray-100">
+          <div className="flex flex-col gap-1 justify-center text-center text-gray-700">
+            <div className="flex items-center justify-center gap-1">
+              <span className="text-sm font-medium">🔒 All messages are end‑to‑end encrypted</span>
+            </div>
+            <div className="flex items-center justify-center gap-1">
+              <span className="text-sm font-medium">💬 Single Tap to Reply</span>
+            </div>
+            <div className="flex items-center justify-center gap-1">
+              <span className="text-sm font-medium">❌ Long‑Press to Delete your message</span>
+            </div>
+          </div>
+        </div>
+      </div>
       {messageGroups.length > 0 ? (
         messageGroups.map((group, groupIndex) => (
           <div key={group.date || `group-${groupIndex}`} className="flex flex-col gap-2">
@@ -239,7 +255,10 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           onClick={() => {
             const el = listRef.current || document.documentElement;
             if (el) {
-              el.scrollTop = el.scrollHeight;
+              el.scrollTo({
+                top: el.scrollHeight,
+                behavior: 'smooth'
+              });
             }
           }}
           aria-label="Scroll to latest"
