@@ -75,7 +75,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
           if (onTyping) onTyping(false);
         }}
         onKeyDown={e => {
-          if (e.key === 'Enter' && !e.shiftKey) {
+          if (e.key === 'Enter' && e.shiftKey) {
             e.preventDefault();
             onSend(value);
           }
