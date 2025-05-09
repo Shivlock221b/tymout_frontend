@@ -23,7 +23,8 @@ const EventCard = ({
   fullWidth = false,
   variant = 'default',
   customActions = null,
-  disableNavigation = false
+  disableNavigation = false,
+  hideHeader = false
 }) => {
   // Using our custom hook instead of direct navigation and state management
   const { 
@@ -180,7 +181,7 @@ const EventCard = ({
         onClick={onCardClick}
       >
         {/* Host/Admin Information - At the very top (explore variant) */}
-        {getPerson() && Object.keys(getPerson()).length > 0 && (
+        {!hideHeader && getPerson() && Object.keys(getPerson()).length > 0 && (
           <div 
             className="py-2 px-4 bg-gray-50 flex items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
             onClick={onProfileClick}
@@ -353,7 +354,7 @@ const EventCard = ({
       onClick={onCardClick}
     >
       {/* Host/Admin Information - At the very top (for default and explore variants) */}
-      {(variant === 'default' || variant === 'explore') && getPerson() && Object.keys(getPerson()).length > 0 && (
+      {!hideHeader && (variant === 'default' || variant === 'explore') && getPerson() && Object.keys(getPerson()).length > 0 && (
         <div 
           className="py-4 px-5 bg-gray-50 flex items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
           onClick={onProfileClick}
@@ -569,7 +570,8 @@ EventCard.propTypes = {
   fullWidth: PropTypes.bool,
   variant: PropTypes.oneOf(['default', 'explore', 'onlyforyou']),
   customActions: PropTypes.node,
-  disableNavigation: PropTypes.bool
+  disableNavigation: PropTypes.bool,
+  hideHeader: PropTypes.bool
 };
 
 export default EventCard;

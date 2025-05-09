@@ -15,7 +15,9 @@ const EventDetailLayout = ({
   type, 
   isFromExplore,
   handleGoBack,
-  handleMainAction
+  handleMainAction,
+  isAuthenticated = true, // Default to true for backward compatibility
+  isActionLoading = false
 }) => {
   const navigate = useNavigate();
   // Handle null/undefined checks for properties
@@ -87,6 +89,8 @@ const EventDetailLayout = ({
               item={item}
               type={type}
               handleMainAction={handleMainAction}
+              isAuthenticated={isAuthenticated}
+              isActionLoading={isActionLoading}
             />
           </div>
         </div>
@@ -100,7 +104,9 @@ EventDetailLayout.propTypes = {
   type: PropTypes.string.isRequired,
   isFromExplore: PropTypes.bool.isRequired,
   handleGoBack: PropTypes.func.isRequired,
-  handleMainAction: PropTypes.func.isRequired
+  handleMainAction: PropTypes.func.isRequired,
+  isAuthenticated: PropTypes.bool,
+  isActionLoading: PropTypes.bool
 };
 
 export default EventDetailLayout;

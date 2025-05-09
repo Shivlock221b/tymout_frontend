@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEventDetail, useEventAction, useCancelEventAction } from '../hooks/queries/useEventDetailQueries';
+import { useAuthStore } from '../stores/authStore';
 
 // Import the new modular components
 import {
@@ -21,11 +22,14 @@ import {
  */
 const EventDetailPage = (props) => {
   const params = useParams();
-  // Use type from props (from ProtectedRoute) if present, else from params
+  // Use type from props (from PublicRoute/ProtectedRoute) if present, else from params
   const type = props.type || params.type;
   const id = params.id;
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Check if user is authenticated
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
 
   // DEBUG: Log received props and resolved type/id
   console.log('[EventDetailPage] received props:', props);
@@ -64,6 +68,12 @@ const EventDetailPage = (props) => {
   
   // Handle RSVP/Join/Apply action with optimistic updates
   const handleMainAction = () => {
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
     // Use 'join' for events to match our backend implementation
     const action = type === 'events' ? 'join' : 
                    type === 'tables' ? 'join' : 'apply';
@@ -137,6 +147,7 @@ const EventDetailPage = (props) => {
       handleGoBack={handleGoBack}
       handleMainAction={handleMainAction}
       isActionLoading={eventAction.isPending || cancelEventAction.isPending}
+      isAuthenticated={isAuthenticated}
     />
   );
 };

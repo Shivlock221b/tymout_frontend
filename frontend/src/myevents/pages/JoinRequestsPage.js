@@ -4,8 +4,18 @@ import { useEventPendingRequests, useApproveJoinRequest, useRejectJoinRequest, u
 import { useAuthStore } from '../../stores/authStore';
 import GroupHeader from '../components/chat/GroupHeader';
 
-// Get initials from user ID for avatar fallback
-const getIdInitials = (userId) => {
+// Get initials from name or user ID for avatar fallback
+const getInitials = (name, userId) => {
+  // If name is available, use it for initials
+  if (name) {
+    const nameParts = name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+  
+  // Fallback to user ID if name is not available
   if (!userId) return '?';
   return userId.substring(0, 2).toUpperCase();
 };
@@ -24,10 +34,12 @@ const JoinRequestCard = ({ request, onApprove, onReject, isProcessing }) => {
     <div className="flex items-center justify-between p-4 border-b border-gray-100">
       <div className="flex items-center gap-3 cursor-pointer" onClick={handleProfileClick}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-800 text-sm font-bold border border-gray-200">
-          {getIdInitials(request.userId)}
+          {getInitials(request.name, request.userId)}
         </div>
         <div>
-          <div className="font-medium hover:text-indigo-600 transition-colors">{request.userId.substring(0, 8)}...</div>
+          <div className="font-medium hover:text-indigo-600 transition-colors">
+            {request.name || `User ${request.userId.substring(0, 8)}...`}
+          </div>
           <div className="text-sm text-gray-500">
             Requested {new Date(request.createdAt).toLocaleString()}
           </div>

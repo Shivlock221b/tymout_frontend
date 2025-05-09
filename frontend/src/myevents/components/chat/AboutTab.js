@@ -1,10 +1,41 @@
-import React from 'react';
-import { FaMapMarkerAlt, FaExternalLinkAlt } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaMapMarkerAlt, FaExternalLinkAlt, FaTrash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuthStore } from '../../../stores/authStore';
 
 /**
  * AboutTab displays general information about an event
  */
 const AboutTab = ({ event }) => {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState(null);
+  const [isHost, setIsHost] = useState(false);
+  const navigate = useNavigate();
+  
+  // Get current user from auth store
+  const currentUser = useAuthStore(state => state.user);
+  
+  // Check if current user is the host of the event
+  useEffect(() => {
+    if (!currentUser || !event || !event.host) return;
+    
+    // Check different possible host structures
+    if (typeof event.host === 'object') {
+      // If host is an object with userId
+      if (event.host.userId) {
+        setIsHost(event.host.userId.toString() === currentUser._id.toString());
+      } else if (event.host._id) {
+        setIsHost(event.host._id.toString() === currentUser._id.toString());
+      } else if (event.host.id) {
+        setIsHost(event.host.id.toString() === currentUser._id.toString());
+      }
+    } else {
+      // If host is just an ID string
+      setIsHost(event.host.toString() === currentUser._id.toString());
+    }
+  }, [currentUser, event]);
   // Get attendee count safely (handle both array and number formats)
   const attendeeCount = Array.isArray(event.attendees) 
     ? event.attendees.length 
@@ -85,6 +116,72 @@ const AboutTab = ({ event }) => {
               <div className="min-w-0">{event.capacity}</div>
             </>
           )}
+          
+          {/* Delete Event Button - Only visible to host */}
+          {isHost && (
+            <>
+              <div className="text-gray-500 mt-4">Host Actions:</div>
+              <div>
+                <button 
+                  onClick={() => setShowConfirmation(true)}
+                  className="flex items-center px-3 py-1.5 mt-1 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  disabled={isDeleting}
+                >
+                  <FaTrash className="mr-1.5" />
+                  {isDeleting ? 'Deleting...' : 'Delete Event'}
+                </button>
+                {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+              </div>
+            </>
+          )}
+          
+          {/* Confirmation Dialog */}
+          {showConfirmation && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg p-5 max-w-md w-full">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Delete Event</h3>
+                <p className="text-gray-500 mb-4">Are you sure you want to delete this event? This action is irreversible and all event data will be permanently removed.</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowConfirmation(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        setIsDeleting(true);
+                        setError(null);
+                        
+                        // Get the event ID (handle different ID formats)
+                        const eventId = event._id || event.id;
+                        
+                        // Call the API to delete the event
+                        await axios.delete(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`);
+                        
+                        // Redirect to explore page
+                        navigate('/explore');
+                        // Force reload to refresh the events list
+                        window.location.reload();
+                      } catch (err) {
+                        console.error('Error deleting event:', err);
+                        setError('Failed to delete event. Please try again.');
+                        setIsDeleting(false);
+                        setShowConfirmation(false);
+                      }
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
@@ -21,6 +21,7 @@ import CitySelector from '../components/explore/CitySelector';
  */
 const ExplorePage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getScrollTarget, clearScrollTarget } = useScrollToElement();
   const { user } = useUserData();

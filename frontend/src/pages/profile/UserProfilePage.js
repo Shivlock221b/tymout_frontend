@@ -2,6 +2,8 @@ import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaMapMarkerAlt, FaStar, FaCalendarAlt, FaUser } from 'react-icons/fa';
 import { useProfileById } from '../../hooks/queries/useProfileQueries';
+import { useUserHostedEvents } from '../../hooks/queries/useUserHostedEvents';
+import UniversalEventCard from '../../components/common/EventCard';
 import SkeletonLoader from '../../components/ui/SkeletonLoader';
 
 /**
@@ -27,6 +29,13 @@ const UserProfilePage = () => {
     error, 
     refetch 
   } = useProfileById(id);
+  
+  // Fetch events hosted by this user
+  const {
+    data: hostedEvents = [],
+    isLoading: eventsLoading,
+    error: eventsError
+  } = useUserHostedEvents(id);
   
   // Handle back button functionality
   const handleBack = () => {
@@ -202,39 +211,59 @@ const UserProfilePage = () => {
         </div>
       </div>
       
-      {/* User Stats */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Activity</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="font-bold text-2xl text-indigo-600">{userData.eventsHosted || 0}</div>
-              <div className="text-gray-600">Events Hosted</div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="font-bold text-2xl text-indigo-600">4.8</div>
-              <div className="text-gray-600">Average Rating</div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="font-bold text-2xl text-indigo-600">92%</div>
-              <div className="text-gray-600">Response Rate</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* No User Stats Section - Removed as requested */}
       
-      {/* Recent Events Section */}
+      {/* Events Hosted Section */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Events</h2>
+          <h2 className="text-xl font-semibold mb-4">Events Hosted</h2>
           
-          {/* This would be populated with actual events in a real implementation */}
-          <div className="text-center py-8 text-gray-500">
-            <FaCalendarAlt className="mx-auto text-gray-300 text-4xl mb-3" />
-            <p>No recent events to display</p>
-          </div>
+          {eventsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-pulse flex space-x-4">
+                <div className="flex-1 space-y-4 py-1">
+                  <div className="h-40 bg-gray-200 rounded w-full"></div>
+                  <div className="h-40 bg-gray-200 rounded w-full"></div>
+                </div>
+              </div>
+            </div>
+          ) : eventsError ? (
+            <div className="text-center py-8 text-gray-500">
+              <FaCalendarAlt className="mx-auto text-gray-300 text-4xl mb-3" />
+              <p>Error loading events</p>
+            </div>
+          ) : hostedEvents.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FaCalendarAlt className="mx-auto text-gray-300 text-4xl mb-3" />
+              <p>No events hosted yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {hostedEvents.map(event => {
+                // Format the date for display
+                const formattedDate = event.date && event.date.start ? 
+                  new Date(event.date.start).toLocaleDateString() : 'Date not specified';
+                
+                return (
+                  <div key={event._id || event.id} className="overflow-hidden">
+                    <UniversalEventCard
+                      item={{
+                        ...event,
+                        id: event._id || event.id, // Ensure ID is properly set
+                        date: formattedDate // Format date as string
+                      }}
+                      type="event"
+                      source="profile"
+                      fullWidth={true}
+                      variant="explore"
+                      hideHeader={true} // Hide the host header
+                      disableNavigation={true} // Make the card non-clickable
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

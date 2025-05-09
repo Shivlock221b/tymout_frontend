@@ -31,6 +31,7 @@ import TableCreationPage from './hosting/pages/TableCreationPage';
 import CircleCreationPage from './hosting/pages/CircleCreationPage';
 import BusinessListingPage from './hosting/pages/BusinessListingPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoute from './components/auth/PublicRoute';
 import Header from './components/layout/Header';
 import { useLocation } from 'react-router-dom';
 import Footer from './components/layout/Footer';
@@ -107,9 +108,9 @@ const App = () => {
             <Route 
               path="/explore" 
               element={
-                <ProtectedRoute>
+                <PublicRoute>
                   <ExplorePage />
-                </ProtectedRoute>
+                </PublicRoute>
               } 
             />
             {/* MyEvents route */}
@@ -177,9 +178,9 @@ const App = () => {
             <Route 
               path="/events/:id" 
               element={
-                <ProtectedRoute>
+                <PublicRoute>
                   <EventDetailPage type="events" />
-                </ProtectedRoute>
+                </PublicRoute>
               } 
             />
             <Route 

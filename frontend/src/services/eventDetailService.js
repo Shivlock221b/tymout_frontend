@@ -4,6 +4,7 @@ import {
   circlesData 
 } from '../data/mockExploreData';
 import { personalizedEventsData } from '../data/mockPersonalizedData';
+import { useAuthStore } from '../stores/authStore';
 
 /**
  * EventDetail Service
@@ -80,11 +81,18 @@ const eventDetailService = {
       if (type === 'events' && action === 'join') {
         // Import dynamically to avoid circular dependencies
         const eventService = (await import('./eventService')).default;
+        
+        // Get current user data from auth store
+        const authState = useAuthStore.getState();
+        const currentUser = authState.user;
+        
+        // Prepare user data with name from auth store if available
         const userData = {
-          // In a real app, this would come from the auth store
-          userId: localStorage.getItem('userId') || '1',
-          name: localStorage.getItem('userName') || 'Anonymous User'
+          userId: currentUser?._id || localStorage.getItem('userId') || '1',
+          name: currentUser?.name || currentUser?.fullName || localStorage.getItem('userName') || 'Anonymous User'
         };
+        
+        console.log('[eventDetailService] Joining event with user data:', userData);
         
         try {
           const result = await eventService.joinEvent(id, userData);
