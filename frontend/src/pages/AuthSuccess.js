@@ -17,10 +17,9 @@ const AuthSuccess = () => {
 
   useEffect(() => {
     const processAuth = async () => {
-      // Extract tokens from URL query parameters
+      // Extract token from URL query parameters
       const query = new URLSearchParams(location.search);
       const token = query.get('token');
-      const refreshToken = query.get('refreshToken');
       
       if (!token) {
         console.error('No token found in URL');
@@ -29,9 +28,9 @@ const AuthSuccess = () => {
         return;
       }
 
-      console.log('Tokens found in URL, verifying with backend...');
-      // Call the mutation function with both tokens
-      verifyOAuth({ token, refreshToken });
+      console.log('Token found in URL, verifying with backend...');
+      // Call the mutation function
+      verifyOAuth(token);
     };
 
     processAuth();

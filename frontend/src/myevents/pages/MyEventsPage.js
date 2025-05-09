@@ -38,7 +38,7 @@ const MyEventsPage = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header section with title and search */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-primary">Messages</h1>
+        <h1 className="text-2xl font-bold text-primary">Chat</h1>
         
         <div className="relative w-full max-w-xs ml-3">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -59,7 +59,7 @@ const MyEventsPage = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('upcoming')}
-            className={`px-3 py-1 rounded-full font-medium text-sm transition 
+            className={`px-4 py-2 rounded-full font-medium text-base transition 
               ${activeTab === 'upcoming'
                 ? 'bg-indigo-600 text-white shadow'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
@@ -69,7 +69,7 @@ const MyEventsPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-3 py-1 rounded-full font-medium text-sm transition 
+            className={`px-4 py-2 rounded-full font-medium text-base transition 
               ${activeTab === 'pending'
                 ? 'bg-indigo-600 text-white shadow'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
