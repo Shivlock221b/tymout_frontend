@@ -120,7 +120,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         <div
           className={`rounded-lg px-3 py-2 text-base break-words whitespace-pre-line relative ${
             isOwn 
-              ? 'chat-bubble-glass-own bg-gray-200 text-gray-900' 
+              ? 'chat-bubble-glass-own bg-gray-100 text-gray-900' 
               : 'chat-bubble-glass text-gray-900'
           }`}
           aria-label={isOwn ? 'Your message' : 'Member message'}

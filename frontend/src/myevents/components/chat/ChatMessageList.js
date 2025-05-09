@@ -255,7 +255,10 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           onClick={() => {
             const el = listRef.current || document.documentElement;
             if (el) {
-              el.scrollTop = el.scrollHeight;
+              el.scrollTo({
+                top: el.scrollHeight,
+                behavior: 'smooth'
+              });
             }
           }}
           aria-label="Scroll to latest"
@@ -272,7 +275,6 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
           </div>
         </div>
       )}
-      <div className="h-20 w-full flex-shrink-0 pb-16" id="chat-end-spacer" aria-hidden="true"></div>
     </div>
   );
 };

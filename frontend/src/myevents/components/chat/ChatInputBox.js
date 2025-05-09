@@ -3,14 +3,8 @@ import EmojiPickerButton from './EmojiPickerButton';
 
 const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, onTyping }) => {
   const inputRef = React.useRef();
-  const handleSend = (e) => {
-    // Prevent default to avoid keyboard dismissal
-    if (e) e.preventDefault();
-    
-    // Only send if there's content
-    if (value && value.trim()) {
-      onSend(value);
-    }
+  const handleSend = () => {
+    onSend(value);
   };
 
   // Insert emoji at cursor position
@@ -90,18 +84,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
       />
       <button
         className="btn btn-primary flex-shrink-0 flex items-center justify-center"
-        onTouchStart={(e) => {
-          // Prevent default behavior on touch start
-          e.preventDefault();
-        }}
-        onMouseDown={(e) => {
-          // Prevent default behavior on mouse down
-          e.preventDefault();
-        }}
-        onClick={(e) => {
-          // Handle the click with preventDefault
-          handleSend(e);
-        }}
+        onClick={handleSend}
         type="button"
         aria-label="Send message"
       >

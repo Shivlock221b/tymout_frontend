@@ -4,23 +4,19 @@ import authService from '../services/authService';
 import axios from 'axios';
 
 /**
- * Configure axios interceptors to manage auth headers and token refresh
+ * Configure axios interceptor to manage auth headers
  * @param {string} token - The authentication token to set in headers
  */
 const configureAxiosAuthInterceptor = (token) => {
   // Remove any existing interceptors to prevent duplicates
+  // Using ejectRequestInterceptor ensures we don't have memory leaks
   if (window.__authInterceptorId !== undefined) {
     axios.interceptors.request.eject(window.__authInterceptorId);
     window.__authInterceptorId = undefined;
   }
   
-  if (window.__authResponseInterceptorId !== undefined) {
-    axios.interceptors.response.eject(window.__authResponseInterceptorId);
-    window.__authResponseInterceptorId = undefined;
-  }
-  
-  // Add request interceptor to include token in all requests
-  const requestInterceptorId = axios.interceptors.request.use(
+  // Add interceptor to include token in all requests
+  const interceptorId = axios.interceptors.request.use(
     (config) => {
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
@@ -32,57 +28,8 @@ const configureAxiosAuthInterceptor = (token) => {
     }
   );
   
-  // Add response interceptor to handle token expiration
-  const responseInterceptorId = axios.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
-      
-      // If the error is 401 (Unauthorized) and we haven't tried to refresh the token yet
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        
-        try {
-          // Get the current auth state
-          const authStore = useAuthStore.getState();
-          const refreshToken = authStore.refreshToken;
-          
-          if (!refreshToken) {
-            // No refresh token available, logout the user
-            authStore.logout();
-            return Promise.reject(error);
-          }
-          
-          console.log('Token expired, attempting to refresh...');
-          
-          // Call the refresh token endpoint
-          const response = await authService.refreshToken(refreshToken);
-          const { user, token: newToken } = response;
-          
-          // Update the auth store with the new token
-          authStore.setUser(user, newToken, refreshToken);
-          
-          // Update the Authorization header for the original request
-          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-          
-          // Retry the original request with the new token
-          return axios(originalRequest);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          
-          // If refresh fails, logout the user
-          useAuthStore.getState().logout();
-          return Promise.reject(error);
-        }
-      }
-      
-      return Promise.reject(error);
-    }
-  );
-  
-  // Store the interceptor IDs for future reference
-  window.__authInterceptorId = requestInterceptorId;
-  window.__authResponseInterceptorId = responseInterceptorId;
+  // Store the interceptor ID for future reference
+  window.__authInterceptorId = interceptorId;
 };
 
 /**
@@ -94,17 +41,15 @@ export const useAuthStore = create(
     // State
     user: null,
     token: null,
-    refreshToken: null,
     isAuthenticated: false,
     loading: false,
     error: null,
     
     // Actions
-    setUser: (userData, token, refreshToken) => {
+    setUser: (userData, token) => {
       set({ 
         user: userData, 
         token, 
-        refreshToken,
         isAuthenticated: userData !== null && userData !== undefined,
         error: null
       });
@@ -118,7 +63,7 @@ export const useAuthStore = create(
     login: async (credentials) => {
       set({ loading: true, error: null });
       try {
-        const { user, token, refreshToken } = await authService.login(credentials);
+        const { user, token } = await authService.login(credentials);
         
         // Configure axios headers with new token
         configureAxiosAuthInterceptor(token);
@@ -126,7 +71,6 @@ export const useAuthStore = create(
         set({ 
           user, 
           token, 
-          refreshToken,
           isAuthenticated: true, 
           loading: false,
           error: null
@@ -152,7 +96,6 @@ export const useAuthStore = create(
         set({ 
           user: null, 
           token: null, 
-          refreshToken: null,
           isAuthenticated: false, 
           loading: false,
           error: null
@@ -166,7 +109,7 @@ export const useAuthStore = create(
     register: async (userData) => {
       set({ loading: true, error: null });
       try {
-        const { user, token, refreshToken } = await authService.register(userData);
+        const { user, token } = await authService.register(userData);
         
         // Configure axios headers with new token
         configureAxiosAuthInterceptor(token);
@@ -174,7 +117,6 @@ export const useAuthStore = create(
         set({ 
           user, 
           token, 
-          refreshToken,
           isAuthenticated: true, 
           loading: false,
           error: null
@@ -189,18 +131,9 @@ export const useAuthStore = create(
       }
     },
     
-    handleOAuthVerification: async (authData) => {
+    handleOAuthVerification: async (token) => {
       set({ loading: true, error: null });
       try {
-        // Extract token and refreshToken from the authData object
-        const { token, refreshToken } = typeof authData === 'string' 
-          ? { token: authData, refreshToken: null } // Handle legacy format
-          : authData;
-        
-        if (!token) {
-          throw new Error('No token provided');
-        }
-        
         // Set the token in axios headers for this request only
         const user = await authService.handleOAuthVerification(token);
         
@@ -210,7 +143,6 @@ export const useAuthStore = create(
         set({ 
           user, 
           token, 
-          refreshToken, // Store the refresh token from the OAuth callback
           isAuthenticated: true, 
           loading: false,
           error: null
@@ -219,45 +151,9 @@ export const useAuthStore = create(
       } catch (error) {
         set({ 
           loading: false, 
-          error: error.response?.data?.message || 'OAuth verification failed'
+          error: error.message || 'OAuth authentication failed'
         });
         return { success: false, error: get().error };
-      }
-    },
-    
-    // Refresh the access token using the refresh token
-    refreshAccessToken: async () => {
-      const { refreshToken } = get();
-      if (!refreshToken) {
-        console.error('No refresh token available');
-        return { success: false, error: 'No refresh token available' };
-      }
-      
-      set({ loading: true, error: null });
-      try {
-        console.log('Manually refreshing access token...');
-        const { user, token } = await authService.refreshToken(refreshToken);
-        
-        // Update the auth store with the new token but keep the same refresh token
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-          loading: false,
-          error: null
-        });
-        
-        // Configure axios headers with the new token
-        configureAxiosAuthInterceptor(token);
-        
-        return { success: true };
-      } catch (error) {
-        console.error('Manual token refresh failed:', error);
-        
-        // If refresh fails, logout the user
-        get().logout();
-        
-        return { success: false, error: 'Failed to refresh token' };
       }
     },
     
