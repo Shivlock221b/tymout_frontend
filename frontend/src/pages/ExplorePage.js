@@ -9,6 +9,7 @@ import ExploreSearch from '../components/explore/ExploreSearch';
 import ExploreResults from '../components/explore/ExploreResults';
 import TagFilter from '../components/explore/TagFilter';
 import CitySelector from '../components/explore/CitySelector';
+import SpotlightEvents from '../components/explore/SpotlightEvents';
 
 /**
  * ExplorePage Component
@@ -481,14 +482,22 @@ const ExplorePage = () => {
       {/* End hero + search */}
       <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0 }}>
 
-      {/* Heading moved to hero image */}
+      {/* Spotlight section - horizontally scrollable 2x3 grid */}
+      {!isLoading && results && results.length > 0 && (
+        <div className="mt-4">
+          <SpotlightEvents 
+            events={results.filter(event => 
+              event.set_trending === 'in the spotlight'
+            )} 
+          />
+        </div>
+      )}
       
-      {/* Search is now only in the hero overlay */}
-      
-      {/* Tag filter moved to hero overlay */}
-      
-      {/* Content section */}
+      {/* Content section with heading */}
       <div className="mt-8">
+        <div className="flex items-center mb-4 px-4">
+          <h2 className="text-xl font-bold text-gray-800">Find Your Table</h2>
+        </div>
         <ExploreResults 
           results={results} 
           isLoading={isLoading}
