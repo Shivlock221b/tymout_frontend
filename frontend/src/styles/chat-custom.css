@@ -1,0 +1,24 @@
+/* Custom chat styling */
+
+/* 1. Change user chat bubble from dark grey to light grey */
+.chat-bubble-glass-own {
+  background-color: #f0f0f0 !important; /* Light grey for user chat bubbles */
+}
+
+/* 2. Hide scrollbar completely while maintaining scroll functionality */
+.chat-scrollbar {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+  width: 0;
+  height: 0;
+}
+
+/* 3. Larger text and cursor for chat input */
+.chat-input {
+  font-size: 1.05rem !important; /* Slightly larger text */
+  caret-color: #4f46e5; /* Indigo cursor color */
+}

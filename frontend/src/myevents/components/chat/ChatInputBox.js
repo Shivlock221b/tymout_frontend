@@ -64,7 +64,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
       <EmojiPickerButton onSelect={handleEmojiSelect} />
       <textarea
         ref={inputRef}
-        className="flex-1 min-w-0 px-3 py-2 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[40px] max-h-32 overflow-auto"
+        className="flex-1 min-w-0 px-3 py-2 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[40px] max-h-32 overflow-auto chat-input"
         placeholder="Type a message..."
         value={value}
         maxLength={500}
@@ -89,7 +89,8 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
         style={{lineHeight: '1.5'}}
       />
       <button
-        className="btn btn-primary flex-shrink-0 flex items-center justify-center"
+        className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0"
+        style={{ display: 'grid', placeItems: 'center' }}
         onTouchStart={(e) => {
           // Prevent default behavior on touch start
           e.preventDefault();
@@ -105,7 +106,9 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
         type="button"
         aria-label="Send message"
       >
-        Send
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
       </button>
     </div>
   );

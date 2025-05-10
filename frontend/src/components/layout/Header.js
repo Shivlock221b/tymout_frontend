@@ -129,10 +129,12 @@ const Header = () => {
                 <Link 
                   to="/host"
                   className="mr-6 flex flex-col items-center focus:outline-none hover:opacity-80 transition-all duration-300 text-indigo-600"
-                  aria-label="Host"
+                  aria-label="Host a Table"
                 >
-                  <FaPlus className="text-lg mb-1" />
-                  <span className="text-xs font-medium">Host</span>
+                  <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center mb-1">
+                    <FaPlus className="text-lg text-white" />
+                  </div>
+                  <span className="text-xs font-medium">Host a Table</span>
                 </Link>
               </>
             )}
