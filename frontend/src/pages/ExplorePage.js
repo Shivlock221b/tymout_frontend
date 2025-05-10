@@ -335,7 +335,7 @@ const ExplorePage = () => {
           position: relative !important;
           box-sizing: border-box !important;
           border-radius: 12px !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
           overflow: hidden !important;
         }
         

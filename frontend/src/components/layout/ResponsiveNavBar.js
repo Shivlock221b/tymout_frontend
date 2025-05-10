@@ -22,8 +22,25 @@ const ResponsiveNavBar = () => {
 
   return (
     <>
+      <style>{`
+        .glassy-nav {
+          background-color: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-right: 1px solid rgba(255, 255, 255, 0.25);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+        
+        .glassy-nav-mobile {
+          background-color: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-top: 1px solid rgba(255, 255, 255, 0.25);
+          box-shadow: 0 -8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+      `}</style>
       {/* Desktop Left Side Navigation - hidden on mobile, visible on md+ screens */}
-      <nav className="hidden md:block w-64 h-screen bg-gray-100 p-6 fixed top-20 left-0 flex-col z-10"> 
+      <nav className="hidden md:block w-64 h-screen glassy-nav p-6 fixed top-20 left-0 flex-col z-10"> 
         <ul className="space-y-5">
           {navItems.map((item) => (
             <li key={item.name}>
@@ -46,7 +63,7 @@ const ResponsiveNavBar = () => {
       </nav>
 
       {/* Mobile Bottom Navigation - visible on small screens, hidden on md+ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glassy-nav-mobile z-50">
         <ul className="flex justify-between items-center p-2">
           {navItems.map((item) => (
             <li key={item.name} className="flex-1 flex justify-center">
