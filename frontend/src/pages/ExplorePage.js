@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
@@ -22,7 +22,6 @@ import SpotlightEvents from '../components/explore/SpotlightEvents';
  */
 const ExplorePage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getScrollTarget, clearScrollTarget } = useScrollToElement();
   const { user } = useUserData();
@@ -340,8 +339,8 @@ const ExplorePage = () => {
         }
         
         /* Base page resets */
-        body, html { margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; }
-        #root > div:first-of-type { padding-top: 0 !important; margin-top: 0 !important; }
+        body, html { margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; background-color: #FFFFFF !important; }
+        #root > div:first-of-type { padding-top: 0 !important; margin-top: 0 !important; background-color: #FFFFFF !important; }
         
         /* Horizontal scrolling for tag filter */
         .tag-scroll-container {
@@ -459,7 +458,7 @@ const ExplorePage = () => {
             />
             <div className="mt-6 pl-1">
               <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg" style={{ letterSpacing: '0.5px' }}>
-                <span className="text-white">Connecting through Shared Experience</span>
+                <span className="text-white">Meet Like-minded People!</span>
               </h2>
               <div className="h-1 w-20 bg-white rounded-full mt-2 opacity-80"></div>
             </div>
@@ -480,7 +479,7 @@ const ExplorePage = () => {
         </div>
       </div>
       {/* End hero + search */}
-      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0 }}>
+      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF' }}>
 
       {/* Spotlight section - horizontally scrollable 2x3 grid */}
       {!isLoading && results && results.length > 0 && (

@@ -10,7 +10,7 @@ const ResponsiveNavBar = () => {
   // Navigation items configuration - memoized to prevent recreating on each render
   const navItems = useMemo(() => [
     { name: 'Experience', path: '/explore', icon: <FaUsers /> },
-    { name: 'Chat', path: '/myevents', icon: <FaCommentDots /> },
+    { name: 'Chats', path: '/myevents', icon: <FaCommentDots /> },
     { name: 'Profile', path: '/profile', icon: <FaUser /> }
   ], []);
   

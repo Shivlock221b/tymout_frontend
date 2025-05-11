@@ -38,7 +38,7 @@ const MyEventsPage = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header section with title and search */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-primary">Chat</h1>
+        <h1 className="text-2xl font-bold text-primary">Chats</h1>
         
         <div className="relative w-full max-w-xs ml-3">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
