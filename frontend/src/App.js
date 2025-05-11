@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 // MIGRATION: Migration to Zustand and React Query complete
 // AuthProvider -> MIGRATED to useAuthStore (Zustand)
 // ProfileProvider -> MIGRATED to useProfileQueries hooks (React Query)
@@ -74,7 +75,7 @@ const App = () => {
   // Hide Footer on My Events page
   const isMyEventsPage = /\/myevents\/?$/.test(location.pathname);
   return (
-    <>
+    <HelmetProvider>
       {!isNoHeaderPage && <Header />}
       <div className={`flex flex-1 ${!isNoHeaderPage ? 'pt-16 md:pt-20' : ''}`}> 
         {/* Main content area: Add left margin if authenticated (for desktop side nav) */}
@@ -302,7 +303,7 @@ const App = () => {
 
       {/* Only show Footer when user is NOT authenticated */}
       {/* Removed this line as it is redundant */}
-    </>
+    </HelmetProvider>
   );
 };
 

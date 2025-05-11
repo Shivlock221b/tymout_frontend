@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useForm, Controller } from 'react-hook-form';
-import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUpload, FaBuilding } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUpload, FaBuilding, FaVenusMars, FaTimes, FaPlus } from 'react-icons/fa';
 
 /**
  * EventCreationFormHookForm Component
@@ -71,14 +71,38 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
   // Watch for changes
   const selectedCity = watch('city');
   
-  // Handle tags input (comma-separated)
-  const handleTagsChange = (e, onChange) => {
-    const tagText = e.target.value;
-    onChange(tagText); // Update the form input value
+  // Handle tags as pills
+  const [tagInput, setTagInput] = useState('');
+  const [tagsArray, setTagsArray] = useState([]);
+  
+  // Add a new tag
+  const addTag = (onChange) => {
+    if (tagInput.trim() !== '') {
+      const newTag = tagInput.trim();
+      const updatedTags = [...tagsArray, newTag];
+      setTagsArray(updatedTags);
+      setTagInput('');
+      
+      // Update the form value
+      onChange(updatedTags);
+    }
+  };
+  
+  // Remove a tag
+  const removeTag = (indexToRemove, onChange) => {
+    const updatedTags = tagsArray.filter((_, index) => index !== indexToRemove);
+    setTagsArray(updatedTags);
     
-    // Convert comma-separated text to array for actual submission
-    const tagsArray = tagText.split(',').map(tag => tag.trim()).filter(tag => tag);
-    setValue('tagsArray', tagsArray);
+    // Update the form value
+    onChange(updatedTags);
+  };
+  
+  // Handle key press in tag input (add tag on Enter)
+  const handleTagInputKeyPress = (e, onChange) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag(onChange);
+    }
   };
   
   const user = useAuthStore(state => state.user);
@@ -161,12 +185,13 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
           name: user && user.name ? user.name : 'Test Host'
         },
         attendees: [],
-        tags: typeof data.tags === 'string' ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : data.tags,
+        tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []),
         type: 'table',
         status: 'pending',
         maxAttendees: data.maxAttendees,
         entryFee: data.entryFee || 0,
         category: data.category,
+        gender: data.gender || 'All',
         access: data.isPublic ? 'public' : 'private',
         isPublic: data.isPublic // Explicitly include the isPublic field
       };
@@ -512,6 +537,45 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             </div>
           </div>
 
+          {/* Gender Field */}
+          <div>
+            <label htmlFor="gender" className="block text-base font-medium text-gray-700">
+              <span className="inline-flex items-center">
+                <FaVenusMars className="mr-2 text-gray-400" />
+                Who can join?
+              </span>
+            </label>
+            <div className="mt-2">
+              <Controller
+                name="gender"
+                control={control}
+                defaultValue="All"
+                render={({ field }) => (
+                  <div className="flex space-x-4">
+                    <div 
+                      className={`flex-1 py-2 px-4 border rounded-md cursor-pointer text-center transition-colors ${field.value === 'Male' ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
+                      onClick={() => field.onChange('Male')}
+                    >
+                      Male
+                    </div>
+                    <div 
+                      className={`flex-1 py-2 px-4 border rounded-md cursor-pointer text-center transition-colors ${field.value === 'Female' ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
+                      onClick={() => field.onChange('Female')}
+                    >
+                      Female
+                    </div>
+                    <div 
+                      className={`flex-1 py-2 px-4 border rounded-md cursor-pointer text-center transition-colors ${field.value === 'All' ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
+                      onClick={() => field.onChange('All')}
+                    >
+                      All
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
+          </div>
+
           {/* Capacity field removed - using maxAttendees instead */}
 
           {/* Event Image Upload */}
@@ -572,27 +636,57 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             <label htmlFor="tags" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaTags className="mr-2 text-gray-400" />
-                Tags (comma separated)
+                Tags
               </span>
             </label>
-            <div className="mt-1">
-              <Controller
-                name="tags"
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <input
-                    type="text"
-                    id="tags"
-                    value={value}
-                    onChange={(e) => handleTagsChange(e, onChange)}
-                    placeholder="e.g., coffee, networking, casual"
-                    className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
-                )}
-              />
-            </div>
+            <Controller
+              name="tags"
+              control={control}
+              render={({ field: { onChange } }) => (
+                <div>
+                  {/* Tags display */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tagsArray.map((tag, index) => (
+                      <div 
+                        key={index} 
+                        className="flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        <span>{tag}</span>
+                        <button 
+                          type="button"
+                          onClick={() => removeTag(index, onChange)}
+                          className="ml-1 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                        >
+                          <FaTimes size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Tag input */}
+                  <div className="flex mt-1">
+                    <input
+                      type="text"
+                      id="tagInput"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={(e) => handleTagInputKeyPress(e, onChange)}
+                      placeholder="Add a tag (e.g., coffee, networking)"
+                      className="block flex-1 rounded-l-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addTag(onChange)}
+                      className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <FaPlus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            />
             <p className="mt-1 text-sm text-gray-500">
-              Add relevant tags to help people find your table
+              Add relevant tags to help people find your event
             </p>
           </div>
 

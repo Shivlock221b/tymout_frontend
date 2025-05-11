@@ -27,6 +27,12 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
         !resultsRef.current.contains(event.target)
       ) {
         setIsOpen(false);
+        
+        // If we have a selected place but the input doesn't match it,
+        // reset to the selected place to ensure consistency
+        if (selectedPlace && query !== selectedPlace.name) {
+          setQuery(selectedPlace.name);
+        }
       }
     };
 
@@ -34,7 +40,7 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [selectedPlace, query]);
 
   // Search for places when query changes
   useEffect(() => {
@@ -65,13 +71,23 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
     if (e.target.value === '') {
       setSelectedPlace(null);
       onPlaceSelect(null);
+    } else if (selectedPlace && e.target.value !== selectedPlace.name) {
+      // If user is typing something different than the selected place,
+      // clear the selection to avoid inconsistency
+      setSelectedPlace(null);
     }
   };
 
   const handlePlaceSelect = (place) => {
+    // Update local state
     setSelectedPlace(place);
     setQuery(place.name);
+    
+    // Force close the dropdown immediately
     setIsOpen(false);
+    setResults([]);
+    
+    // Ensure the place is selected in the parent component
     onPlaceSelect(place);
   };
 
@@ -79,7 +95,7 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
     <div className="relative">
       <div className="relative" ref={searchRef}>
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
+          {/* <FaMapMarkerAlt className="h-5 w-5 text-gray-400" /> */}
         </div>
         <input
           type="text"
@@ -109,7 +125,7 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
         <p className="mt-1 text-sm text-amber-600">Please select a city first</p>
       )}
       
-      {isOpen && results.length > 0 && (
+      {isOpen && results.length > 0 && !selectedPlace && (
         <div 
           ref={resultsRef}
           className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto max-h-60"
