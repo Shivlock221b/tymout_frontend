@@ -108,34 +108,8 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
                   ${tag === 'Only For You' && !isAuthenticated ? 'cursor-pointer text-white/80 hover:text-white' : ''}
                 `}
               >
-                {tag === 'Play' ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <img 
-                      src="/icons/sports.png" 
-                      alt="Sports" 
-                      className="w-12 h-12 mb-1 filter brightness-0 invert" 
-                    />
-                    <span className="font-bold text-white">{tag}</span>
-                  </div>
-                ) : tag === 'Food' ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <img 
-                      src="/icons/food.png" 
-                      alt="Food" 
-                      className="w-12 h-12 mb-1 filter brightness-0 invert" 
-                    />
-                    <span className="font-bold text-white">{tag}</span>
-                  </div>
-                ) : tag === 'Learn' ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <img 
-                      src="/icons/learn.png" 
-                      alt="Learn" 
-                      className="w-12 h-12 mb-1 filter brightness-0 invert" 
-                    />
-                    <span className="font-bold text-white">{tag}</span>
-                  </div>
-                ) : (
+                {/* Logos hidden for now - will be used later */
+                (
                   <div className="flex items-center justify-center h-full">
                     <span className="font-bold text-white">{tag}</span>
                   </div>
