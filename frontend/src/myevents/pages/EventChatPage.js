@@ -319,6 +319,28 @@ const EventChatPage = () => {
     ? messages.filter(msg => msg.text && msg.text.includes(`#${selectedTag.name}`))
     : messages;
 
+  // Tag visibility state
+  const [showTags, setShowTags] = useState(false);
+
+  // Hide tags on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showTags) setShowTags(false);
+    };
+    const chatContent = chatContainerRef.current;
+    if (chatContent) {
+      chatContent.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (chatContent) {
+        chatContent.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [showTags]);
+
+  // Toggle function
+  const toggleShowTags = () => setShowTags((prev) => !prev);
+
   if (showGroupTabs) {
     return (
       <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative">
@@ -403,6 +425,8 @@ const EventChatPage = () => {
                   onTagFilter={handleTagFilter}
                   selectedTag={selectedTag}
                   onTagClick={handleTagClick}
+                  showTags={showTags}
+                  toggleShowTags={toggleShowTags}
                 />
               )}
             </div>

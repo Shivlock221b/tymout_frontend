@@ -19,6 +19,21 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
   const [, setTagQuery] = useState(''); // Only need the setter
   const [tagCandidates, setTagCandidates] = useState([]);
 
+  // Function to adjust textarea height based on content
+  const adjustTextareaHeight = () => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height (limit to max-height defined in CSS)
+    const newHeight = Math.min(textarea.scrollHeight, 120); // 120px max height (5-6 lines)
+    
+    // Set the height
+    textarea.style.height = `${newHeight}px`;
+  };
+
   // Fetch tags for the event (only for autocomplete functionality)
   useEffect(() => {
     if (!eventId) return;
@@ -26,6 +41,18 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
       .then(res => setTags(res.data))
       .catch(err => console.error('Failed to fetch tags:', err));
   }, [eventId]);
+
+  // Adjust height whenever value changes
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [value]);
+
+  // Adjust height on component mount
+  useEffect(() => {
+    if (inputRef.current && value) {
+      adjustTextareaHeight();
+    }
+  }, []);
 
   // Tag management functions removed as functionality was moved to GroupHeader
 
@@ -79,6 +106,9 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
     }
     // ...existing typing logic...
     if (onTyping) onTyping(val.length > 0);
+    
+    // Adjust textarea height as user types
+    adjustTextareaHeight();
   };
 
   // Insert mention at cursor
@@ -195,11 +225,11 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
           </button>
         ))}
       </div>
-      <div className="flex w-full gap-2 items-end">
+      <div className="flex w-full gap-2 items-start">
         {/* Tag button removed and moved to GroupHeader */}
         <textarea
           ref={inputRef}
-          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[28px] max-h-24 overflow-auto chat-input"
+          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[28px] overflow-auto chat-input"
           placeholder="Type a message..."
           value={value}
           maxLength={1500}
@@ -210,15 +240,19 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
             if (onTyping) onTyping(false);
           }}
           onKeyDown={e => {
-            if (e.key === 'Enter' && e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              // Send message with Enter (unless Shift is pressed for newline)
               e.preventDefault();
-              onSend(value);
+              handleSend(e);
+            } else if (e.key === 'Enter' && e.shiftKey) {
+              // Allow newline with Shift+Enter and adjust height
+              setTimeout(adjustTextareaHeight, 0);
             }
           }}
-          style={{lineHeight: '1.5'}}
+          style={{lineHeight: '1.5', overflow: 'hidden'}}
         />
         <button
-          className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0"
+          className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0 self-end"
           style={{ display: 'grid', placeItems: 'center' }}
           onTouchStart={(e) => {
             // Prevent default behavior on touch start

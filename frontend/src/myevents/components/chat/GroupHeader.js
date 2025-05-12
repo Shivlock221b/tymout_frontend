@@ -11,11 +11,13 @@ import { useAuthStore } from '../../../stores/authStore';
  * @param {Function} props.onTagFilter - Function to call when a tag is clicked for filtering
  * @param {Object} props.selectedTag - The currently selected tag for filtering
  * @param {Function} props.onTagClick - Function to call when a tag is clicked to insert in chat input
+ * @param {Boolean} props.showTags - Whether to show the tag pills
+ * @param {Function} props.toggleShowTags - Function to toggle the tag pills
  */
 
 const API_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
 
-const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagClick }) => {
+const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagClick, showTags = true, toggleShowTags }) => {
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState('');
   const [editingTagId, setEditingTagId] = useState(null);
@@ -139,35 +141,47 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
   
   return (
     <div className="flex flex-col w-full">
-      <button
-        className="flex items-center gap-3 group focus:outline-none w-full transition-all duration-300 justify-start"
-        onClick={onClick}
-        aria-label={`View details for ${eventTitle}`}
-        type="button"
-      >
-        <div className="relative flex-shrink-0">
-          <img
-            src={eventImage}
-            alt={eventTitle}
-            className="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm"
-          />
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-        </div>
-        <div className="flex flex-col items-start flex-grow min-w-0 text-left">
-          <span 
-            className="font-semibold text-base text-gray-800 group-hover:text-indigo-600 group-focus:text-indigo-600 transition-colors duration-300 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left"
-            title={eventTitle} // Show full title on hover
-          >
-            {displayTitle}
-          </span>
-          {/* Group info text removed as requested */}
-        </div>
-      </button>
-      {/* Tag management and filtering */}
-      <div className="flex items-center gap-2 mt-1">
-        {/* Tag add button (+ icon) - only visible to hosts */}
+      <div className="flex items-center w-full">
+        <button
+          className="flex items-center gap-3 group focus:outline-none w-full transition-all duration-300 justify-start flex-grow"
+          onClick={onClick}
+          aria-label={`View details for ${eventTitle}`}
+          type="button"
+        >
+          <div className="relative flex-shrink-0">
+            <img
+              src={eventImage}
+              alt={eventTitle}
+              className="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm"
+            />
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+          </div>
+          <div className="flex flex-col items-start flex-grow min-w-0 text-left">
+            <span 
+              className="font-semibold text-base text-gray-800 group-hover:text-indigo-600 group-focus:text-indigo-600 transition-colors duration-300 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left"
+              title={eventTitle}
+            >
+              {displayTitle}
+            </span>
+          </div>
+        </button>
+        {/* Tag toggle chevron icon - now in line with group name */}
+        <button
+          type="button"
+          className="flex items-center justify-center w-7 h-7 ml-2 rounded-full border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 transition focus:outline-none"
+          onClick={toggleShowTags}
+          aria-label={showTags ? 'Hide tags' : 'Show tags'}
+          style={{ minWidth: 28 }}
+        >
+          {showTags ? (
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 12 10 8 14 12" /></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 8 10 12 14 8" /></svg>
+          )}
+        </button>
+        {/* Tag add button (+ icon) - only visible to hosts, now next to toggle */}
         {isHost && (
-          <div className="relative tag-dropdown-container">
+          <div className="relative tag-dropdown-container ml-2">
             <button
               type="button"
               className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
@@ -239,9 +253,14 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
             )}
           </div>
         )}
-        
+      </div>
+      {/* Tag management and filtering */}
+      <div className="flex items-center gap-2 mt-1 relative">
         {/* Tag pills for filtering */}
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div
+          className={`overflow-hidden transition-all duration-300 ${showTags ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', WebkitOverflowScrolling: 'touch' }}
+        >
           {tags.map(tag => {
             const isSelected = selectedTag && selectedTag._id === tag._id;
             return (
@@ -254,7 +273,6 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
                   if (onTagClick) {
                     onTagClick(tag);
                   }
-                  
                   // Then also filter messages by this tag
                   onTagFilter && onTagFilter(isSelected ? null : tag);
                 }}
