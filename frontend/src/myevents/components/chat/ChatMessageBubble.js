@@ -146,11 +146,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         )}
         {/* Message bubble */}
         <div
-          className={`flex flex-col gap-1 max-w-[85%] relative ${
-            message.status === 'pending' ? 'border-2 border-indigo-200' : ''
-          } ${
-            message.status === 'failed' ? 'border-2 border-red-500' : ''
-          }`}
+          className={`flex flex-col gap-1 max-w-[85%] relative`}
           style={{ order: 1 }}
         >
           {/* Reply indicator */}

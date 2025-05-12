@@ -241,9 +241,25 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
           }}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
-              // Send message with Enter (unless Shift is pressed for newline)
-              e.preventDefault();
-              handleSend(e);
+              const textarea = e.target;
+              const cursorPos = textarea.selectionStart;
+              const text = textarea.value;
+              // Get the text before the cursor
+              const beforeCursor = text.slice(0, cursorPos);
+              // Get the text after the cursor
+              const afterCursor = text.slice(cursorPos);
+              // Check if the line before the cursor is empty (i.e., double Enter)
+              const lines = beforeCursor.split('\n');
+              const lastLine = lines[lines.length - 1];
+              if (lastLine.trim() === '' && afterCursor.trim() === '') {
+                // Double Enter: send message
+                e.preventDefault();
+                handleSend(e);
+              } else {
+                // Single Enter: add newline
+                // Let default behavior happen, then adjust height
+                setTimeout(adjustTextareaHeight, 0);
+              }
             } else if (e.key === 'Enter' && e.shiftKey) {
               // Allow newline with Shift+Enter and adjust height
               setTimeout(adjustTextareaHeight, 0);
