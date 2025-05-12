@@ -6,7 +6,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // NotificationsProvider -> MIGRATED to useNotificationQueries hooks (React Query)
 // ScrollToElementProvider -> MIGRATED to useUIStore (Zustand)
 import { useAuthStore } from './stores/authStore';
-import HomePage from './pages/HomePage';
+// HomePage import removed as it's not being used
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AuthSuccess from './pages/AuthSuccess';

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useAuthStore } from '../../../stores/authStore';
 
 /**
  * GroupHeader component displays the event (group) name and photo in the chat header.
@@ -9,32 +10,76 @@ import axios from 'axios';
  * @param {Boolean} props.isAdmin - Whether the current user is an admin
  * @param {Function} props.onTagFilter - Function to call when a tag is clicked for filtering
  * @param {Object} props.selectedTag - The currently selected tag for filtering
+ * @param {Function} props.onTagClick - Function to call when a tag is clicked to insert in chat input
  */
 
 const API_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
 
-const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag }) => {
+const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagClick }) => {
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState('');
   const [editingTagId, setEditingTagId] = useState(null);
   const [editingTagName, setEditingTagName] = useState('');
   const [error, setError] = useState('');
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [tagLoading, setTagLoading] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  
+  // Get current user from auth store
+  const currentUser = useAuthStore(state => state.user);
 
   // Debug log
   console.log('[GroupHeader Debug] isAdmin:', isAdmin, 'tags:', tags, 'event:', event);
+
+  // Check if current user is the host of the event
+  useEffect(() => {
+    if (!currentUser || !event || !event.host) return;
+    if (typeof event.host === 'object') {
+      if (event.host.userId) {
+        setIsHost(event.host.userId.toString() === currentUser._id.toString());
+      } else if (event.host._id) {
+        setIsHost(event.host._id.toString() === currentUser._id.toString());
+      } else if (event.host.id) {
+        setIsHost(event.host.id.toString() === currentUser._id.toString());
+      }
+    } else {
+      setIsHost(event.host.toString() === currentUser._id.toString());
+    }
+  }, [currentUser, event]);
 
   useEffect(() => {
     if (!event?._id) return;
     fetchTags();
     // eslint-disable-next-line
   }, [event?._id]);
+  
+  // Add event listener to handle clicks outside the tag dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if the click was outside the tag dropdown
+      if (showTagDropdown && !event.target.closest('.tag-dropdown-container')) {
+        setShowTagDropdown(false);
+      }
+    };
+
+    // Add the event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showTagDropdown]);
 
   const fetchTags = async () => {
+    setTagLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/tags?eventId=${event._id}`);
       setTags(res.data);
     } catch (err) {
       setError('Failed to fetch tags');
+    } finally {
+      setTagLoading(false);
     }
   };
 
@@ -42,7 +87,9 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag }) => {
     if (!newTag.trim()) return;
     setError('');
     try {
-      await axios.post(`${API_URL}/api/tags`, { name: newTag.trim(), eventId: event._id });
+      // Convert tag name to lowercase before saving
+      const tagNameLowercase = newTag.trim().toLowerCase();
+      await axios.post(`${API_URL}/api/tags`, { name: tagNameLowercase, eventId: event._id });
       setNewTag('');
       fetchTags();
     } catch (err) {
@@ -54,7 +101,9 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag }) => {
     if (!editingTagName.trim()) return;
     setError('');
     try {
-      await axios.put(`${API_URL}/api/tags/${tagId}`, { name: editingTagName.trim() });
+      // Convert tag name to lowercase before saving
+      const tagNameLowercase = editingTagName.trim().toLowerCase();
+      await axios.put(`${API_URL}/api/tags/${tagId}`, { name: tagNameLowercase });
       setEditingTagId(null);
       setEditingTagName('');
       fetchTags();
@@ -111,27 +160,112 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag }) => {
           >
             {displayTitle}
           </span>
-          <span className="text-xs text-indigo-600 overflow-hidden text-ellipsis whitespace-nowrap w-full text-left">
-            Click here for group-info
-          </span>
+          {/* Group info text removed as requested */}
         </div>
       </button>
-      {/* Tag pills for filtering only */}
-      <div className="flex items-center gap-2 mt-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {tags.map(tag => {
-          const isSelected = selectedTag && selectedTag._id === tag._id;
-          return (
-            <span
-              key={tag._id}
-              className={`inline-flex items-center px-2 py-0.5 mr-2 rounded-full text-xs font-medium cursor-pointer transition-colors
-                ${isSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
-              onClick={() => onTagFilter && onTagFilter(isSelected ? null : tag)}
-              style={{ display: 'inline-block' }}
+      {/* Tag management and filtering */}
+      <div className="flex items-center gap-2 mt-1">
+        {/* Tag add button (+ icon) - only visible to hosts */}
+        {isHost && (
+          <div className="relative tag-dropdown-container">
+            <button
+              type="button"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+              onClick={() => setShowTagDropdown(v => !v)}
+              aria-label="Manage tags"
             >
-              #{tag.name}
-            </span>
-          );
-        })}
+              <span className="text-base font-bold">+</span>
+            </button>
+            {showTagDropdown && (
+              <div className="absolute left-0 top-9 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[180px] max-h-64 overflow-y-auto p-2">
+                {/* Add tag input */}
+                <div className="flex gap-1 mb-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    maxLength={20}
+                    placeholder="Add new tag..."
+                    className="border px-2 py-1 rounded text-xs flex-1"
+                  />
+                  <button
+                    onClick={handleAddTag}
+                    className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                {tagLoading ? (
+                  <div className="p-2 text-xs text-gray-500">Loading...</div>
+                ) : error ? (
+                  <div className="p-2 text-xs text-red-500">{error}</div>
+                ) : tags.length === 0 ? (
+                  <div className="p-2 text-xs text-gray-400">No tags</div>
+                ) : (
+                  tags.map(tag => (
+                    <div key={tag._id} className="flex items-center w-full mb-2">
+                      {editingTagId === tag._id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editingTagName}
+                            onChange={e => setEditingTagName(e.target.value)}
+                            maxLength={20}
+                            className="border px-1 py-0.5 rounded text-xs"
+                            style={{ width: 70 }}
+                          />
+                          <button onClick={() => handleEditTag(tag._id)} className="text-green-600 text-xs font-bold">✔</button>
+                          <button onClick={() => { setEditingTagId(null); setEditingTagName(''); }} className="text-gray-400 text-xs font-bold">✖</button>
+                        </>
+                      ) : (
+                        <div className="flex items-center w-full">
+                          <span className="inline-block bg-indigo-100 text-indigo-700 px-3 py-0.5 rounded-full text-sm font-medium hover:bg-indigo-200 flex-shrink-0">
+                            #{tag.name}
+                          </span>
+                          <div className="flex-1"></div>
+                          <button 
+                            onClick={() => handleDeleteTag(tag._id)} 
+                            className="text-red-600 text-lg font-bold ml-2 p-1 hover:bg-red-50 rounded-full"
+                            title="Delete tag"
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Tag pills for filtering */}
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {tags.map(tag => {
+            const isSelected = selectedTag && selectedTag._id === tag._id;
+            return (
+              <span
+                key={tag._id}
+                className={`inline-flex items-center px-3 py-1 mr-2 rounded-full text-sm font-medium cursor-pointer transition-colors
+                  ${isSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                onClick={(e) => {
+                  // First add the tag to the chat input
+                  if (onTagClick) {
+                    onTagClick(tag);
+                  }
+                  
+                  // Then also filter messages by this tag
+                  onTagFilter && onTagFilter(isSelected ? null : tag);
+                }}
+                style={{ display: 'inline-block' }}
+                title="Click to add tag to message and filter by tag"
+              >
+                #{tag.name}
+              </span>
+            );
+          })}
+        </div>
       </div>
       {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
     </div>

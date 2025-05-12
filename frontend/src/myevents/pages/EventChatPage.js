@@ -97,11 +97,28 @@ const EventChatPage = () => {
     };
   }, [eventId, markAsRead]);
 
+  // Function to scroll to bottom of chat
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Handle sending messages
   const handleSend = (text) => {
-    if (!text.trim()) return;
-    sendMessage(text, replyToMessage);
+    // Ensure text is a string and not empty
+    const textStr = typeof text === 'string' ? text : String(text || '');
+    if (!textStr.trim()) return;
+    
+    // Send the message - sendMessage expects (text, replyToMessage)
+    sendMessage(textStr, replyToMessage);
+    
+    // Clear the input but prepare it with the selected tag if one exists
+    setInput(selectedTag ? `#${selectedTag.name} ` : '');
     setReplyToMessage(null);
-    setInput('');
+    
+    // Scroll to bottom after sending
+    scrollToBottom();
   };
 
   const handleReplyTo = (message) => {
@@ -234,8 +251,68 @@ const EventChatPage = () => {
   const [selectedTag, setSelectedTag] = useState(null);
   const handleTagFilter = (tag) => {
     setSelectedTag(tag);
+    
+    // If a tag is selected, automatically add it to the input field
+    if (tag) {
+      const tagText = `#${tag.name}`;
+      const currentText = input.trim();
+      
+      // Only add the tag if it's not already at the beginning of the input
+      if (currentText === '') {
+        setInput(tagText + ' ');
+      } else if (!currentText.startsWith(tagText)) {
+        setInput(tagText + ' ' + currentText);
+      }
+      
+      // Focus the input field
+      setTimeout(() => {
+        const inputField = document.querySelector('.chat-input');
+        if (inputField) {
+          inputField.focus();
+        }
+      }, 50);
+    }
   };
-  const handleClearTagFilter = () => setSelectedTag(null);
+  
+  // Clear tag filter and remove tag from input
+  const handleClearTagFilter = () => {
+    setSelectedTag(null);
+    
+    // If input starts with the tag, remove it
+    if (selectedTag) {
+      const tagText = `#${selectedTag.name}`;
+      const currentText = input.trim();
+      
+      if (currentText.startsWith(tagText)) {
+        setInput(currentText.substring(tagText.length).trim());
+      }
+    }
+  };
+  
+  // Handle inserting a tag into the chat input
+  const handleTagClick = (tag) => {
+    // Add the tag as the first word in the input
+    // If there's already text, add a space after the tag
+    const tagText = `#${tag.name}`;
+    const currentText = input.trim();
+    if (currentText === '') {
+      setInput(tagText + ' ');
+    } else if (currentText.startsWith(tagText)) {
+      // If the input already starts with this tag, don't add it again
+      return;
+    } else {
+      // Add the tag at the beginning and keep the existing text
+      setInput(tagText + ' ' + currentText);
+    }
+    
+    // Focus the input field after inserting the tag
+    setTimeout(() => {
+      const inputField = document.querySelector('.chat-input');
+      if (inputField) {
+        inputField.focus();
+      }
+    }, 50);
+  };
 
   // Filter messages by selected tag
   const filteredMessages = selectedTag
@@ -325,6 +402,7 @@ const EventChatPage = () => {
                   isAdmin={isAdmin}
                   onTagFilter={handleTagFilter}
                   selectedTag={selectedTag}
+                  onTagClick={handleTagClick}
                 />
               )}
             </div>

@@ -6,7 +6,7 @@ import { FaSearch } from 'react-icons/fa';
 import { useChatPreviews } from '../hooks/queries/useChatPreviewQuery';
 import { queryClient } from '../../query/queryClient';
 import { io } from 'socket.io-client';
-import { useAuthStore } from '../../stores/authStore';
+// useAuthStore import removed as it's not being used
 
 const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
 
@@ -14,7 +14,8 @@ const MyEventsPage = () => {
   const { data: events = [], isLoading, isError } = useMyEvents();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
-  const currentUserId = useAuthStore(state => state.user?._id);
+  // currentUserId removed as it's not being used
+  // const currentUserId = useAuthStore(state => state.user?._id);
 
   // Helper function to check if an event is in the past
   const isEventPast = (event) => {
