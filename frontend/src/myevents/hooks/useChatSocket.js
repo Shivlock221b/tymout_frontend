@@ -149,7 +149,7 @@ export function useChatSocket(eventId) {
       });
     });
 
-    // statusUpdate (e.g., delivered)
+    // statusUpdate (e.g., delivered/read)
     socket.on('statusUpdate', ({ messageId, status }) => {
       if (!messageId || !status) return;
       setMessages(prev => prev.map(m => (m._id === messageId || m.id === messageId) ? { ...m, status } : m));
@@ -298,12 +298,19 @@ export function useChatSocket(eventId) {
     }
   }, [eventId, user, debouncedStopTyping]);
 
+  // Add markAsRead function
+  const markAsRead = useCallback(() => {
+    if (!socketRef.current || !user || !eventId) return;
+    socketRef.current.emit('markAsRead', { eventId, userId: user._id });
+  }, [eventId, user]);
+
   return {
     messages,
     sendMessage,
     deleteMessage,
     setMessages,
     typingUsers,
-    updateTypingStatus
+    updateTypingStatus,
+    markAsRead
   };
 }

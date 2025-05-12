@@ -190,7 +190,7 @@ const UserProfilePage = () => {
                 </div>
               )}
               
-              <p className="text-gray-600 mb-4">{userData.bio}</p>
+              <p className="text-gray-600 mb-4" style={{ whiteSpace: 'pre-wrap' }}>{userData.bio}</p>
               
               {userData.interests && userData.interests.length > 0 && (
                 <div className="mb-4">

@@ -5,12 +5,19 @@ import { isPast } from 'date-fns';
 import eventService from '../../services/eventService';
 
 // Only use global CSS classes!
-const MyEventTicketCard = ({ event, isPending = false }) => {
+const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnreadBadge = false }) => {
+  console.log('CARD BADGE', { eventTitle: event.title, unreadCount, showUnreadBadge });
   const navigate = useNavigate();
 
   // Format the date object into a readable string
   const formattedDate = event.date && event.date.start 
-    ? new Date(event.date.start).toLocaleDateString()
+    ? (() => {
+        const dateObj = new Date(event.date.start);
+        const day = dateObj.getDate().toString().padStart(2, '0');
+        const month = dateObj.toLocaleString('en-US', { month: 'short' });
+        const year = dateObj.getFullYear();
+        return `${day}/${month}/${year}`;
+      })()
     : 'Date not available'; // Fallback if date or start is missing
     
   // Check if event is in the past
@@ -33,7 +40,7 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
     
     return (
       <>
-        {accessType} {formattedLocation}
+        {accessType}
       </>
     );
   };
@@ -140,12 +147,19 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
         tabIndex={isPending ? undefined : 0}
         onKeyPress={isPending ? undefined : e => { if (e.key === 'Enter') handleClick(); }}
       >
-        <img
-          src={event.event_image}
-          alt={event.title}
-          className="w-14 h-14 rounded object-cover border border-gray-200 bg-gray-50"
-          loading="lazy"
-        />
+        <div className="relative">
+          <img
+            src={event.event_image}
+            alt={event.title}
+            className="w-14 h-14 rounded object-cover border border-gray-200 bg-gray-50"
+            loading="lazy"
+          />
+          {showUnreadBadge && (
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg z-10">
+              {unreadCount}
+            </span>
+          )}
+        </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
             <div className="font-semibold text-base text-primary mb-0.5">{event.title}</div>
@@ -172,7 +186,12 @@ const MyEventTicketCard = ({ event, isPending = false }) => {
             )}
           </div>
           {/* Use the formatted date and location strings */}
-          <div className="text-gray-500 text-xs mb-0.5">{formattedDate} &bull; {locationWithAccess()}</div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-0.5 rounded-full">
+              {formattedDate}
+            </span>
+            {locationWithAccess()}
+          </div>
           <div className="text-xs text-theme-accent"><span className="font-mono">{event.ticketCode}</span></div>
           {/* Removed status display */}
         </div>

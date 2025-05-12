@@ -14,6 +14,8 @@ import { useEventTabsQuery } from '../hooks/queries/useEventTabsQuery';
 import { useEventMembersQuery } from '../hooks/queries/useEventMembersQuery';
 import { useEventAnnouncementsQuery } from '../hooks/queries/useEventAnnouncementsQuery';
 import useEventsStore from '../hooks/stores/eventsStore';
+import EventTagManager from '../components/event/EventTagManager';
+import { useAuthStore } from '../../stores/authStore';
 
 const EventPage = () => {
   const { eventId } = useParams();
@@ -38,6 +40,16 @@ const EventPage = () => {
   const { data: tabs = [], isLoading: isTabsLoading } = useEventTabsQuery();
   const { data: members = [], isLoading: isMembersLoading } = useEventMembersQuery(eventId);
   const { data: announcements = [], isLoading: isAnnouncementsLoading } = useEventAnnouncementsQuery(eventId);
+  // Get current user ID
+  const currentUserId = useAuthStore(state => state.user?._id);
+  // Find current user's member object
+  const currentMember = members.find(m => (m.userId || m.id) === currentUserId);
+  const isAdmin = currentMember?.role === 'admin';
+  // Debug logs
+  console.log('[TagManager Debug] members:', members);
+  console.log('[TagManager Debug] currentUserId:', currentUserId);
+  console.log('[TagManager Debug] currentMember:', currentMember);
+  console.log('[TagManager Debug] isAdmin:', isAdmin);
 
   if (isEventsLoading) return <div className="p-4 text-center text-gray-500">Loading event...</div>;
   if (isEventsError || !event) return <div className="p-4 text-center text-red-500">Event not found.</div>;
@@ -82,6 +94,10 @@ const EventPage = () => {
         />
       )}
       <div className="flex-1">
+        {/* Tag Manager for Admins */}
+        {isAdmin && (
+          <EventTagManager eventId={eventId} isAdmin={isAdmin} />
+        )}
         {activeTab === 'members' && (
           isMembersLoading ? (
             <div className="p-4 text-gray-500">Loading members...</div>

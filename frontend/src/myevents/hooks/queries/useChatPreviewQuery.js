@@ -21,10 +21,11 @@ export function useChatPreviews(eventIds = []) {
     try {
       // Fetch last messages for each event
       const previewPromises = eventIds.map(eventId => 
-        axios.get(`${API_URL}/preview/${eventId}?userId=${userId}`)
+        axios.get(`${API_URL}/chat-preview/${eventId}?userId=${userId}`)
       );
       
       const results = await Promise.all(previewPromises);
+      console.log('DEBUG useChatPreviews API results:', results);
       
       // Transform results into a map of eventId -> preview data
       const chatPreviews = results.reduce((acc, res, index) => {
@@ -57,8 +58,8 @@ export function useChatPreviews(eventIds = []) {
     queryKey: ['chatPreviews', eventIds.sort().join(','), userId],
     queryFn: fetchChatPreviews,
     enabled: Boolean(eventIds.length && userId),
-    staleTime: 60000, // Cache for 1 minute
-    refetchInterval: 30000, // Poll every 30 seconds
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: false, // No polling
   });
 
   return { chatPreviews, isLoading };
