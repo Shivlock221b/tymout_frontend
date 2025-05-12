@@ -327,7 +327,7 @@ const ExplorePage = () => {
           max-width: 100% !important;
           margin-left: auto !important;
           margin-right: auto !important;
-          margin-top: -80px !important; /* Negative margin to offset header height */
+          margin-top: 40px !important; /* Positive margin to account for fixed header */
           padding-top: 0 !important;
           z-index: 1 !important;
           padding: 0 !important;
@@ -417,7 +417,13 @@ const ExplorePage = () => {
       `}</style>
       
       {/* City Selector - positioned at the very top of the page */}
-      <div className="w-full bg-transparent py-1 px-4 mb-0 sticky top-0 z-30">
+      <div className="w-full py-2 px-4 mb-0 fixed top-0 left-0 right-0 z-40" style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: '0 1px 10px rgba(0, 0, 0, 0.1)',
+        transition: 'all 0.3s ease'
+      }}>
         <div className="flex justify-start">
           <div className="city-selector-container">
             <CitySelector 

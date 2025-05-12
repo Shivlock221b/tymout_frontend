@@ -87,6 +87,11 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
 
   const handleAddTag = async () => {
     if (!newTag.trim()) return;
+    // Check if tag limit is reached
+    if (tags.length >= 3) {
+      setError('Maximum of 3 tags allowed');
+      return;
+    }
     setError('');
     try {
       // Convert tag name to lowercase before saving
@@ -165,21 +170,8 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
             </span>
           </div>
         </button>
-        {/* Tag toggle chevron icon - now in line with group name */}
-        <button
-          type="button"
-          className="flex items-center justify-center w-7 h-7 ml-2 rounded-full border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 transition focus:outline-none"
-          onClick={toggleShowTags}
-          aria-label={showTags ? 'Hide tags' : 'Show tags'}
-          style={{ minWidth: 28 }}
-        >
-          {showTags ? (
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 12 10 8 14 12" /></svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 8 10 12 14 8" /></svg>
-          )}
-        </button>
-        {/* Tag add button (+ icon) - only visible to hosts, now next to toggle */}
+        
+        {/* Tag add button (+ icon) - only visible to hosts, now to the left of toggle */}
         {isHost && (
           <div className="relative tag-dropdown-container ml-2">
             <button
@@ -191,20 +183,28 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
               <span className="text-base font-bold">+</span>
             </button>
             {showTagDropdown && (
-              <div className="absolute left-0 top-9 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[180px] max-h-64 overflow-y-auto p-2">
+              <div className="absolute right-0 top-9 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[180px] max-w-[220px] max-h-64 overflow-y-auto p-2">
+                {/* Tag limit message */}
+                <div className="text-xs text-gray-600 mb-2 italic">
+                  Only host can add or remove up to 3 tags
+                </div>
                 {/* Add tag input */}
-                <div className="flex gap-1 mb-2">
+                <div className="flex gap-1 mb-2 items-center">
                   <input
                     type="text"
                     value={newTag}
                     onChange={e => setNewTag(e.target.value)}
                     maxLength={20}
                     placeholder="Add new tag..."
-                    className="border px-2 py-1 rounded text-xs flex-1"
+                    className="border px-2 py-1 rounded text-xs flex-1 w-[100px] min-w-0"
+                    style={{ maxWidth: "120px" }}
+                    disabled={tags.length >= 3}
                   />
                   <button
                     onClick={handleAddTag}
-                    className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700"
+                    className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 whitespace-nowrap flex-shrink-0"
+                    disabled={tags.length >= 3 || !newTag.trim()}
+                    style={{ opacity: (tags.length >= 3 || !newTag.trim()) ? 0.6 : 1 }}
                   >
                     Add
                   </button>
@@ -253,6 +253,21 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
             )}
           </div>
         )}
+        
+        {/* Tag toggle chevron icon - now in line with group name */}
+        <button
+          type="button"
+          className="flex items-center justify-center w-7 h-7 ml-2 rounded-full border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 transition focus:outline-none"
+          onClick={toggleShowTags}
+          aria-label={showTags ? 'Hide tags' : 'Show tags'}
+          style={{ minWidth: 28 }}
+        >
+          {showTags ? (
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 12 10 8 14 12" /></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 8 10 12 14 8" /></svg>
+          )}
+        </button>
       </div>
       {/* Tag management and filtering */}
       <div className="flex items-center gap-2 mt-1 relative">
