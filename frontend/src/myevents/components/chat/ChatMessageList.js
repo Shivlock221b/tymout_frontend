@@ -230,7 +230,15 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
                     isOwn={isOwn}
                     userPhoto={msg.senderAvatar || msg.avatar || msg.photo || undefined}
                     onDelete={deleteMessage}
-                    onReplyTo={onReplyTo}
+                    onReplyTo={(message, messageId) => {
+                      // If messageId is provided, scroll to that message
+                      if (messageId) {
+                        scrollToMessage(messageId);
+                      } else {
+                        // Otherwise, use the original onReplyTo handler
+                        onReplyTo && onReplyTo(message);
+                      }
+                    }}
                     onResend={handleResend}
                   />
                 </div>
