@@ -63,7 +63,7 @@ const EventChatPage = () => {
   
   console.log('Resolved event from events list:', event);
   // useChatSocket returns an array of message objects as per the backend structure
-  const { messages, sendMessage, typingUsers, updateTypingStatus } = useChatSocket(eventId);
+  const { messages, sendMessage, typingUsers, updateTypingStatus, markAsRead } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
 
@@ -83,6 +83,19 @@ const EventChatPage = () => {
       setTimeout(scrollToBottom, 300); // Additional delay for slower devices
     }
   }, [messages]);
+
+  // Mark messages as read on mount and when window regains focus
+  useEffect(() => {
+    if (!eventId) return;
+    // Mark as read on mount
+    markAsRead();
+    // Mark as read when window regains focus
+    const handleFocus = () => markAsRead();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [eventId, markAsRead]);
 
   const handleSend = (text) => {
     if (!text.trim()) return;
@@ -212,6 +225,23 @@ const EventChatPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Find current user's member object for admin check
+  const currentUserId = user?._id;
+  const currentMember = members.find(m => (m.userId || m.id) === currentUserId);
+  const isAdmin = currentMember?.role === 'admin';
+
+  // Tag filtering state
+  const [selectedTag, setSelectedTag] = useState(null);
+  const handleTagFilter = (tag) => {
+    setSelectedTag(tag);
+  };
+  const handleClearTagFilter = () => setSelectedTag(null);
+
+  // Filter messages by selected tag
+  const filteredMessages = selectedTag
+    ? messages.filter(msg => msg.text && msg.text.includes(`#${selectedTag.name}`))
+    : messages;
+
   if (showGroupTabs) {
     return (
       <div className="flex flex-col h-screen bg-white max-w-[600px] mx-auto relative">
@@ -289,7 +319,13 @@ const EventChatPage = () => {
                 <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
               </button>
               {event && (
-                <GroupHeader event={event} onClick={() => setShowGroupTabs(true)} />
+                <GroupHeader
+                  event={event}
+                  onClick={() => setShowGroupTabs(true)}
+                  isAdmin={isAdmin}
+                  onTagFilter={handleTagFilter}
+                  selectedTag={selectedTag}
+                />
               )}
             </div>
           </div>
@@ -301,7 +337,7 @@ const EventChatPage = () => {
         {/* Chat messages with scrolling */}
         <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden" ref={chatContainerRef}>
           <ChatMessageList
-            messages={messages}
+            messages={filteredMessages}
             currentUserId={user?._id}
             otherPhoto={event?.thumbnail}
             eventId={eventId}
@@ -319,9 +355,19 @@ const EventChatPage = () => {
               replyToMessage={replyToMessage}
               onCancelReply={handleCancelReply}
               onTyping={updateTypingStatus}
+              eventId={eventId}
+              members={members}
             />
           </div>
         </div>
+        {/* Show active tag filter */}
+        {selectedTag && (
+          <div className="flex items-center gap-2 px-4 py-1 bg-indigo-50 border-b border-indigo-200 text-indigo-700 text-xs">
+            <span>Filtering by tag:</span>
+            <span className="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">#{selectedTag.name}</span>
+            <button onClick={handleClearTagFilter} className="ml-2 text-xs text-red-500 hover:underline">Clear</button>
+          </div>
+        )}
       </div>
     </div>
   );

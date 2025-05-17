@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMyEvents } from '../hooks/queries/useMyEventsQueries';
 import MyEventTicketCard from './MyEventTicketCard';
 import { isPast } from 'date-fns';
 import { FaSearch } from 'react-icons/fa';
+import { useChatPreviews } from '../hooks/queries/useChatPreviewQuery';
+import { queryClient } from '../../query/queryClient';
+import { io } from 'socket.io-client';
+import { useAuthStore } from '../../stores/authStore';
+
+const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
 
 const MyEventsPage = () => {
   const { data: events = [], isLoading, isError } = useMyEvents();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Debug: Log the events data structure to the console
-  console.log('[MyEventsPage] events:', events);
+  const currentUserId = useAuthStore(state => state.user?._id);
 
   // Helper function to check if an event is in the past
   const isEventPast = (event) => {
@@ -33,6 +37,22 @@ const MyEventsPage = () => {
     
     return matchesTab && matchesSearch;
   });
+
+  // Get chat previews (unread counts) for all filtered events
+  const eventIds = filteredEvents.map(event => event._id);
+  const { chatPreviews } = useChatPreviews(eventIds);
+
+  // Real-time unread counter update
+  useEffect(() => {
+    const socket = io(SOCKET_URL);
+    socket.on('unreadCountsChanged', (data) => {
+      console.log('Received unreadCountsChanged', data, 'refetching chatPreviews');
+      queryClient.refetchQueries({ queryKey: ['chatPreviews'], exact: false });
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -108,14 +128,20 @@ const MyEventsPage = () => {
       ) : (
         <div className="flex flex-col space-y-3">
           {/* Use event._id as the key, assuming it's the unique ID */}
-          {filteredEvents.map(event => (
-            <div key={event._id} className="bg-white rounded-lg shadow-sm">
-              <MyEventTicketCard 
-                event={event} 
-                isPending={activeTab === 'pending'}
-              />
-            </div>
-          ))}
+          {filteredEvents.map(event => {
+            const preview = chatPreviews?.[event._id] || {};
+            const showUnreadBadge = preview.unreadCount > 0;
+            return (
+              <div key={event._id} className="bg-white rounded-lg shadow-sm">
+                <MyEventTicketCard 
+                  event={event} 
+                  isPending={activeTab === 'pending'}
+                  unreadCount={preview.unreadCount || 0}
+                  showUnreadBadge={showUnreadBadge}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

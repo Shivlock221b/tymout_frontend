@@ -6,7 +6,7 @@ import './typing-indicator.css';
 import '../../../styles/chat-custom.css';
 
 const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo, typingUsers = [] }) => {
-  const { deleteMessage } = useChatSocket(eventId);
+  const { deleteMessage, sendMessage, setMessages } = useChatSocket(eventId);
   const listRef = useRef(null);
   // internal state to track if user is near the bottom
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -162,11 +162,19 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
   // Group messages by date
   const messageGroups = groupMessagesByDate(propMessages);
 
+  // Handler to resend failed messages
+  const handleResend = (failedMessage) => {
+    // Remove the failed message from the list
+    setMessages(prev => prev.filter(m => m._id !== failedMessage._id));
+    // Re-send the message (call sendMessage with the same text/replyTo)
+    sendMessage(failedMessage.text, failedMessage.replyTo);
+  };
+
   return (
     <div
       ref={listRef}
       onScroll={handleScroll}
-      className="flex flex-col gap-2 w-full pb-16 overflow-y-auto flex-1 relative chat-scrollbar"
+      className="flex flex-col gap-1 w-full pb-16 overflow-y-auto flex-1 relative chat-scrollbar"
       style={{
         scrollPaddingBottom: '90px'
       }}
@@ -189,7 +197,7 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
       </div>
       {messageGroups.length > 0 ? (
         messageGroups.map((group, groupIndex) => (
-          <div key={group.date || `group-${groupIndex}`} className="flex flex-col gap-2">
+          <div key={group.date || `group-${groupIndex}`} className="flex flex-col gap-0.5">
             {/* Date separator for each group */}
             <div className="sticky top-0 z-10 flex justify-center my-2">
               <div className="bg-white bg-opacity-80 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm">
@@ -212,28 +220,20 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
                 ? msg._senderId === String(currentUserId).trim()
                 : String(senderId).trim() === String(currentUserId).trim();
               return (
-                <ChatMessageBubble
-                  key={msg._id || msg.id || `${group.date}-${idx}`}
-                  message={msg}
-                  isOwn={isOwn}
-                  userPhoto={msg.senderPhoto || msg.userPhoto || undefined}
-                  onDelete={deleteMessage}
-                  onReplyTo={(message, scrollToId) => {
-                    if (scrollToId) {
-                      // Handle scrolling to original message
-                      scrollToMessage(scrollToId);
-                    } else if (message && onReplyTo) {
-                      // Handle normal reply action
-                      onReplyTo(message);
-                    }
-                  }}
-                  ref={(el) => {
-                    if (el) {
-                      // Store ref to this message's DOM element
-                      messageRefs.current[msg._id || msg.id || `msg-${idx}`] = el;
-                    }
-                  }}
-                />
+                <div
+                  key={msg._id}
+                  ref={el => (messageRefs.current[msg._id] = el)}
+                  className="w-full"
+                >
+                  <ChatMessageBubble
+                    message={msg}
+                    isOwn={isOwn}
+                    userPhoto={msg.senderAvatar || msg.avatar || msg.photo || undefined}
+                    onDelete={deleteMessage}
+                    onReplyTo={onReplyTo}
+                    onResend={handleResend}
+                  />
+                </div>
               );
             })}
           </div>
@@ -252,7 +252,7 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
       {!isAtBottom && (
         <button
           type="button"
-          className="fixed right-4 bottom-28 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none z-40 flex items-center justify-center"
+          className="fixed left-4 bottom-36 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none z-40 flex items-center justify-center"
           onClick={() => {
             const el = listRef.current || document.documentElement;
             if (el) {
