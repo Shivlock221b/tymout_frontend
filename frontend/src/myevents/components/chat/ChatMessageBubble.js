@@ -1,4 +1,5 @@
 import React, { useState, useRef, forwardRef, useMemo } from 'react';
+import './ChatMessageBubble.css'; // Import the CSS file for animations
 import { getColorForName } from './name-colors';
 
 const LONG_PRESS_DURATION = 600; // ms
