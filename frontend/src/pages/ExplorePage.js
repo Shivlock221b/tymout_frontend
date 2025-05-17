@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
+import { FaVenusMars, FaFilter } from 'react-icons/fa';
+import { Helmet } from 'react-helmet-async';
 
 // Import our separate components
 import ExploreSearch from '../components/explore/ExploreSearch';
@@ -22,6 +24,7 @@ import SpotlightEvents from '../components/explore/SpotlightEvents';
  */
 const ExplorePage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getScrollTarget, clearScrollTarget } = useScrollToElement();
   const { user } = useUserData();
@@ -50,6 +53,8 @@ const ExplorePage = () => {
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
+  const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || 'All');
+  const [showGenderFilter, setShowGenderFilter] = useState(false);
   
   // Fetch user interests when component mounts
   useEffect(() => {
@@ -87,7 +92,8 @@ const ExplorePage = () => {
     sortBy,
     city: selectedCity, // Include the city parameter in the initial filters
     view: activeSpecialTag, // Include the view parameter for special tags
-    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [] // Include user interests if 'Only For You' is selected
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [], // Include user interests if 'Only For You' is selected
+    gender: selectedGender // Include gender filter
   });
 
   // Set up image rotation interval
@@ -192,6 +198,48 @@ const ExplorePage = () => {
     }
   }, [location, isLoading, results, getScrollTarget, clearScrollTarget]);
   
+  // Update search params when filters change
+  const updateSearchParams = (updates) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    // Process each update
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        // Remove empty values
+        newParams.delete(key);
+      } else if (Array.isArray(value)) {
+        // Handle arrays (like tags)
+        newParams.delete(key); // Remove existing values
+        value.forEach(item => newParams.append(key, item));
+      } else {
+        // Handle simple values
+        newParams.set(key, value);
+      }
+    });
+    
+    // Update URL without reloading the page
+    setSearchParams(newParams);
+    
+    // Update the filters for the query
+    updateFilters({
+      query: newParams.get('q') || '',
+      tags: newParams.getAll('tag'),
+      distance: parseInt(newParams.get('distance') || '10', 10),
+      sortBy: newParams.get('sort') || 'relevance',
+      city: newParams.get('city') || 'Agra',
+      view: newParams.get('view') || 'Explore',
+      userInterests: activeSpecialTag === 'Only For You' ? userInterests : [],
+      gender: newParams.get('gender') || 'All'
+    });
+  };
+  
+  // Handle gender filter change
+  const handleGenderFilterChange = (gender) => {
+    setSelectedGender(gender);
+    updateSearchParams({ gender });
+    setShowGenderFilter(false);
+  };
+
   // Update URL parameters and trigger data fetch when search changes
   const handleSearch = (query) => {
     const newParams = new URLSearchParams(searchParams);
@@ -479,7 +527,30 @@ const ExplorePage = () => {
         </div>
       </div>
       {/* End hero + search */}
-      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF' }}>
+      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0 }}>
+        {/* Get the base URL for absolute URLs in meta tags */}
+        <Helmet>
+          <title>Explore Events | Tymout</title>
+          <meta name="description" content="So many tables to join and have a tymout, what are you waiting for?" />
+          
+          {/* Open Graph / Facebook */}
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={`${window.location.origin}/explore`} />
+          <meta property="og:title" content="Explore Events | Tymout" />
+          <meta property="og:description" content="So many tables to join and have a tymout, what are you waiting for?" />
+          <meta property="og:image" content={`${window.location.origin}/timeout_logo.png`} />
+          
+          {/* Twitter */}
+          <meta property="twitter:card" content="summary_large_image" />
+          <meta property="twitter:url" content={`${window.location.origin}/explore`} />
+          <meta property="twitter:title" content="Explore Events | Tymout" />
+          <meta property="twitter:description" content="So many tables to join and have a tymout, what are you waiting for?" />
+          <meta property="twitter:image" content={`${window.location.origin}/timeout_logo.png`} />
+          
+          {/* WhatsApp specific */}
+          <meta property="og:site_name" content="Tymout" />
+          <meta property="og:locale" content="en_US" />
+        </Helmet>
 
       {/* Spotlight section - horizontally scrollable 2x3 grid */}
       {!isLoading && results && results.length > 0 && (
@@ -492,11 +563,54 @@ const ExplorePage = () => {
         </div>
       )}
       
-      {/* Content section with heading */}
-      <div className="mt-8">
-        <div className="flex items-center mb-4 px-4">
-          <h2 className="text-xl font-bold text-gray-800">Find Your Table</h2>
+      {/* Search is now only in the hero overlay */}
+      
+      {/* Tag filter moved to hero overlay */}
+      
+      {/* Gender Filter Button */}
+      <div className="flex justify-end px-4 mt-4">
+        <div className="relative">
+          <button 
+            onClick={() => setShowGenderFilter(!showGenderFilter)}
+            className="flex items-center space-x-2 bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <FaFilter className="text-gray-500" />
+            <span>Filter: {selectedGender}</span>
+          </button>
+          
+          {/* Gender Filter Dropdown */}
+          {showGenderFilter && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+              <div className="py-1">
+                <button 
+                  onClick={() => handleGenderFilterChange('All')}
+                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'All' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  <FaVenusMars className="mr-2" />
+                  All
+                </button>
+                <button 
+                  onClick={() => handleGenderFilterChange('Male')}
+                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'Male' || selectedGender === 'Only Male' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  <FaVenusMars className="mr-2" />
+                  Male
+                </button>
+                <button 
+                  onClick={() => handleGenderFilterChange('Female')}
+                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'Female' || selectedGender === 'Only Female' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  <FaVenusMars className="mr-2" />
+                  Female
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+      </div>
+      
+      {/* Content section */}
+      <div className="mt-4">
         <ExploreResults 
           results={results} 
           isLoading={isLoading}
