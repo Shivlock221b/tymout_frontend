@@ -1,0 +1,158 @@
+# Tymout Chat System Documentation
+
+This document provides a **single-source reference** for everything related to the real-time chat feature used in Tymout.  Reading this file alone should enable any developer to understand, debug, and extend the chat module (frontend & backend).
+
+---
+
+## 1. High-Level Overview
+
+```
+┌──────────────┐          REST (history)        ┌────────────────────┐
+│ React Pages  │ ─────────────────────────────▶ │ messageController  │
+│  / Hooks     │                               │   (Express)        │
+└──────▲───────┘                               └────────┬───────────┘
+       │    Socket.IO (realtime)                         │
+       │                                                ▼
+┌──────┴────────┐   MongoDB sub-doc array    ┌────────────────────┐
+│ socketService │ ─────────────────────────▶ │ Message Model      │
+│   (Node)      │                           │   (Mongoose)       │
+└───────────────┘                           └────────────────────┘
+```
+* **History**: Fetched via REST (`/api/messages/:eventId`).
+* **Realtime**: Socket.IO rooms keyed by `eventId`.
+* **Cache**: SessionStorage on the client for instant re-hydration.
+* **Delivery** ticks: _pending → sent ✓ → delivered ✓✓_.
+
+---
+
+## 2. File Index & Responsibilities
+
+### 2.1 Front-End (`frontend/src/myevents`)
+
+| File | Responsibility |
+|------|----------------|
+| `pages/EventChatPage.js` | Page shell. Hosts header, `ChatMessageList`, and `ChatInputBox`. Injects `eventId` into `useChatSocket`. |
+| `components/chat/ChatMessageList.js` | Virtual list + auto-scroll. Consumes `messages` from the hook and renders `ChatMessageBubble`. |
+| `components/chat/ChatMessageBubble.js` | Visual bubble. Shows name, time stamp, **tick icons** (⌛, ✓, ✓✓) based on `message.status / pending`. Handles long-press / right-click delete. |
+| `components/chat/ChatInputBox.js` | Textarea + send button. Calls `sendMessage(text, replyTo)` from the hook. |
+| `components/chat/ChatTab.js` | (Chat preview inside event list) shows last message using the `useChatPreviewQuery`. |
+| `hooks/useChatSocket.js` | **Heart of the client**. *Features:*<br>• Fetch REST history → `setMessages`.<br>• Load / persist cache `sessionStorage('chat-<eventId>')`.<br>• Manage `socketRef`, join room, emit/receive:
+  - `sendMessage` (client)  → server
+  - `sentAck` (server → sender) – set `status:'sent'`
+  - `newMessage` (server → everyone) – render & `deliveredAck`
+  - `statusUpdate` (server → room) – set `status:'delivered'`
+  - `messageDeleted` (server → room) – soft delete UI
+• Creates **temp** message with `pending:true` until `sentAck` received. |
+| `hooks/queries/useEventChatQuery.js` | (Optional) Query helpers if pagination / infinite scroll is desired. |
+
+### 2.2 Back-End (`message-service`)
+
+| File | Responsibility |
+|------|----------------|
+| `models/Message.js` | Mongoose schema. Fields per message:<br>`senderId, senderName, senderAvatar, text, timestamp, status{sent|delivered}, replyTo, clientMsgId, isDeleted`.<br>Stored as *sub-document array* per `eventId`. |
+| `controllers/messageController.js` | REST API:<br>`GET /api/messages/:eventId?limit=&skip=` – history (sorted oldest→newest).<br>`POST /api/messages` – create (used for non-socket environments).<br>`PATCH /api/messages/:eventId/:messageId/delete` – soft delete. |
+| `services/socketService.js` | Initializes Socket.IO. Room = `eventId`.<br>Events:<br>• `joinEvent` — client joins room.<br>• `sendMessage` — save, emit `newMessage` + `sentAck`.<br>• `deliveredAck` — update `status:'delivered'`, emit `statusUpdate`.<br>• `deleteMessage` — mark `isDeleted`, emit `messageDeleted`. |
+| `index.js` (or server entry) | Boots Express + Socket.IO and connects to Mongo using cluster URI `mongodb+srv://tymout:...`. |
+
+---
+
+## 3. Detailed Message Lifecycle
+
+1. **User Types & Sends** (ChatInputBox ➜ `useChatSocket.sendMessage`)
+   - Generates `clientMsgId` (UUID).
+   - Pushes **temp** message `{pending:true, status:'pending'}` into `messages` state.
+   - Emits `sendMessage` via socket with metadata.
+2. **Server Persists** (`socketService`)
+   - Dedupes by `clientMsgId`.
+   - Saves with default `status:'sent'`.
+   - Broadcasts `newMessage` to room.
+   - Emits `sentAck` **only to sender**.
+3. **Sender Receives `sentAck`**
+   - Hook replaces temp with stored copy → `pending:false`, `status:'sent'` (single ✓).
+4. **Recipients Receive `newMessage`**
+   - Append to list, then immediately emit `deliveredAck` back.
+5. **Server Receives `deliveredAck`**
+   - Updates DB status.
+   - Emits `statusUpdate {messageId, status:'delivered'}` to room.
+6. **All Clients Update**
+   - Hook patches corresponding message → `status:'delivered'` (double ✓).
+
+> _Read receipts (blue ticks) are **not** yet implemented; extend using a `readAck` event and `status:'read'`._
+
+---
+
+## 4. Caching Strategy
+
+| Layer | Purpose | Implementation |
+|-------|---------|----------------|
+| **SessionStorage** | Instant reload inside same tab session. | `useChatSocket` serializes `messages` on every change → `sessionStorage('chat-<eventId>')`. Loaded synchronously on mount before REST call. |
+| **React Query** | (Planned) long-term history caching & pagination. | `useEventChatQuery` shows example; integrate if needed. |
+
+---
+
+## 5. Socket Event Reference
+
+| Event | Direction | Payload | Description |
+|-------|-----------|---------|-------------|
+| `joinEvent` | client → server | `{eventId}` | Subscribe to chat room. |
+| `sendMessage` | client → server | `{eventId, senderId, text, replyTo?, clientMsgId}` | Send message. |
+| `sentAck` | server → sender | *Message DTO* | Confirms DB save (✓). |
+| `newMessage` | server → room | *Message DTO* | Broadcast new message. Recipients must issue `deliveredAck`. |
+| `deliveredAck` | client → server | `{eventId, messageId}` | Tell server message reached client. |
+| `statusUpdate` | server → room | `{messageId, status:'delivered'}` | Double-tick update. |
+| `deleteMessage` | client → server | `{eventId, messageId}` | Request soft delete. |
+| `messageDeleted` | server → room | `{messageId}` | Announce deletion. |
+
+---
+
+## 6. REST API Cheat-Sheet
+
+> Base URL: `http://<chat-service-host>:3020/api/messages`
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/:eventId?limit=&skip=` | Fetch paginated history. |
+| POST | `/` | (Fallback) Create message when socket unavailable. |
+| PATCH | `/:eventId/:messageId/delete` | Soft-delete message. |
+
+All APIs return JSON. Authentication handled upstream via API-gateway (JWT) and is not inside chat scope.
+
+---
+
+## 7. UI/UX Details
+
+* **Auto-Scroll**: `ChatMessageList` keeps the view pinned to latest unless user manually scrolls up.
+* **Reply Preview**: `replyTo` metadata rendered above bubble; clicking scrolls to original message.
+* **Delete**: long-press (mobile) or right-click (desktop) on own message.
+* **Accessibility**: Bubbles have ARIA labels (`Your message` / `Member message`).
+
+---
+
+## 8. Extensibility Notes
+
+* **Read Receipts**: Add `readAck` + `status:'read'`. UI: blue double-tick in `ChatMessageBubble`.
+* **Media Messages**: Expand schema with `type`, `mediaUrl` etc. Store in AWS S3.
+* **End-to-End Encryption**: Wrap text in encrypted payload; manage encryption keys per event room.
+* **Mobile (React-Native)**: Re-use hook; replace DOM components with native equivalents.
+
+---
+
+## 9. Troubleshooting Tips
+
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| No ticks update | `deliveredAck` not firing | Ensure recipient emits ack; check browser dev-tools Network → WS frames. |
+| Duplicate messages | `clientMsgId` missing/duplicated | Verify `uuidv4()` generation and dedupe logic in both hook & socketService. |
+| Large memory usage | SessionStorage limit (~5 MB) | Implement IndexedDB persistence + eviction policy. |
+
+---
+
+## 10. Changelog (Recent)
+
+| Date | Change |
+|------|--------|
+| 2025-05-04 | Added `status` field, single/double-tick flow, session cache, detailed docs (this file). |
+
+---
+
+Happy hacking! If you spot outdated info, update **this file** as the canonical chat reference.

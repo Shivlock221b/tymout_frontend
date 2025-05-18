@@ -1,0 +1,14 @@
+import { useEventAnnouncementsQuery } from '../../queries/useEventAnnouncementsQuery';
+import AnnouncementTab from '../chat/AnnouncementTab';
+
+// ... inside your EventPage component, after other hooks:
+const { data: announcements = [], isLoading: isAnnouncementsLoading } = useEventAnnouncementsQuery(eventId);
+
+// ... inside your tab content rendering:
+{activeTab === 'announcements' && (
+  isAnnouncementsLoading ? (
+    <div className="p-4 text-gray-500">Loading announcements...</div>
+  ) : (
+    <AnnouncementTab announcements={announcements} />
+  )
+)}

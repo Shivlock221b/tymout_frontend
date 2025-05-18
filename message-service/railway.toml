@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+providers = ["nodejs"]
+buildCommand = "npm install --production=false"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/api/messages/health"
+healthcheckTimeout = 100
+
+[variables]
+NODE_ENV = "production"

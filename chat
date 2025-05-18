@@ -1,0 +1,163 @@
+# Tymout Chat System Documentation
+
+## Overview
+The Tymout chat feature enables real-time group conversations inside every event. It combines a dedicated **message-service** micro-service (Node.js + Express + MongoDB + Socket.IO) with a set of React front-end hooks, pages and UI components. 
+
+High-level responsibilities:
+* Persist all messages (with soft-delete & replies) in MongoDB.
+* Provide a REST API for history & moderation actions.
+* Stream new / deleted messages instantly via WebSockets.
+* Offer an intuitive, mobile-first chat UI that follows the global CSS & state-management standards (React-Query + Zustand).
+
+---
+## End-to-End Flow
+1. **EventChatPage** mounts (`/myevents/:eventId/chat`).
+2. `useChatSocket` hook
+   * GET `GET /api/messages/:eventId` → loads history.
+   * Opens a Socket.IO client to `REACT_APP_CHAT_SERVICE_URL` and emits `joinEvent`.
+3. **Sending** – `ChatInputBox` → `useChatSocket.sendMessage()`
+   * Adds **optimistic** temp message.
+   * Emits `sendMessage` *(eventId, sender info, text, optional replyTo)*.
+4. **Backend** (`socketService.js`)
+   * Saves or creates the chat document.
+   * Broadcasts `newMessage` to room *eventId*.
+5. **Front-end** receives `newMessage` and reconciles state (dedupe / replace temp).
+6. **Deleting** – long-press / right-click → `useChatSocket.deleteMessage()`
+   * Emits `deleteMessage` or falls back to `PATCH /api/messages/:eventId/:messageId/delete`.
+   * Server marks message `isDeleted=true`, emits `messageDeleted`.
+7. UI marks bubble as *“This message was deleted”*.
+
+Socket event summary
+| Direction | Event | Payload |
+|-----------|-------|---------|
+| C → S | `joinEvent` | `{ eventId }` |
+| C → S | `sendMessage` | `{ eventId, senderId, senderName, senderAvatar, text, replyTo? }` |
+| C → S | `deleteMessage` | `{ eventId, messageId }` |
+| S → C | `newMessage` | *Message object* |
+| S → C | `messageDeleted` | `{ messageId }` |
+
+---
+## Backend (message-service)
+| File | Role |
+|------|------|
+| `server.js` | Boots Express, connects MongoDB, mounts REST routes, initialises Socket.IO and binds handlers. |
+| `models/Message.js` | Mongoose schema containing **one document per event** with an array of `messages`. Supports `replyTo`, `isDeleted`, timestamps, sender metadata. |
+| `routes/messageRoutes.js` | REST routes:<br>• **GET** `/api/messages/:eventId` – paginated history<br>• **POST** `/api/messages` – create<br>• **PATCH** `/api/messages/:eventId/:messageId/delete` – soft delete |
+| `controllers/messageController.js` | Implements the above endpoints (pagination, create, delete). |
+| `services/socketService.js` | Sets up Socket.IO rooms and handles `sendMessage / deleteMessage` saving + broadcasting. |
+| `config/*.js` & `.env` | hold connection strings ( `MONGO_URI`, `FRONTEND_URL`, `PORT`). |
+
+Database collection:
+```
+{
+  eventId: String, // unique per event
+  messages: [{
+    senderId, senderName, senderAvatar,
+    text,
+    replyTo: { messageId, senderId, senderName, text },
+    isDeleted, deletedAt,
+    timestamp
+  }]
+}
+```
+
+---
+## Front-End (React SPA)
+
+### Hooks & State
+| File | Role |
+|------|------|
+| `hooks/useChatSocket.js` | All chat logic (REST history, socket connection, send & delete helpers, local `messages` state). Caches nothing in React-Query because it needs live updates. |
+| `hooks/queries/useEventChatQuery.js` | **(Legacy / optional)** React-Query wrapper around `chatService.getEventChat` for static reads. |
+| `hooks/queries/useChatPreviewQuery.js` | Fetches last message preview for event list. |
+| `hooks/stores/chatStore.js` | Light Zustand store for *UI-only* state (current input value). |
+
+### Services & Data-Fetch (documented per Global Rule #2)
+| Path | Function | HTTP | Description |
+|------|----------|------|-------------|
+| `services/chatService.js` | `getEventChat(eventId)` | GET `/api/messages/{eventId}` | Load full message history (used by React-Query hooks). |
+| `hooks/useChatSocket.js` | Inline axios call | GET `/api/messages/{eventId}` | Initial chat history before socket live feed. |
+| `hooks/useChatSocket.js` (socket) | emit `sendMessage` | WS | Send a new message in real-time. |
+| `hooks/useChatSocket.js` (socket) | emit `deleteMessage` | WS | Soft-delete a message. |
+| `hooks/useChatSocket.js` (fallback) | PATCH `/api/messages/{eventId}/{messageId}/delete` | Soft delete if socket unavailable. |
+
+_Note: All server state is handled by Socket.IO + REST; any purely UI state (input text) lives in Zustand, complying with State Management Standard._
+
+### UI Pages & Components
+| Path | Role |
+|------|------|
+| `pages/EventChatPage.js` | Container page – assembles header, tab navigation, message list & input; wires `useChatSocket`. |
+| `components/chat/ChatMessageList.js` | Virtualised / scrollable list mapping messages → bubbles and handling scroll-into-view for replies. |
+| `components/chat/ChatMessageBubble.js` | Individual bubble; shows sender name, reply preview, long-press/right-click delete, colour-coded for own vs others. |
+| `components/chat/ChatInputBox.js` | Textarea, send button, shows *replying-to* indicator and triggers `onSend`. |
+| `components/chat/ChatTab.js` | (Optional) wrapper used by MyEventsPage to show last message preview. |
+| `data/myEventsChats.js` | Development mock messages (replaced by live data in production). |
+| Auxiliary: `GroupHeader.js`, `MomentsTab.js`, `MembersTab.js`, `AboutTab.js` – Non-core but appear in EventChatPage’s tabbed interface.
+
+Styling strictly uses **global CSS** (`variables.css`, `components.css`, `utilities.css`, `theme.css`) & utility classes – no inline or per-component hard-coded styles.
+
+---
+## Environment Variables
+| Var | Where | Example |
+|-----|-------|---------|
+| `MONGO_URI` | message-service | `mongodb+srv://tymout:***@tymout.mongodb.net/tymout-events` |
+| `FRONTEND_URL` | message-service | `http://localhost:3010` |
+| `REACT_APP_CHAT_SERVICE_URL` | frontend | `http://localhost:3020` |
+
+---
+## Future Enhancements
+* Typing indicators (`typing` socket event).
+* Read receipts per message.
+* Infinite scroll / lazy-loading older messages via `skip` query.
+* Message attachments (images, files) stored in S3 / Cloudinary.
+* End-to-end encryption layer.
+
+---
+### Quick Dev Tips
+* Run backend: `npm start` inside `message-service` (port 3020).
+* Run frontend: `npm start` inside `frontend` (port 3010).
+* Ensure `.env` values are set on both sides.
+* Use **long-press on mobile** or **right-click on desktop** to delete your own messages.
+
+---
+## Architecture Cheat-Sheet (Tymout Chat)
+
+### 1. High-Level Components
+• **API Gateway** (Express / NGINX) – central entry for HTTP & WebSocket traffic.
+• **Message-Service** (Node.js + Express + Socket.IO)
+  – WebSocket endpoint and REST controllers
+  – Persists chat logs in MongoDB.
+• **MongoDB Atlas** – sharded `tymout-events` database, `messages` collection.
+• **React SPA** – `useChatSocket` hook manages REST history + live socket stream.
+• **Event-Service** – independent microservice owning event & membership data.
+• **Notification-Service** *(optional)* – pushes mobile / web notifications on `newMessage`.
+
+### 2. Message Flow (Event Group Chat)
+1. Client emits `sendMessage` (WebSocket) → Message-Service.
+2. Service validates, writes to MongoDB, and joins sender to `eventId` room if needed.
+3. Service broadcasts `newMessage` to all clients in that room.
+4. Each client updates UI; sender swaps its temp bubble with server copy.
+5. For deletions, client emits `deleteMessage`; service marks `isDeleted` and emits `messageDeleted`.
+
+### 3. Scalability Techniques
+• Stateless Message-Service pods behind load balancer; **Socket.IO Redis adapter** shares rooms/sessions across nodes.
+• Membership lookups cached in Redis (fall back to Event-Service on miss).
+• MongoDB sharded by `eventId` to distribute hot groups.
+• Gateway rate-limits & connection quotas protect memory.
+
+### 4. Reliability & Idempotency
+• Unique ObjectId per message ensures idempotent writes.
+• Sender receives ACK after DB commit; Socket.IO auto-retries if network blips.
+• Soft-delete keeps audit trail (`isDeleted = true`).
+
+### 5. Optimization Principles
+• Push storage & validation to backend; keep Gateway “thin”.
+• Combine REST for history with WebSocket for real-time to minimise payloads.
+• Optimistic UI with temp IDs hides latency.
+
+### 6. Future Extensions
+• Typing indicators & read receipts via additional socket events.
+• RabbitMQ event bus for analytics / notification fan-out.
+• Media & file attachments stored in S3 / Cloudinary with presigned URLs.
+
+ Tymout Engineering – Updated 04-May-2025

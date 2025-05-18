@@ -1,0 +1,30 @@
+.chat-bubble {
+  background: var(--theme-chat-bubble-bg, #e7f7ff);
+  border-radius: var(--theme-chat-bubble-radius, 1.5rem);
+  box-shadow: var(--theme-chat-bubble-shadow, 0 1px 2px rgba(0,0,0,0.05));
+  border: 1px solid var(--theme-border, #e0e0e0);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.chat-bubble:hover {
+  background: var(--theme-chat-bubble-hover, #d2f0ff);
+}
+
+.chat-list {
+  background: var(--theme-chat-list-bg, #f8fafc);
+  padding-bottom: 2rem;
+  min-height: 0;
+}
+
+.chat-page-bg {
+  background: var(--theme-chat-page-bg, #e5e5e5);
+}
+
+:root {
+  --theme-chat-bubble-bg: #e7f7ff;
+  --theme-chat-bubble-hover: #d2f0ff;
+  --theme-chat-bubble-radius: 1.5rem;
+  --theme-chat-bubble-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  --theme-chat-list-bg: #f8fafc;
+  --theme-chat-page-bg: #e5e5e5;
+}
