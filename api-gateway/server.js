@@ -6,14 +6,14 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const session = require('express-session');
 
-// Load environment variables
+// Load environment variables with fallbacks
 dotenv.config({ path: '../.env' });
 
 // Following Single Responsibility Principle - server.js only handles server setup and routing
 const app = express();
 const PORT = process.env.PORT || process.env.API_GATEWAY_PORT || 3000;
 
-// Get service ports from environment variables
+// Get service ports from environment variables with fallbacks
 const USER_SERVICE_PORT = process.env.USER_SERVICE_PORT || 3001;
 const EVENT_SERVICE_PORT = process.env.EVENT_SERVICE_PORT || 3002;
 const DISCOVERY_SERVICE_PORT = process.env.DISCOVERY_SERVICE_PORT || 3003;
@@ -23,6 +23,9 @@ const FEEDBACK_SERVICE_PORT = process.env.FEEDBACK_SERVICE_PORT || 3006;
 const SAFETY_SERVICE_PORT = process.env.SAFETY_SERVICE_PORT || 3007;
 const PAYMENT_SERVICE_PORT = process.env.PAYMENT_SERVICE_PORT || 3008;
 const PARTNERSHIP_SERVICE_PORT = process.env.PARTNERSHIP_SERVICE_PORT || 3009;
+
+// Frontend URL for redirects
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3010';
 
 // Middleware
 app.use(
@@ -102,8 +105,8 @@ app.use('/api/users', createProxyMiddleware({
         return;
       }
       
-      // If it's a success redirect to frontend, let it pass through without modification
-      if (location.includes('/auth/success')) {
+      // If it's any redirect to frontend URL, let it pass through without modification
+      if (location.includes(FRONTEND_URL)) {
         res.redirect(location);
         return;
       }
