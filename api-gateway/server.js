@@ -102,6 +102,12 @@ app.use('/api/users', createProxyMiddleware({
         return;
       }
       
+      // If it's a success redirect to frontend, let it pass through without modification
+      if (location.includes('/auth/success')) {
+        res.redirect(location);
+        return;
+      }
+      
       // For other redirects, handle them as usual
       console.log(`[API Gateway:Step 7] Auth request: ${req.method} ${req.url}`);
       console.log(`[API Gateway:Step 8] Response status: ${proxyRes.statusCode}`);
