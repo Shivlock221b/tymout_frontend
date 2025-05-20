@@ -62,7 +62,9 @@ router.get(
       
       if (!req.user) {
         console.error('No user found after authentication');
-        return res.redirect(`${FRONTEND_URL}/login?error=no_user`);
+        const errorUrl = new URL('/login', FRONTEND_URL);
+        errorUrl.searchParams.append('error', 'no_user');
+        res.redirect(errorUrl.toString());
       }
 
       // Create access token with user ID
@@ -82,10 +84,15 @@ router.get(
       console.log('JWT tokens created, redirecting to frontend');
       
       // Redirect to frontend with both tokens
-      res.redirect(`${FRONTEND_URL}/auth/success?token=${token}&refreshToken=${refreshToken}`);
+      const successUrl = new URL('/auth/success', FRONTEND_URL);
+      successUrl.searchParams.append('token', token);
+      successUrl.searchParams.append('refreshToken', refreshToken);
+      res.redirect(successUrl.toString());
     } catch (err) {
       console.error('Error in Google callback:', err);
-      res.redirect(`${FRONTEND_URL}/login?error=server_error`);
+      const errorUrl = new URL('/login', FRONTEND_URL);
+      errorUrl.searchParams.append('error', 'server_error');
+      res.redirect(errorUrl.toString());
     }
   }
 );

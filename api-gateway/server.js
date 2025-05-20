@@ -143,7 +143,7 @@ app.use('/api/users', createProxyMiddleware({
         proxyRes.headers.location = location;
       } else if (location.includes('/auth/success')) {
         // For frontend redirects, keep the URL as-is
-        proxyRes.headers.location = location;
+        proxyRes.headers.location = `${FRONTEND_URL}/auth/success`;
       } else {
         // For other paths, add the /api/users prefix
         proxyRes.headers.location = `/api/users${location}`;
