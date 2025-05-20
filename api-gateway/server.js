@@ -61,25 +61,18 @@ app.use('/api/users', createProxyMiddleware({
   target: process.env.USER_SERVICE_URL || `http://localhost:${USER_SERVICE_PORT}`, 
   changeOrigin: true,
   pathRewrite: {'^/api/users': ''},
-  // Enable cookies for Google OAuth
   cookieDomainRewrite: {
     '*': process.env.FRONTEND_URL || 'http://localhost:3010'
   },
-  // Configure proxy options
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
-    // Maintain keep-alive connection
     proxyReqOpts.headers['connection'] = 'keep-alive';
-    // Ensure proper content-type is set
     if (srcReq.body) {
       proxyReqOpts.headers['content-type'] = 'application/json';
     }
-    
-    // Forward Authorization header if present
     if (srcReq.headers.authorization) {
       console.log('[API Gateway] Forwarding Authorization header to User Service');
       proxyReqOpts.headers['authorization'] = srcReq.headers.authorization;
     }
-    
     return proxyReqOpts;
   },
   onProxyReq: (proxyReq, req, res) => {
@@ -87,8 +80,6 @@ app.use('/api/users', createProxyMiddleware({
     console.log(`[API Gateway:Step 5] Proxy Request Headers:`, proxyReq.getHeaders());
     console.log(`[API Gateway:Step 5.1] Proxy Request Body:`, req.body);
     console.log(`[API Gateway:Step 5.2] Target URL: http://localhost:${USER_SERVICE_PORT}${req.url.replace('/api/users', '')}`);
-    
-    // Ensure body is properly forwarded
     if (req.body) {
       const bodyData = JSON.stringify(req.body);
       proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
@@ -100,6 +91,22 @@ app.use('/api/users', createProxyMiddleware({
       statusCode: proxyRes.statusCode,
       headers: proxyRes.headers
     });
+    
+    // Handle redirects
+    if (proxyRes.headers.location) {
+      const location = proxyRes.headers.location;
+      
+      // If it's a Google OAuth redirect, let it pass through without modification
+      if (location.startsWith('https://accounts.google.com')) {
+        res.redirect(location);
+        return;
+      }
+      
+      // For other redirects, handle them as usual
+      console.log(`[API Gateway:Step 7] Auth request: ${req.method} ${req.url}`);
+      console.log(`[API Gateway:Step 8] Response status: ${proxyRes.statusCode}`);
+      console.log(`[API Gateway:Step 9] Redirect location: ${location}`);
+    }
     
     // Log response body if available
     const chunks = [];
@@ -121,13 +128,16 @@ app.use('/api/users', createProxyMiddleware({
     
     // Handle redirects from the user service
     if (proxyRes.headers.location) {
-      // Rewrite the location header to include /api/users prefix
       const location = proxyRes.headers.location;
-      if (location.startsWith('/auth')) {
-        proxyRes.headers.location = `/api/users${location}`;
+      // Only modify paths that are meant to be proxied to other services
+      if (location.startsWith('/api/users')) {
+        proxyRes.headers.location = location;
       } else if (location.includes('/auth/success')) {
-        // Make sure the success redirect goes to the correct frontend URL
-        proxyRes.headers.location = location.replace(process.env.API_GATEWAY_URL || 'http://localhost:3000', process.env.FRONTEND_URL || 'http://localhost:3010');
+        // For frontend redirects, keep the URL as-is
+        proxyRes.headers.location = location;
+      } else {
+        // For other paths, add the /api/users prefix
+        proxyRes.headers.location = `/api/users${location}`;
       }
     }
   },
