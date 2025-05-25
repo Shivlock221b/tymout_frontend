@@ -92,13 +92,13 @@ const SpotlightEvents = ({ events }) => {
   };
 
   return (
-    <div className="w-full overflow-hidden py-4">
-      <div className="flex items-center mb-3 px-4">
-        <h2 className="text-lg font-bold text-gray-800">In the Spotlight ✨</h2>
+    <div className="w-full overflow-hidden py-2">
+      <div className="flex items-center mb-2 px-4">
+        <h2 className="text-lg font-bold text-indigo-600">In the Spotlight ✨</h2>
       </div>
       
       {/* Horizontally scrollable container */}
-      <div className="overflow-x-auto pb-4 no-scrollbar">
+      <div className="overflow-x-auto pb-2 no-scrollbar">
         <div className="flex px-4 space-x-4">
           {useCompactLayout ? (
             // Single-row layout for 3 or fewer events
@@ -113,7 +113,7 @@ const SpotlightEvents = ({ events }) => {
                 
                 return (
                   <div key={`group-${groupIndex}`} className="flex-shrink-0 w-80 md:w-96">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                       {/* Render event cards */}
                       {groupEvents.map((event, index) => renderEventCard(event, index, groupIndex))}
                       

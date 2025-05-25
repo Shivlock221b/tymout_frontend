@@ -288,9 +288,9 @@ const AboutTab = ({ event }) => {
           {event.capacity && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaUsers className="text-indigo-400" /> Capacity:</div><div className="flex items-center justify-end"><span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">{event.capacity}</span></div></>}
 
           <div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaTag className="text-indigo-400" /> Type:</div>
-          <div className="flex items-center justify-end">{type}</div>
+          <div className="flex items-center justify-end">Table</div>
 
-          {price !== undefined && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaRupeeSign className="text-indigo-400" /> Price:</div><div className="flex items-center justify-end"><span className={`inline-block px-2 py-0.5 rounded-full ${price === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'} text-xs font-semibold`}>{price === 0 ? 'Free' : `₹${price}`}</span></div></>}
+          {/* {price !== undefined && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaRupeeSign className="text-indigo-400" /> Price:</div><div className="flex items-center justify-end"><span className={`inline-block px-2 py-0.5 rounded-full ${price === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'} text-xs font-semibold`}>{price === 0 ? 'Free' : `₹${price}`}</span></div></>} */}
 
           {rsvp && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaClock className="text-indigo-400" /> RSVP by:</div><div className="flex items-center justify-end">{formatDate(rsvp)}</div></>}
 

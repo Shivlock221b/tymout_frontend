@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEventDetail, useEventAction, useCancelEventAction } from '../hooks/queries/useEventDetailQueries';
 import { useAuthStore } from '../stores/authStore';
-import { Helmet } from 'react-helmet-async';
 
 // Import the new modular components
 import {
@@ -45,22 +44,6 @@ const EventDetailPage = (props) => {
 
   // DEBUG: Log the fetched item
   console.log('[EventDetailPage] fetched item:', item);
-  
-  // Get the base URL for absolute URLs in meta tags
-  const baseUrl = window.location.origin;
-  
-  // Prepare meta data for social media sharing
-  const eventTitle = item ? item.title : 'Event Details';
-  const eventDescription = item ? `Join this table before it's too late! Let's have some Tymout.` : 'Join exciting events on Tymout';
-  
-  // Handle image path - ensure it's an absolute URL
-  let eventImage = `${baseUrl}/timeout_logo.png`; // Default to the logo
-  if (item && item.image) {
-    // Check if the image URL is already absolute
-    eventImage = item.image.startsWith('http') ? item.image : `${baseUrl}${item.image}`;
-  }
-  
-  const canonicalUrl = `${baseUrl}${location.pathname}`;
 
   
   // Use React Query mutations for actions with optimistic updates
@@ -137,82 +120,35 @@ const EventDetailPage = (props) => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <>
-        <Helmet>
-          <title>Loading Event | Tymout</title>
-        </Helmet>
-        <EventDetailLoading handleGoBack={handleGoBack} />
-      </>
-    );
+    return <EventDetailLoading handleGoBack={handleGoBack} />;
   }
 
   // Error state
   if (error) {
-    return (
-      <>
-        <Helmet>
-          <title>Event Not Found | Tymout</title>
-        </Helmet>
-        <EventDetailError 
-          error={error.message || "Failed to load item details. Please try again later."} 
-          handleGoBack={handleGoBack} 
-        />
-      </>
-    );
+    return <EventDetailError 
+      error={error.message || "Failed to load item details. Please try again later."} 
+      handleGoBack={handleGoBack} 
+    />;
   }
   
   // No item found
   if (!item) {
-    return (
-      <>
-        <Helmet>
-          <title>Event Not Found | Tymout</title>
-        </Helmet>
-        <EventDetailError 
-          error="Item not found. It may have been removed or you may have followed an invalid link." 
-          handleGoBack={handleGoBack} 
-        />
-      </>
-    );
+    return <EventDetailError 
+      error="Item not found. It may have been removed or you may have followed an invalid link." 
+      handleGoBack={handleGoBack} 
+    />;
   }
 
   return (
-    <>
-      <Helmet>
-        <title>{eventTitle} | Tymout</title>
-        <meta name="description" content={eventDescription} />
-        
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:title" content={eventTitle} />
-        <meta property="og:description" content={eventDescription} />
-        <meta property="og:image" content={eventImage} />
-        
-        {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={canonicalUrl} />
-        <meta property="twitter:title" content={eventTitle} />
-        <meta property="twitter:description" content={eventDescription} />
-        <meta property="twitter:image" content={eventImage} />
-        
-        {/* WhatsApp specific */}
-        <meta property="og:site_name" content="Tymout" />
-        <meta property="og:locale" content="en_US" />
-        <link rel="canonical" href={canonicalUrl} />
-      </Helmet>
-      
-      <EventDetailLayout
-        item={item}
-        type={type}
-        isFromExplore={isFromExplore}
-        handleGoBack={handleGoBack}
-        handleMainAction={handleMainAction}
-        isActionLoading={eventAction.isPending || cancelEventAction.isPending}
-        isAuthenticated={isAuthenticated}
-      />
-    </>
+    <EventDetailLayout
+      item={item}
+      type={type}
+      isFromExplore={isFromExplore}
+      handleGoBack={handleGoBack}
+      handleMainAction={handleMainAction}
+      isActionLoading={eventAction.isPending || cancelEventAction.isPending}
+      isAuthenticated={isAuthenticated}
+    />
   );
 };
 

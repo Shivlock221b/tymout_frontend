@@ -41,11 +41,34 @@ router.post('/:eventId', handleMulterUpload, async (req, res) => {
     console.error(`[Event Service:Image] Error stack:`, error.stack);
     res.status(500).json({
       success: false,
-      error: error.message || 'Server error during image upload',
-      details: error.code || 'Unknown error'
+      error: error.message || 'Error uploading image'
     });
   } finally {
     console.log(`[Event Service:Image] ===== IMAGE REQUEST COMPLETED =====`);
+  }
+});
+
+/**
+ * @route   POST /api/events/images/:eventId/moments
+ * @desc    Upload a moment image for an event
+ * @access  Private
+ */
+router.post('/:eventId/moments', auth, handleMulterUpload, async (req, res) => {
+  console.log(`[Event Service:Image] Processing moment image upload for event ${req.params.eventId}`);
+  console.log(`[Event Service:Image] User ID:`, req.user ? req.user.id : 'Not authenticated');
+  console.log(`[Event Service:Image] File in request:`, !!req.file);
+  
+  try {
+    console.log(`[Event Service:Image] Calling imageController.uploadEventMoment`);
+    await imageController.uploadEventMoment(req, res);
+    console.log(`[Event Service:Image] Moment upload completed successfully`);
+  } catch (error) {
+    console.error(`[Event Service:Image] Error in moment upload route:`, error);
+    console.error(`[Event Service:Image] Error stack:`, error.stack);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error uploading moment image'
+    });
   }
 });
 

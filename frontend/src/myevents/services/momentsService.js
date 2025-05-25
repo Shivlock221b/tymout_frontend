@@ -51,8 +51,19 @@ export async function getEventMoments(eventId) {
     // Log the response for debugging
     console.log('Event photos response:', response.data);
     
-    // Return the photos from the event data
-    return response.data.data || [];
+    // Extract URLs from media objects if needed
+    const photos = response.data.data || [];
+    
+    // Map the response to handle both formats (URL strings or media objects)
+    return photos.map(photo => {
+      // If it's already a string URL, return it
+      if (typeof photo === 'string') return photo;
+      // If it's a media object with a url property, return the URL
+      if (photo && photo.url) return photo.url;
+      // If it's some other format, log it and return empty string
+      console.warn('Unexpected photo format:', photo);
+      return '';
+    }).filter(url => url); // Remove any empty URLs
   } catch (error) {
     console.error(`Error fetching photos for event ${eventId}:`, error);
     return [];

@@ -173,12 +173,55 @@ class EventService {
         console.log(`[Event Service] Added city filter for: ${query.city}`);
       }
       
-      // Handle gender filtering
-      if (query.gender && query.gender !== 'All') {
-        console.log(`[Event Service] Filtering by gender:`, query.gender);
+      // Handle filter parameter (gender, time-based)
+      if (query.filter && query.filter !== 'All') {
+        console.log(`[Event Service] Filtering by:`, query.filter);
+        
+        // Gender filters
+        if (query.filter === 'Male' || query.filter === 'Female') {
+          // Add gender filter - exact match for gender field
+          // Handle both new format ('Male', 'Female') and old format ('Only Male', 'Only Female')
+          if (query.filter === 'Male') {
+            filter.gender = { $in: ['Male', 'Only Male'] };
+          } else if (query.filter === 'Female') {
+            filter.gender = { $in: ['Female', 'Only Female'] };
+          }
+          
+          console.log(`[Event Service] Added gender filter for: ${query.filter}`);
+        }
+        // Time-based filters
+        else if (query.filter === 'Tonight' || query.filter === 'ThisWeek') {
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+          
+          if (query.filter === 'Tonight') {
+            // Filter events happening today
+            console.log(`[Event Service] Filtering events for tonight: ${startOfToday} to ${endOfToday}`);
+            filter['date.start'] = { 
+              $gte: startOfToday,
+              $lte: endOfToday
+            };
+          } else if (query.filter === 'ThisWeek') {
+            // Calculate the end of the week (7 days from now)
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() + 7);
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            console.log(`[Event Service] Filtering events for this week: ${now} to ${endOfWeek}`);
+            filter['date.start'] = { 
+              $gte: now,
+              $lte: endOfWeek
+            };
+          }
+        }
+      }
+      
+      // For backward compatibility - handle gender parameter if filter is not provided
+      else if (query.gender && query.gender !== 'All') {
+        console.log(`[Event Service] Filtering by gender (legacy):`, query.gender);
         
         // Add gender filter - exact match for gender field
-        // Handle both new format ('Male', 'Female') and old format ('Only Male', 'Only Female')
         if (query.gender === 'Male') {
           filter.gender = { $in: ['Male', 'Only Male'] };
         } else if (query.gender === 'Female') {
@@ -187,7 +230,6 @@ class EventService {
           filter.gender = query.gender;
         }
         
-        // For debugging
         console.log(`[Event Service] Added gender filter for: ${query.gender}`);
       }
       

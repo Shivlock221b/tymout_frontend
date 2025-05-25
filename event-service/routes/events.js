@@ -13,6 +13,45 @@ router.use((req, res, next) => {
   next();
 });
 
+/**
+ * @route   GET /api/events/:eventId/photos
+ * @desc    Get all photos/moments for an event
+ * @access  Private
+ */
+router.get('/:eventId/photos', auth, async (req, res) => {
+  try {
+    console.log(`[Event Service] Fetching photos for event with ID: ${req.params.eventId}`);
+    
+    // Find the event by ID
+    const event = await Event.findById(req.params.eventId);
+    
+    if (!event) {
+      console.log(`[Event Service] Event not found with ID: ${req.params.eventId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
+    // Extract media items of type 'image'
+    const photos = event.media.filter(item => item.type === 'image');
+    
+    console.log(`[Event Service] Found ${photos.length} photos for event`);
+    
+    res.status(200).json({
+      success: true,
+      data: photos
+    });
+  } catch (error) {
+    console.error(`[Event Service] Error fetching event photos:`, error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
 // GET endpoint for fetching events by host ID
 router.get('/host/:userId', async (req, res) => {
   try {

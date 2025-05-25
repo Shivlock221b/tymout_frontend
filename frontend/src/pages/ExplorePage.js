@@ -1,10 +1,8 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
-import { FaVenusMars, FaFilter } from 'react-icons/fa';
-import { Helmet } from 'react-helmet-async';
 
 // Import our separate components
 import ExploreSearch from '../components/explore/ExploreSearch';
@@ -24,7 +22,6 @@ import SpotlightEvents from '../components/explore/SpotlightEvents';
  */
 const ExplorePage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getScrollTarget, clearScrollTarget } = useScrollToElement();
   const { user } = useUserData();
@@ -33,18 +30,7 @@ const ExplorePage = () => {
   // State for user interests
   const [userInterests, setUserInterests] = useState([]);
   
-  // State for hero image loading
-  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
-  
-  // State to track current hero image index
-  const [currentHeroImageIndex, setCurrentHeroImageIndex] = useState(0);
-  
-  // Hero images array - wrapped in useMemo to prevent re-creation on every render
-  const heroImages = useMemo(() => [
-    "/hero/hero0.jpg",
-    "/hero/hero1.jpg",
-    "/hero/hero2.jpg"
-  ], []);
+  // Simplified hero banner without images - no state needed
 
   // Extract filter parameters from URL
   const searchQuery = searchParams.get('q') || '';
@@ -53,8 +39,7 @@ const ExplorePage = () => {
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
-  const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || 'All');
-  const [showGenderFilter, setShowGenderFilter] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(searchParams.get('filter') || 'All');
   
   // Fetch user interests when component mounts
   useEffect(() => {
@@ -93,57 +78,10 @@ const ExplorePage = () => {
     city: selectedCity, // Include the city parameter in the initial filters
     view: activeSpecialTag, // Include the view parameter for special tags
     userInterests: activeSpecialTag === 'Only For You' ? userInterests : [], // Include user interests if 'Only For You' is selected
-    gender: selectedGender // Include gender filter
+    filter: selectedFilter
   });
 
-  // Set up image rotation interval
-  useEffect(() => {
-    const handleHeroImageLoad = () => {
-      setHeroImageLoaded(true);
-    };
-    
-    // Set initial image as loaded if it's already cached
-    const initialImg = new Image();
-    initialImg.src = heroImages[currentHeroImageIndex];
-    initialImg.onload = handleHeroImageLoad;
-    
-    if (initialImg.complete) {
-      handleHeroImageLoad();
-    }
-    
-    // Set up image rotation interval - changed from 7 seconds to 1 second
-    const rotationInterval = setInterval(() => {
-      setCurrentHeroImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-      // Reset loading state for smooth transition
-      setHeroImageLoaded(false);
-    }, 2000); // Change image every 2 second
-    
-    return () => clearInterval(rotationInterval);
-  }, [heroImages, currentHeroImageIndex]);
-
-  // Handle image change and preload next image
-  useEffect(() => {
-    const handleHeroImageLoad = () => {
-      setHeroImageLoaded(true);
-    };
-    
-    const img = new Image();
-    img.src = heroImages[currentHeroImageIndex];
-    img.onload = handleHeroImageLoad;
-    
-    if (img.complete) {
-      handleHeroImageLoad();
-    }
-  }, [currentHeroImageIndex, heroImages]);
-
-  // Preload all hero images
-  useEffect(() => {
-    // Preload all images
-    heroImages.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, [heroImages]);
+  // No hero image loading effect needed
 
   // Handle scroll position restoration
   useEffect(() => {
@@ -198,48 +136,6 @@ const ExplorePage = () => {
     }
   }, [location, isLoading, results, getScrollTarget, clearScrollTarget]);
   
-  // Update search params when filters change
-  const updateSearchParams = (updates) => {
-    const newParams = new URLSearchParams(searchParams);
-    
-    // Process each update
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === undefined || value === '') {
-        // Remove empty values
-        newParams.delete(key);
-      } else if (Array.isArray(value)) {
-        // Handle arrays (like tags)
-        newParams.delete(key); // Remove existing values
-        value.forEach(item => newParams.append(key, item));
-      } else {
-        // Handle simple values
-        newParams.set(key, value);
-      }
-    });
-    
-    // Update URL without reloading the page
-    setSearchParams(newParams);
-    
-    // Update the filters for the query
-    updateFilters({
-      query: newParams.get('q') || '',
-      tags: newParams.getAll('tag'),
-      distance: parseInt(newParams.get('distance') || '10', 10),
-      sortBy: newParams.get('sort') || 'relevance',
-      city: newParams.get('city') || 'Agra',
-      view: newParams.get('view') || 'Explore',
-      userInterests: activeSpecialTag === 'Only For You' ? userInterests : [],
-      gender: newParams.get('gender') || 'All'
-    });
-  };
-  
-  // Handle gender filter change
-  const handleGenderFilterChange = (gender) => {
-    setSelectedGender(gender);
-    updateSearchParams({ gender });
-    setShowGenderFilter(false);
-  };
-
   // Update URL parameters and trigger data fetch when search changes
   const handleSearch = (query) => {
     const newParams = new URLSearchParams(searchParams);
@@ -263,6 +159,17 @@ const ExplorePage = () => {
     
     // Update filters with new city
     updateFilters({ city });
+  };
+  
+  // Handle filter change (gender, time-based)
+  const handleFilterChange = (filter) => {
+    setSelectedFilter(filter);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('filter', filter);
+    setSearchParams(newParams);
+    
+    // Update filters with new filter value
+    updateFilters({ filter });
   };
 
   // Update URL parameters and trigger data fetch when tags change
@@ -369,21 +276,22 @@ const ExplorePage = () => {
   return (
     <>
       <style>{`
-        /* Hero image styles */
+        /* Hero styles - simplified without images */
         .hero-full-bleed {
           width: calc(100% - 0.001rem) !important;
           max-width: 100% !important;
           margin-left: auto !important;
           margin-right: auto !important;
-          margin-top: -80px !important; /* Negative margin to offset header height */
+          margin-top: 0 !important; /* Remove large margin, so hero sits just below city selector */
           padding-top: 0 !important;
           z-index: 1 !important;
           padding: 0 !important;
           position: relative !important;
           box-sizing: border-box !important;
           border-radius: 12px !important;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
+          box-shadow: none !important;
           overflow: hidden !important;
+          background: white !important;
         }
         
         /* Base page resets */
@@ -410,32 +318,6 @@ const ExplorePage = () => {
           margin-right: 0.5rem;
           flex-shrink: 0;
         }
-
-        /* Hero image skeleton loader */
-        .skeleton-loader {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200% 100%;
-          animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-
-        .hero-image {
-          opacity: 0;
-          transition: opacity 0.5s ease-in-out;
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-        }
-
-        .hero-image.loaded {
-          opacity: 1;
-        }
         
         .hero-container {
           position: relative;
@@ -447,14 +329,16 @@ const ExplorePage = () => {
         .city-selector-container {
           background-color: rgba(255, 255, 255, 0.20);
           backdrop-filter: blur(8px);
-          border-radius: 24px;
-          padding: 8px 16px;
+          border-radius: 12px;
+          padding: 2px 10px;
           display: flex;
           align-items: center;
           cursor: pointer;
           transition: all 0.3s ease;
-          border: 1px solid rgba(79, 70, 229, 0.2);
-          box-shadow: 0 2px 10px rgba(79, 70, 229, 0.1);
+          border: 1px solid rgba(79, 70, 229, 0.15);
+          box-shadow: 0 1px 2px rgba(79, 70, 229, 0.06);
+          font-size: 0.95rem;
+          min-height: 32px;
         }
         
         .city-selector-container:hover {
@@ -464,56 +348,40 @@ const ExplorePage = () => {
         }
       `}</style>
       
-      {/* City Selector - positioned at the very top of the page */}
-      <div className="w-full bg-transparent py-1 px-4 mb-0 sticky top-0 z-30">
-        <div className="flex justify-start">
-          <div className="city-selector-container">
-            <CitySelector 
-              currentCity={selectedCity}
-              onCityChange={handleCityChange}
+      {/* City Selector and Search Bar Row */}
+      <div className="w-full bg-transparent px-4 sticky top-0 z-30 pt-4 md:pt-5">
+        <div className="flex flex-row items-center justify-center gap-x-3 max-w-3xl mx-auto">
+          <div className="w-1/3">
+            <div className="city-selector-container">
+              <CitySelector 
+                currentCity={selectedCity}
+                onCityChange={handleCityChange}
+              />
+            </div>
+          </div>
+          <div className="w-2/3">
+            <ExploreSearch 
+              query={searchQuery} 
+              onSearch={handleSearch} 
             />
           </div>
         </div>
       </div>
       
-      {/* Hero image with overlayed search bar */}
-      <div className="hero-full-bleed hero-section relative aspect-square overflow-hidden">
-        {/* Skeleton loader shown while image is loading */}
-        {!heroImageLoaded && (
-          <div className="skeleton-loader w-full h-full absolute inset-0"></div>
-        )}
-        
+      {/* Hero banner - simplified without search bar */}
+      <div className="hero-full-bleed hero-section relative overflow-hidden h-24 md:h-28 flex items-center">
         <div className="hero-container">
-          {heroImages.map((src, index) => (
-            <img
-              key={src}
-              src={src}
-              alt={`Explore Hero ${index + 1}`}
-              className={`object-cover hero-image ${currentHeroImageIndex === index && heroImageLoaded ? 'loaded' : ''}`}
-              style={{ margin: 0, padding: 0, display: 'block' }}
-              onLoad={() => currentHeroImageIndex === index && setHeroImageLoaded(true)}
-            />
-          ))}
+          {/* No images, just gradient background applied via CSS */}
         </div>
+        {/* Subtle gradient overlay for better text readability */}
         
-        {/* Lighter gradient overlay for better text readability while keeping images bright */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent"></div>
-        <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4 pt-4">
+        <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4">
           <div className="w-full max-w-md">
-            <ExploreSearch 
-              query={searchQuery} 
-              onSearch={handleSearch} 
-            />
-            <div className="mt-6 pl-1">
-              <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg" style={{ letterSpacing: '0.5px' }}>
-                <span className="text-white">Meet Like-minded People!</span>
-              </h2>
-              <div className="h-1 w-20 bg-white rounded-full mt-2 opacity-80"></div>
-            </div>
+            {/* Removed ExploreSearch from hero banner */}
           </div>
           
-          {/* Tag filter overlaid at the very bottom of the hero */}
-          <div className="absolute bottom-0 left-0 right-0 w-full">
+          {/* Tag filter positioned below the search bar */}
+          <div className="w-full">
             <div className="tag-scroll-container w-full" ref={tagScrollRef}>
               <TagFilter 
                 selectedTags={selectedTags}
@@ -527,34 +395,11 @@ const ExplorePage = () => {
         </div>
       </div>
       {/* End hero + search */}
-      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0 }}>
-        {/* Get the base URL for absolute URLs in meta tags */}
-        <Helmet>
-          <title>Explore Events | Tymout</title>
-          <meta name="description" content="So many tables to join and have a tymout, what are you waiting for?" />
-          
-          {/* Open Graph / Facebook */}
-          <meta property="og:type" content="website" />
-          <meta property="og:url" content={`${window.location.origin}/explore`} />
-          <meta property="og:title" content="Explore Events | Tymout" />
-          <meta property="og:description" content="So many tables to join and have a tymout, what are you waiting for?" />
-          <meta property="og:image" content={`${window.location.origin}/timeout_logo.png`} />
-          
-          {/* Twitter */}
-          <meta property="twitter:card" content="summary_large_image" />
-          <meta property="twitter:url" content={`${window.location.origin}/explore`} />
-          <meta property="twitter:title" content="Explore Events | Tymout" />
-          <meta property="twitter:description" content="So many tables to join and have a tymout, what are you waiting for?" />
-          <meta property="twitter:image" content={`${window.location.origin}/timeout_logo.png`} />
-          
-          {/* WhatsApp specific */}
-          <meta property="og:site_name" content="Tymout" />
-          <meta property="og:locale" content="en_US" />
-        </Helmet>
+      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF' }}>
 
       {/* Spotlight section - horizontally scrollable 2x3 grid */}
       {!isLoading && results && results.length > 0 && (
-        <div className="mt-4">
+        <div className="mt-2">
           <SpotlightEvents 
             events={results.filter(event => 
               event.set_trending === 'in the spotlight'
@@ -563,54 +408,32 @@ const ExplorePage = () => {
         </div>
       )}
       
-      {/* Search is now only in the hero overlay */}
-      
-      {/* Tag filter moved to hero overlay */}
-      
-      {/* Gender Filter Button */}
-      <div className="flex justify-end px-4 mt-4">
-        <div className="relative">
-          <button 
-            onClick={() => setShowGenderFilter(!showGenderFilter)}
-            className="flex items-center space-x-2 bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <FaFilter className="text-gray-500" />
-            <span>Filter: {selectedGender}</span>
-          </button>
-          
-          {/* Gender Filter Dropdown */}
-          {showGenderFilter && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-              <div className="py-1">
-                <button 
-                  onClick={() => handleGenderFilterChange('All')}
-                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'All' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
-                >
-                  <FaVenusMars className="mr-2" />
-                  All
-                </button>
-                <button 
-                  onClick={() => handleGenderFilterChange('Male')}
-                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'Male' || selectedGender === 'Only Male' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
-                >
-                  <FaVenusMars className="mr-2" />
-                  Male
-                </button>
-                <button 
-                  onClick={() => handleGenderFilterChange('Female')}
-                  className={`flex items-center w-full px-4 py-2 text-sm ${selectedGender === 'Female' || selectedGender === 'Only Female' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`}
-                >
-                  <FaVenusMars className="mr-2" />
-                  Female
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Content section */}
+      {/* Content section with heading and gender filter */}
       <div className="mt-4">
+        <div className="flex items-center justify-between mb-4 px-4">
+          <h2 className="text-xl font-bold text-indigo-600">Find Your Table</h2>
+          
+          {/* Filter dropdown for gender and time */}
+          <div className="relative">
+            <select
+              value={selectedFilter}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              aria-label="Filter events"
+            >
+              <option value="All">All</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Tonight">Tonight</option>
+              <option value="ThisWeek">This Week</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
         <ExploreResults 
           results={results} 
           isLoading={isLoading}

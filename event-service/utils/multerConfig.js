@@ -28,7 +28,9 @@ const upload = multer({
 
 // Custom error handling for multer
 const handleMulterUpload = (req, res, next) => {
-  const multerMiddleware = upload.single('eventImage');
+  // Determine which field name to use based on the route
+  const fieldName = req.path.includes('/moments') ? 'momentImage' : 'eventImage';
+  const multerMiddleware = upload.single(fieldName);
   
   multerMiddleware(req, res, (err) => {
     if (err) {

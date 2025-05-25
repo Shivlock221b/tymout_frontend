@@ -90,6 +90,19 @@ const MomentsTab = ({ eventId }) => {
     fileInputRef.current?.click();
   };
   
+  // Handle download image
+  const handleDownload = (e, url, idx) => {
+    e.stopPropagation(); // Prevent any other handlers
+    
+    // Create a temporary anchor element
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `event-photo-${idx + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  
   if (isLoading) return <div className="p-4 text-gray-500">Loading photos...</div>;
   if (isError) return <div className="p-4 text-red-500">Failed to load photos.</div>;
   
@@ -101,16 +114,28 @@ const MomentsTab = ({ eventId }) => {
           <div className="col-span-full text-gray-400 text-center py-4">No photos yet.</div>
         ) : (
           localPhotos.map((url, idx) => (
-            <div 
-              key={idx} 
-              className="relative aspect-square overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            >
+            <div key={idx} className="relative aspect-square rounded-lg shadow-md overflow-hidden">
+              {/* Image */}
               <img
                 src={url}
                 alt={`Event photo ${idx + 1}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
+              
+              {/* Download button - overlay on top right */}
+              <button
+                className="absolute top-2 right-2 p-2 rounded-full bg-indigo-600 bg-opacity-90 text-white shadow-lg hover:bg-indigo-700 focus:outline-none transition-colors z-10"
+                onClick={(e) => handleDownload(e, url, idx)}
+                aria-label={`Download photo ${idx + 1}`}
+                title="Download photo"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </button>
             </div>
           ))
         )}

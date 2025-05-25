@@ -134,12 +134,7 @@ const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = tr
         </div>
       )}
       
-      {type === 'events' && item.price !== undefined && (
-        <div className="mb-6">
-          <h3 className="font-medium mb-2">Price</h3>
-          <p>{item.price === 0 ? 'Free' : `$${item.price}`}</p>
-        </div>
-      )}
+      {/* Price section removed as requested */}
       
       {/* Action Button */}
       <button

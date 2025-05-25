@@ -16,7 +16,6 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionCandidates, setMentionCandidates] = useState([]);
-  const [mentionDropdownPos, setMentionDropdownPos] = useState({ left: 0, top: 0 });
 
   // Fetch tags for the event
   useEffect(() => {
@@ -79,10 +78,31 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
     }
   };
 
-  // Handle input change for @mention detection
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const resizeTextarea = () => {
+      const textarea = inputRef.current;
+      if (!textarea) return;
+      
+      // Reset height to calculate scroll height
+      textarea.style.height = 'auto';
+      
+      // Calculate new height based on content (capped at ~5 lines)
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 120);
+      textarea.style.height = `${newHeight}px`;
+    };
+    
+    // Resize on value change
+    if (inputRef.current) {
+      resizeTextarea();
+    }
+  }, [value]);
+  
+  // Handle input change for @mention detection and auto-resize
   const handleInputChange = (e) => {
     const val = e.target.value;
     onChange(val);
+    
     // Detect @mention
     const textarea = inputRef.current;
     if (textarea) {
@@ -99,13 +119,13 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
         });
         setMentionCandidates(filtered.slice(0, 8));
         setShowMentionDropdown(true);
-        // Optionally, position dropdown near cursor
       } else {
         setShowMentionDropdown(false);
         setMentionQuery('');
       }
     }
-    // ...existing typing logic...
+    
+    // Typing indicator
     if (onTyping) onTyping(val.length > 0);
   };
 
@@ -139,6 +159,13 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
     // Only send if there's content
     if (value && value.trim()) {
       onSend(value);
+      
+      // Reset textarea height after sending
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.style.height = '40px';
+        }
+      }, 0);
     }
   };
 
@@ -276,7 +303,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
         </div>
         <textarea
           ref={inputRef}
-          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[28px] max-h-24 overflow-auto chat-input"
+          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none overflow-auto chat-input"
           placeholder="Type a message..."
           value={value}
           maxLength={1500}
@@ -292,7 +319,12 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
               onSend(value);
             }
           }}
-          style={{lineHeight: '1.5'}}
+          style={{
+            lineHeight: '1.5',
+            minHeight: '40px', // Default height (about 1-2 lines)
+            maxHeight: '120px', // Max height (about 4-5 lines)
+            transition: 'height 0.1s ease-in-out'
+          }}
         />
         <button
           className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0"

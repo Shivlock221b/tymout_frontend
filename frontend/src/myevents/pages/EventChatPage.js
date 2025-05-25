@@ -101,7 +101,26 @@ const EventChatPage = () => {
     if (!text.trim()) return;
     sendMessage(text, replyToMessage);
     setReplyToMessage(null);
+    
+    // Clear the input first
     setInput('');
+    
+    // If a tag is selected, re-insert it into the input field for the next message
+    if (selectedTag) {
+      // Use a separate function to insert tag after input is cleared
+      setTimeout(() => {
+        // Insert tag directly without using the previous input value
+        const tagText = `#${selectedTag.name} `;
+        setInput(tagText);
+        
+        // Focus on the input field after inserting tag
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+          textarea.focus();
+          textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+        }
+      }, 100); // Increased delay to ensure input is cleared first
+    }
   };
 
   const handleReplyTo = (message) => {
@@ -232,10 +251,36 @@ const EventChatPage = () => {
 
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState(null);
+  
+  // Handle tag filter and insertion
   const handleTagFilter = (tag) => {
     setSelectedTag(tag);
+    
+    // If tag is selected, also insert it into the chat input
+    if (tag) {
+      handleTagInsert(tag);
+    }
   };
+  
   const handleClearTagFilter = () => setSelectedTag(null);
+  
+  // Insert tag into chat input
+  const handleTagInsert = (tag) => {
+    const tagText = `#${tag.name}`;
+    // Add a space if needed
+    const needsSpace = input && !/\s$/.test(input);
+    const insert = (needsSpace ? ' ' : '') + tagText + ' ';
+    setInput(input + insert);
+    
+    // Focus on the input field after inserting tag
+    setTimeout(() => {
+      const textarea = document.querySelector('textarea');
+      if (textarea) {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+      }
+    }, 0);
+  };
 
   // Filter messages by selected tag
   const filteredMessages = selectedTag

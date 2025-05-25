@@ -18,27 +18,59 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
   const location = useLocation();
   const [showLoginTooltip, setShowLoginTooltip] = useState(false);
   
-  // Popular tags used for filtering
+  // Popular tags used for filtering with emojis and their colors
   const availableTags = [
-    'All', 'Only For You', 'Food', 'Play', 'Art', 'Learn', 'Serve', 
-    'Socialize', 'Travel', 'Culture', 'Wellness'
+    { name: 'Only For You', emoji: '✨', color: 'indigo' },
+    { name: 'Food', emoji: '🍽️', color: 'rose' },
+    { name: 'Play', emoji: '🎮', color: 'violet' },
+    { name: 'Art', emoji: '🎨', color: 'amber' },
+    { name: 'Learn', emoji: '📚', color: 'emerald' },
+    { name: 'Serve', emoji: '🤝', color: 'sky' },
+    { name: 'Socialize', emoji: '🎉', color: 'fuchsia' },
+    { name: 'Travel', emoji: '✈️', color: 'cyan' },
+    { name: 'Culture', emoji: '🏛️', color: 'orange' },
+    { name: 'Wellness', emoji: '🧘', color: 'teal' }
   ];
 
+  // Get color classes for a tag
+  const getTagColorClasses = (tag) => {
+    const isSelected = selectedTags.includes(tag.name) || (tag.name === 'Only For You' && activeSpecialTag === 'Only For You');
+    
+    if (!isSelected) {
+      return 'bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400';
+    }
+
+    const colorMap = {
+      indigo: 'bg-indigo-600 text-white border-indigo-600',
+      rose: 'bg-rose-600 text-white border-rose-600',
+      violet: 'bg-violet-600 text-white border-violet-600',
+      amber: 'bg-amber-600 text-white border-amber-600',
+      emerald: 'bg-emerald-600 text-white border-emerald-600',
+      sky: 'bg-sky-600 text-white border-sky-600',
+      fuchsia: 'bg-fuchsia-600 text-white border-fuchsia-600',
+      cyan: 'bg-cyan-600 text-white border-cyan-600',
+      orange: 'bg-orange-600 text-white border-orange-600',
+      teal: 'bg-teal-600 text-white border-teal-600'
+    };
+
+    return colorMap[tag.color] || 'bg-indigo-600 text-white border-indigo-600';
+  };
+
   // Handle single tag selection/deselection (single-select)
-  const handleTagClick = (tag) => {
-    if (selectedTags[0] === tag) {
+  const handleTagClick = (tagName) => {
+    if (selectedTags[0] === tagName) {
       // Deselect if already selected
       onTagSelect([]);
     } else {
       // Only one tag can be selected at a time
-      onTagSelect([tag]);
+      onTagSelect([tagName]);
     }
   };
 
   // Special navigation/filter options
-  const handleSpecialTagClick = (tag) => {
+  const handleSpecialTagClick = (tagName) => {
     // For 'Only For You', check if user is authenticated
-    if (tag === 'Only For You' && !isAuthenticated) {
+    if (tagName === 'Only For You' && !isAuthenticated) {
       // Redirect to login page with message
       navigate('/login', { 
         state: { 
@@ -50,7 +82,7 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
     }
     
     // Pass the clicked special tag to parent component
-    onSpecialTagSelect(tag);
+    onSpecialTagSelect(tagName);
   };
   
   // Handle click on 'Only For You' when not authenticated
@@ -79,12 +111,12 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
       `}</style>
       {/* Only show regular tag filter section if not hiding regular tags */}
       {!hideRegularTags && (
-        <div className="flex items-center w-full">
+        <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto whitespace-nowrap">
           
           {/* Available tags */}
           {availableTags.map(tag => (
-            <div key={tag} className="relative flex-1">
-              {tag === 'Only For You' && showLoginTooltip && !isAuthenticated && (
+            <div key={tag.name} className="relative inline-block flex-shrink-0">
+              {tag.name === 'Only For You' && showLoginTooltip && !isAuthenticated && (
                 <div className="absolute -top-12 left-0 right-0 mx-auto w-48 bg-indigo-600 text-white text-xs rounded py-1 px-2 z-50 text-center">
                   Login required for personalized content
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-indigo-600"></div>
@@ -92,28 +124,22 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
               )}
               <button
                 onClick={() => {
-                  if (tag === 'Only For You' && !isAuthenticated) {
+                  if (tag.name === 'Only For You' && !isAuthenticated) {
                     handleOnlyForYouClick();
-                  } else if (tag === 'Only For You' || tag === 'All') {
-                    handleSpecialTagClick(tag);
+                  } else if (tag.name === 'Only For You') {
+                    handleSpecialTagClick(tag.name);
                   } else {
-                    handleTagClick(tag);
+                    handleTagClick(tag.name);
                   }
                 }}
                 className={`
-                  tag-item w-full px-5 py-3 text-lg font-medium transition-all duration-200 flex items-center justify-center border-none !ml-0 !mr-0
-                  ${(selectedTags.includes(tag) || (tag === 'Only For You' && activeSpecialTag === 'Only For You') || (tag === 'All' && activeSpecialTag === 'All'))
-                    ? 'bg-white/30 text-white border-b-2 border-white rounded-t-lg backdrop-blur-sm' 
-                    : 'bg-transparent text-white hover:bg-white/20 hover:rounded-t-lg'}
-                  ${tag === 'Only For You' && !isAuthenticated ? 'cursor-pointer text-white/80 hover:text-white' : ''}
+                  tag-item px-2.5 py-1 text-xs transition-all duration-200 flex items-center justify-center rounded-full border h-7
+                  ${getTagColorClasses(tag)}
+                  ${tag.name === 'Only For You' && !isAuthenticated ? 'cursor-pointer opacity-80 hover:opacity-100' : ''}
                 `}
               >
-                {/* Logos hidden for now - will be used later */
-                (
-                  <div className="flex items-center justify-center h-full">
-                    <span className="font-bold text-white">{tag}</span>
-                  </div>
-                )}
+                <span className="mr-0.5 text-xs">{tag.emoji}</span>
+                <span className="font-medium text-xs">{tag.name}</span>
               </button>
             </div>
           ))}

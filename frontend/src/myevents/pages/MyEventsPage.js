@@ -79,9 +79,9 @@ const MyEventsPage = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('upcoming')}
-            className={`px-4 py-2 rounded-full font-medium text-base transition 
+            className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
               ${activeTab === 'upcoming'
-                ? 'bg-indigo-600 text-white shadow'
+                ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
               }`}
           >
@@ -89,9 +89,9 @@ const MyEventsPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 rounded-full font-medium text-base transition 
+            className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
               ${activeTab === 'pending'
-                ? 'bg-indigo-600 text-white shadow'
+                ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
               }`}
           >
