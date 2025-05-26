@@ -25,12 +25,12 @@ const CitySelector = ({ currentCity, onCityChange }) => {
     <div className="relative">
       {/* Current City Display */}
       <div 
-        className="flex items-center cursor-pointer py-1 text-indigo-600"
+        className="flex items-center cursor-pointer py-1.5 px-4 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm"
         onClick={() => setShowCityModal(!showCityModal)}
       >
-        <FaMapMarkerAlt className="text-indigo-600 mr-1.5" />
-        <span className="text-sm font-medium mr-1.5">{currentCity || 'Select City'}</span>
-        <FaChevronDown className="text-indigo-600 text-xs" />
+        <FaMapMarkerAlt className="text-white mr-2 text-base" />
+        <span className="text-sm font-medium mr-2">{currentCity || 'Select City'}</span>
+        <FaChevronDown className="text-white text-xs" />
       </div>
       
       {/* City Selection Modal */}

@@ -23,13 +23,8 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
     { name: 'Only For You', emoji: '✨', color: 'indigo' },
     { name: 'Food', emoji: '🍽️', color: 'rose' },
     { name: 'Play', emoji: '🎮', color: 'violet' },
-    { name: 'Art', emoji: '🎨', color: 'amber' },
-    { name: 'Learn', emoji: '📚', color: 'emerald' },
-    { name: 'Serve', emoji: '🤝', color: 'sky' },
     { name: 'Socialize', emoji: '🎉', color: 'fuchsia' },
-    { name: 'Travel', emoji: '✈️', color: 'cyan' },
-    { name: 'Culture', emoji: '🏛️', color: 'orange' },
-    { name: 'Wellness', emoji: '🧘', color: 'teal' }
+    { name: 'Travel', emoji: '✈️', color: 'cyan' }
   ];
 
   // Get color classes for a tag
@@ -133,13 +128,13 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
                   }
                 }}
                 className={`
-                  tag-item px-2.5 py-1 text-xs transition-all duration-200 flex items-center justify-center rounded-full border h-7
+                  tag-item px-4 py-2 text-sm transition-all duration-200 flex items-center justify-center rounded-full border h-10 shadow-sm hover:shadow-md
                   ${getTagColorClasses(tag)}
                   ${tag.name === 'Only For You' && !isAuthenticated ? 'cursor-pointer opacity-80 hover:opacity-100' : ''}
                 `}
               >
-                <span className="mr-0.5 text-xs">{tag.emoji}</span>
-                <span className="font-medium text-xs">{tag.name}</span>
+                <span className="mr-1.5 text-base">{tag.emoji}</span>
+                <span className="font-medium text-sm">{tag.name}</span>
               </button>
             </div>
           ))}

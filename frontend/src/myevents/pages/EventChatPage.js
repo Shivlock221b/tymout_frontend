@@ -40,6 +40,36 @@ const EventChatPage = () => {
     };
   }, []);
   
+  // Add a listener for viewport height changes (keyboard appearing/disappearing)
+  useEffect(() => {
+    // Function to adjust container height based on viewport
+    const adjustContainerHeight = () => {
+      const container = document.querySelector('.chat-background-container');
+      if (container) {
+        // Use visual viewport height if available for better mobile keyboard handling
+        const height = window.visualViewport ? `${window.visualViewport.height}px` : '100%';
+        container.style.height = height;
+      }
+    };
+    
+    // Initial adjustment
+    adjustContainerHeight();
+    
+    // Add listeners for both resize and visualViewport resize
+    window.addEventListener('resize', adjustContainerHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjustContainerHeight);
+    }
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', adjustContainerHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', adjustContainerHeight);
+      }
+    };
+  }, []);
+  
   // State for active tab
   const [activeTab, setActiveTab] = useState('groupinfo');
   
@@ -389,36 +419,6 @@ const EventChatPage = () => {
     );
   }
 
-  // Add a listener for viewport height changes (keyboard appearing/disappearing)
-  useEffect(() => {
-    // Function to adjust container height based on viewport
-    const adjustContainerHeight = () => {
-      const container = document.querySelector('.chat-background-container');
-      if (container) {
-        // Use visual viewport height if available for better mobile keyboard handling
-        const height = window.visualViewport ? `${window.visualViewport.height}px` : '100%';
-        container.style.height = height;
-      }
-    };
-    
-    // Initial adjustment
-    adjustContainerHeight();
-    
-    // Add listeners for both resize and visualViewport resize
-    window.addEventListener('resize', adjustContainerHeight);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', adjustContainerHeight);
-    }
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', adjustContainerHeight);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', adjustContainerHeight);
-      }
-    };
-  }, []);
-  
   return (
     <div className="chat-background-container">
       <div className="max-w-[600px] mx-auto w-full relative z-10 chat-content-wrapper">
