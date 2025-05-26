@@ -14,7 +14,7 @@ import { useEventMembersQuery } from '../hooks/queries/useEventMembersQuery';
 
 
 const EventChatPage = () => {
-  // Add meta viewport tag to prevent zooming when keyboard opens
+  // Add meta viewport tag to prevent zooming when keyboard opens and handle mobile keyboard appearance better
   useEffect(() => {
     // Get existing viewport meta tag
     let viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -26,12 +26,17 @@ const EventChatPage = () => {
       document.head.appendChild(viewportMeta);
     }
     
-    // Set viewport properties to prevent zooming
-    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    // Set viewport properties to prevent zooming and handle keyboard better
+    // Adding interactive-widget=resizes-content helps modern browsers handle keyboard appearance
+    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content';
+    
+    // Add class to body to prevent scrolling when chat is open
+    document.body.classList.add('chat-open');
     
     // Cleanup function to restore original viewport settings
     return () => {
       viewportMeta.content = 'width=device-width, initial-scale=1.0';
+      document.body.classList.remove('chat-open');
     };
   }, []);
   
@@ -43,6 +48,36 @@ const EventChatPage = () => {
   
   // Ref for the chat container to control scrolling
   const chatContainerRef = useRef(null);
+  
+  // Add a listener for viewport height changes (keyboard appearing/disappearing)
+  useEffect(() => {
+    // Function to adjust container height based on viewport
+    const adjustContainerHeight = () => {
+      const container = document.querySelector('.chat-background-container');
+      if (container) {
+        // Use visual viewport height if available for better mobile keyboard handling
+        const height = window.visualViewport ? `${window.visualViewport.height}px` : '100%';
+        container.style.height = height;
+      }
+    };
+    
+    // Initial adjustment
+    adjustContainerHeight();
+    
+    // Add listeners for both resize and visualViewport resize
+    window.addEventListener('resize', adjustContainerHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjustContainerHeight);
+    }
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', adjustContainerHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', adjustContainerHeight);
+      }
+    };
+  }, []);
   
   console.log('EventChatPage mounted.');
   const { eventId } = useParams();
@@ -136,24 +171,40 @@ const EventChatPage = () => {
   // Debug: Log the event object to inspect its structure
   console.log('EventChatPage event:', event);
 
-  // Add global styles for the chat background
+  // Add global styles for the chat background with improved positioning for mobile keyboard
   useEffect(() => {
     // Create a style element
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
-      .chat-background-container {
-        position: relative;
+      /* Prevent body scrolling when chat is open */
+      body.chat-open {
+        overflow: hidden;
+        position: fixed;
         width: 100%;
+        height: 100%;
+      }
+      
+      .chat-background-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
         padding-left: 0;
         padding-right: 0;
         margin-left: auto;
         margin-right: auto;
         overflow-x: hidden;
         background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
       }
       
+      /* Use height: 100% instead of position: fixed for better mobile keyboard support */
       .chat-header-container {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
         right: 0;
@@ -165,7 +216,7 @@ const EventChatPage = () => {
       }
       
       .chat-header-glass {
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border-bottom-left-radius: 16px;
         border-bottom-right-radius: 16px;
@@ -183,8 +234,17 @@ const EventChatPage = () => {
         padding: 0 4px;
       }
       
+      /* Improved chat messages container with proper padding for header and input */
+      .chat-messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding-top: 70px; /* Space for header */
+        padding-bottom: 80px; /* Space for input */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+      }
+      
       .chat-input-container {
-        position: fixed;
+        position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
@@ -196,7 +256,7 @@ const EventChatPage = () => {
       }
       
       .chat-input-glass {
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
@@ -206,9 +266,20 @@ const EventChatPage = () => {
       }
       
       .chat-content-wrapper {
+        position: relative;
+        height: 100%;
         padding-left: 0;
         padding-right: 0;
         max-width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* iOS-specific fixes */
+      @supports (-webkit-touch-callout: none) {
+        .chat-background-container {
+          height: -webkit-fill-available;
+        }
       }
     `;
     
@@ -347,11 +418,11 @@ const EventChatPage = () => {
       </div>
     );
   }
-
+  
   return (
-    <div className="flex flex-col h-screen bg-white relative chat-background-container">
-      <div className="max-w-[600px] mx-auto w-full flex flex-col h-full relative z-10 chat-content-wrapper">
-        {/* Header with glassy effect */}
+    <div className="chat-background-container">
+      <div className="max-w-[600px] mx-auto w-full relative z-10 chat-content-wrapper">
+        {/* Header with glassy effect - now positioned absolutely within container */}
         <div className="chat-header-container">
           <div className="chat-header-glass">
             <div className="chat-header-content">
@@ -376,11 +447,8 @@ const EventChatPage = () => {
           </div>
         </div>
         
-        {/* Add padding to account for fixed header */}
-        <div className="pt-16"></div>
-        
-        {/* Chat messages with scrolling */}
-        <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden" ref={chatContainerRef}>
+        {/* Chat messages with scrolling - now in a dedicated container with proper padding */}
+        <div className="chat-messages-container" ref={chatContainerRef}>
           <ChatMessageList
             messages={filteredMessages}
             currentUserId={user?._id}
