@@ -40,32 +40,56 @@ const EventChatPage = () => {
     };
   }, []);
   
-  // Add a listener for viewport height changes (keyboard appearing/disappearing)
+  // Improved keyboard handling that works consistently across browsers
   useEffect(() => {
-    // Function to adjust container height based on viewport
-    const adjustContainerHeight = () => {
-      const container = document.querySelector('.chat-background-container');
-      if (container) {
-        // Use visual viewport height if available for better mobile keyboard handling
-        const height = window.visualViewport ? `${window.visualViewport.height}px` : '100%';
-        container.style.height = height;
+    // Function to handle keyboard appearance without causing layout shifts
+    const handleKeyboardAppearance = () => {
+      // Get the chat container and input container
+      const chatContainer = document.querySelector('.chat-messages-container');
+      const inputContainer = document.querySelector('.chat-input-container');
+      
+      if (!chatContainer || !inputContainer) return;
+      
+      // When keyboard appears, we need to ensure the input stays visible
+      // and the messages container adjusts its size appropriately
+      if (window.visualViewport) {
+        // Calculate the difference between window height and visual viewport height
+        // This difference approximates the keyboard height
+        const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
+        
+        // Only make adjustments if keyboard is likely visible (height difference > 150px)
+        if (keyboardHeight > 150) {
+          // Adjust padding to ensure content doesn't hide behind keyboard
+          chatContainer.style.paddingBottom = `${inputContainer.offsetHeight + 10}px`;
+          
+          // Scroll to bottom to keep the latest messages visible
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        } else {
+          // Reset when keyboard is hidden
+          chatContainer.style.paddingBottom = '80px';
+        }
       }
     };
     
-    // Initial adjustment
-    adjustContainerHeight();
+    // Initial setup
+    handleKeyboardAppearance();
     
-    // Add listeners for both resize and visualViewport resize
-    window.addEventListener('resize', adjustContainerHeight);
+    // Add listeners for both regular resize and visualViewport resize
+    window.addEventListener('resize', handleKeyboardAppearance);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', adjustContainerHeight);
+      window.visualViewport.addEventListener('resize', handleKeyboardAppearance);
+      // Additional event for scroll adjustments
+      window.visualViewport.addEventListener('scroll', handleKeyboardAppearance);
     }
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', adjustContainerHeight);
+      window.removeEventListener('resize', handleKeyboardAppearance);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', adjustContainerHeight);
+        window.visualViewport.removeEventListener('resize', handleKeyboardAppearance);
+        window.visualViewport.removeEventListener('scroll', handleKeyboardAppearance);
       }
     };
   }, []);
@@ -179,13 +203,14 @@ const EventChatPage = () => {
       /* Prevent body scrolling when chat is open */
       body.chat-open {
         overflow: hidden;
-        position: fixed;
+        /* Changed from fixed to avoid keyboard issues */
+        position: relative;
         width: 100%;
         height: 100%;
       }
       
       .chat-background-container {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
@@ -200,11 +225,13 @@ const EventChatPage = () => {
         background-color: #ffffff;
         display: flex;
         flex-direction: column;
+        /* Ensure content adapts to keyboard */
+        padding-bottom: env(safe-area-inset-bottom, 0);
       }
       
-      /* Use height: 100% instead of position: fixed for better mobile keyboard support */
+      /* Improved header positioning for keyboard compatibility */
       .chat-header-container {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
@@ -241,10 +268,13 @@ const EventChatPage = () => {
         padding-top: 70px; /* Space for header */
         padding-bottom: 80px; /* Space for input */
         -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        /* Ensure content doesn't get cut off */
+        min-height: 0;
       }
       
+      /* Improved input positioning to stay visible with keyboard */
       .chat-input-container {
-        position: absolute;
+        position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
@@ -253,6 +283,8 @@ const EventChatPage = () => {
         width: 100%;
         margin: 0 auto;
         transition: all 0.3s ease;
+        /* Ensure input stays above keyboard */
+        transform: translateZ(0);
       }
       
       .chat-input-glass {
@@ -275,11 +307,9 @@ const EventChatPage = () => {
         flex-direction: column;
       }
       
-      /* iOS-specific fixes */
-      @supports (-webkit-touch-callout: none) {
-        .chat-background-container {
-          height: -webkit-fill-available;
-        }
+      /* Ensure inputs don't get hidden by keyboard */
+      textarea, input {
+        font-size: 16px !important;
       }
     `;
     

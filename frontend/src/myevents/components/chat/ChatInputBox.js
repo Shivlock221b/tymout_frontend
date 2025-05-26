@@ -14,7 +14,10 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
   const [tagError, setTagError] = useState('');
   // Mention state
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState('');
+  const [setMentionQuery] = useState(() => (query) => {
+    // This is just a placeholder function to keep the code working
+    // The actual query string is not used directly in the component
+  });
   const [mentionCandidates, setMentionCandidates] = useState([]);
 
   // Fetch tags for the event
@@ -169,23 +172,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
     }
   };
 
-  // Insert emoji at cursor position
-  const handleEmojiSelect = (emoji) => {
-    const textarea = inputRef.current;
-    if (!textarea) {
-      onChange((value || '') + emoji);
-      return;
-    }
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newValue = (value || '').slice(0, start) + emoji + (value || '').slice(end);
-    onChange(newValue);
-    // Move cursor after inserted emoji
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-    }, 0);
-  };
+  // Emoji functionality removed as emoji row was removed
 
   // Insert tag at cursor position
   const handleTagInsert = (tag) => {
@@ -213,23 +200,7 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
 
   return (
     <div className="flex w-full gap-2 items-end p-2 border-t border-gray-200 bg-white relative flex-col">
-      {/* Popular emoji row */}
-      <div className="flex gap-1 mb-0 px-0.5" style={{ minHeight: 24, marginTop: 0 }}>
-        {['😂', '❤️', '👍', '🙏', '😍', '🎉', '👎', '🔥', '👻'].map(emoji => (
-          <button
-            key={emoji}
-            type="button"
-            className="text-xl hover:scale-110 transition-transform focus:outline-none leading-none p-0"
-            style={{ height: 28, width: 28, lineHeight: '28px' }}
-            onClick={() => handleEmojiSelect(emoji)}
-            onMouseDown={e => e.preventDefault()}
-            onTouchStart={e => e.preventDefault()}
-            aria-label={`Insert emoji ${emoji}`}
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
+      {/* Emoji row removed to fix layout issues */}
       <div className="flex w-full gap-2 items-end">
         {/* Tag button */}
         <div className="relative">

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar, FaComment } from 'react-icons/fa';
 import useEventCard from '../../hooks/useEventCard';
+import axios from 'axios';
 
 /**
  * Universal EventCard Component
@@ -34,30 +35,62 @@ const EventCard = ({
     isPending
   } = useEventCard(source);
   
-  // Handle null/undefined checks for properties
-  if (!item) return null;
+  // State for last message
+  const [lastMessage, setLastMessage] = useState(null);
   
+  // Extract properties safely with default empty object to prevent errors
   const {
-    id,
-    title,
-    description,
-    location,
-    distance,
-    participants,
-    maxParticipants,
-    tags,
-    image,
-    event_image, // Add event_image field
-    host,
-    date,
-    time,
-    recommendation,
-    memberCount,
-    attendees,
-    rating,
-    activity,
-    place // Extract place data from item
-  } = item;
+    id = '',
+    title = '',
+    description = '',
+    location = '',
+    distance = '',
+    participants = 0,
+    maxParticipants = 0,
+    tags = [],
+    image = '',
+    event_image = '', // Add event_image field
+    host = {},
+    date = '',
+    time = '',
+    recommendation = null,
+    memberCount = 0,
+    attendees = [],
+    rating = 0,
+    activity = '',
+    place = {}, // Extract place data from item
+    lastMessage: propLastMessage = null // Last message passed as prop
+  } = item || {};
+  
+  // Fetch last message if not provided as prop
+  useEffect(() => {
+    // Skip if no item
+    if (!item) return;
+    
+    const fetchLastMessage = async () => {
+      // Only fetch for events and when in myevents context
+      if (type === 'event' && source === 'myevents' && id && !propLastMessage) {
+        const API_URL = `${process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'}/api/messages`;
+        
+        try {
+          const res = await axios.get(`${API_URL}/${id}/last`);
+          if (res.data && res.data.text) {
+            setLastMessage(res.data);
+          }
+        } catch (err) {
+          console.error('Error fetching last message:', err);
+        }
+      } else if (propLastMessage) {
+        // Use the last message passed as prop
+        setLastMessage(propLastMessage);
+      }
+    };
+    
+    fetchLastMessage();
+  }, [item, id, type, source, propLastMessage]);
+  
+  // Early return after all hooks are called
+  if (!item) return null;
   
   // Use event_image as fallback if image is not available
   const displayImage = image || event_image;
@@ -334,10 +367,25 @@ const EventCard = ({
             </div>
             
             {/* Participants/Attendees - Only show if available */}
-            {getParticipantCount() > 0 && (
-              <div className="flex items-center text-gray-600 text-xs">
-                <FaUsers className="h-3 w-3 mr-1" />
-                <span>{getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants</span>
+            <div className="flex items-center gap-1 mt-2">
+              <FaUsers className="text-gray-500 h-3 w-3" />
+              <span className="text-xs text-gray-600">
+                {getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants
+              </span>
+            </div>
+            
+            {/* Last message - Show if available */}
+            {(lastMessage || propLastMessage) && (
+              <div className="flex items-start gap-1 mt-2 bg-gray-50 p-2 rounded-md">
+                <FaComment className="text-indigo-500 h-3 w-3 mt-0.5 flex-shrink-0" />
+                <div className="flex flex-col">
+                  <span className="font-medium text-xs text-gray-700">
+                    {lastMessage?.sender?.name || propLastMessage?.sender?.name || 'Someone'}
+                  </span>
+                  <span className="line-clamp-1">
+                    {lastMessage?.text || propLastMessage?.text || ''}
+                  </span>
+                </div>
               </div>
             )}
           </div>
