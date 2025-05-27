@@ -6,7 +6,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // NotificationsProvider -> MIGRATED to useNotificationQueries hooks (React Query)
 // ScrollToElementProvider -> MIGRATED to useUIStore (Zustand)
 import { useAuthStore } from './stores/authStore';
-import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AuthSuccess from './pages/AuthSuccess';
@@ -286,7 +285,9 @@ const App = () => {
       {!isEventChatPage && <ResponsiveNavBar />}
       {/* Hide Footer on EventDetailPage, HostPage, and UserProfilePage routes */}
       {(() => {
-        if (isEventChatPage || isMyEventsPage || location.pathname === '/explore') return null;
+        // Hide Footer on Explore page and related paths
+        if (location.pathname === '/explore' || location.pathname.startsWith('/explore')) return null;
+        if (isEventChatPage || isMyEventsPage) return null;
         // Hide Footer on event detail pages
         if (/^\/(events|tables|circles)\/[^/]+$/.test(location.pathname)) return null;
         // Hide Footer on host dashboard and host subpages
