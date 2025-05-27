@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import MessageList from '../components/MessageList';
 import MessageEmpty from '../components/MessageEmpty';
 import MessageTagFilter from '../components/MessageTagFilter';
 import { useMessageThreads } from '../hooks/queries/useMessagingQueries';
 import { useMessageFilters } from '../hooks/stores/useMessagingStoreHooks';
+import chatApi from '../services/chatApi';
+import { useAuthStore } from '../../stores/authStore';
 
 /**
  * MessageIndexPage Component
@@ -26,11 +28,90 @@ const MessageIndexPage = () => {
     showTagFilter
   } = useMessageFilters();
   
-  // Use React Query for data fetching
+  // Get current user from auth store
+  const currentUser = useAuthStore(state => state.user);
+  
+  // Local state for real chat data
+  const [realThreads, setRealThreads] = useState([]);
+  const [isLoadingReal, setIsLoadingReal] = useState(true);
+  
+  // Use React Query for data fetching (as fallback)
   const { 
-    data: threads = [], 
-    isLoading 
+    data: mockThreads = [], 
+    isLoading: isLoadingMock 
   } = useMessageThreads();
+  
+  // Directly fetch real chat data
+  useEffect(() => {
+    const fetchRealChats = async () => {
+      if (!currentUser || !currentUser._id) {
+        console.log('No user found, using mock data');
+        setIsLoadingReal(false);
+        return;
+      }
+      
+      try {
+        setIsLoadingReal(true);
+        console.log('Fetching real chats for user:', currentUser._id);
+        
+        const chats = await chatApi.getUserChats(currentUser._id);
+        console.log('Received real chats:', chats);
+        
+        if (!chats || !Array.isArray(chats) || chats.length === 0) {
+          console.log('No real chats found');
+          setRealThreads([]);
+          setIsLoadingReal(false);
+          return;
+        }
+        
+        // Transform chat data to match the expected format
+        const formattedThreads = chats.map(chat => {
+          // Check if the response is in the expected format from chatController
+          if (chat.otherUser) {
+            // Format from chatController.getUserChats
+            return {
+              id: chat.chatId,
+              name: chat.otherUser.name || 'User',
+              avatar: chat.otherUser.avatar || 'https://via.placeholder.com/48?text=U',
+              lastMessage: chat.lastMessage?.text || 'No messages yet',
+              timestamp: chat.lastMessage?.timestamp || chat.lastActivity || new Date().toISOString(),
+              unread: chat.unreadCount || 0,
+              online: false,
+              tags: ['Private']
+            };
+          } else {
+            // Alternative format - find other participant manually
+            const otherParticipant = chat.participants?.find(p => p.userId !== currentUser._id) || chat.participants?.[0] || {};
+            const lastMsg = chat.lastMessage || {};
+            
+            return {
+              id: chat.chatId || chat._id,
+              name: otherParticipant.name || 'User',
+              avatar: otherParticipant.avatar || 'https://via.placeholder.com/48?text=U',
+              lastMessage: lastMsg.text || 'No messages yet',
+              timestamp: lastMsg.timestamp || lastMsg.createdAt || new Date().toISOString(),
+              unread: chat.unreadCount || 0,
+              online: otherParticipant.online || false,
+              tags: ['Private']
+            };
+          }
+        });
+        
+        setRealThreads(formattedThreads);
+      } catch (error) {
+        console.error('Error fetching real chats:', error);
+        setRealThreads([]);
+      } finally {
+        setIsLoadingReal(false);
+      }
+    };
+    
+    fetchRealChats();
+  }, [currentUser]);
+  
+  // Combine real and mock threads, prioritizing real data
+  const threads = realThreads.length > 0 ? realThreads : mockThreads;
+  const isLoading = isLoadingReal || isLoadingMock;
   
   // Extract all unique tags from threads and order them 
   const availableTags = useMemo(() => {
@@ -128,7 +209,7 @@ const MessageIndexPage = () => {
         )}
       
         {/* Message threads */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden p-2">
           {isLoading ? (
             <div className="p-4 space-y-4">
               {[...Array(5)].map((_, index) => (

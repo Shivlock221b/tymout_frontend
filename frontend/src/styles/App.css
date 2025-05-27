@@ -100,3 +100,24 @@
 :focus:not(.tag-item) {
   outline: 2px solid rgba(255, 255, 255, 0.3);
 }
+
+/* Prevent horizontal overflow for the entire app */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+/* Defensive: all direct children of #root should not overflow */
+#root > * {
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+/* Optional: make all containers and sections box-border and not overflow */
+.container, .categories-section, .categories-container {
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+}

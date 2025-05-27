@@ -5,131 +5,110 @@ const API_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020
 
 const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, onTyping, eventId, members = [] }) => {
   const inputRef = useRef();
+  // Keep showTagDropdown state for reference in handleInputChange
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tags, setTags] = useState([]);
-  const [tagLoading, setTagLoading] = useState(false);
-  const [editingTagId, setEditingTagId] = useState(null);
-  const [editingTagName, setEditingTagName] = useState('');
-  const [newTag, setNewTag] = useState('');
-  const [tagError, setTagError] = useState('');
   // Mention state
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
-  const [setMentionQuery] = useState(() => (query) => {
-    // This is just a placeholder function to keep the code working
-    // The actual query string is not used directly in the component
-  });
+  // We still need setMentionQuery for the handleInputChange function
+  const [, setMentionQuery] = useState('');
   const [mentionCandidates, setMentionCandidates] = useState([]);
+  
+  // Tag autocomplete state
+  const [showTagAutocomplete, setShowTagAutocomplete] = useState(false);
+  const [, setTagQuery] = useState(''); // Only need the setter
+  const [tagCandidates, setTagCandidates] = useState([]);
 
-  // Fetch tags for the event
+  // Function to adjust textarea height based on content
+  const adjustTextareaHeight = () => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height (limit to max-height defined in CSS)
+    const newHeight = Math.min(textarea.scrollHeight, 120); // 120px max height (5-6 lines)
+    
+    // Set the height
+    textarea.style.height = `${newHeight}px`;
+  };
+
+  // Fetch tags for the event (only for autocomplete functionality)
   useEffect(() => {
     if (!eventId) return;
-    setTagLoading(true);
     axios.get(`${API_URL}/api/tags?eventId=${eventId}`)
       .then(res => setTags(res.data))
-      .catch(() => setTagError('Failed to fetch tags'))
-      .finally(() => setTagLoading(false));
+      .catch(err => console.error('Failed to fetch tags:', err));
   }, [eventId]);
 
-  // Add a new tag
-  const handleAddTag = async () => {
-    if (!newTag.trim()) return;
-    setTagError('');
-    try {
-      await axios.post(`${API_URL}/api/tags`, { name: newTag.trim(), eventId });
-      setNewTag('');
-      fetchTags();
-    } catch (err) {
-      setTagError(err.response?.data?.error || 'Failed to add tag');
-    }
-  };
-
-  // Edit a tag
-  const handleEditTag = async (tagId) => {
-    if (!editingTagName.trim()) return;
-    setTagError('');
-    try {
-      await axios.put(`${API_URL}/api/tags/${tagId}`, { name: editingTagName.trim() });
-      setEditingTagId(null);
-      setEditingTagName('');
-      fetchTags();
-    } catch (err) {
-      setTagError(err.response?.data?.error || 'Failed to edit tag');
-    }
-  };
-
-  // Delete a tag
-  const handleDeleteTag = async (tagId) => {
-    setTagError('');
-    try {
-      await axios.delete(`${API_URL}/api/tags/${tagId}`);
-      fetchTags();
-    } catch (err) {
-      setTagError('Failed to delete tag');
-    }
-  };
-
-  // Helper to refetch tags
-  const fetchTags = async () => {
-    setTagLoading(true);
-    try {
-      const res = await axios.get(`${API_URL}/api/tags?eventId=${eventId}`);
-      setTags(res.data);
-    } catch {
-      setTagError('Failed to fetch tags');
-    } finally {
-      setTagLoading(false);
-    }
-  };
-
-  // Auto-resize textarea based on content
+  // Adjust height whenever value changes
   useEffect(() => {
-    const resizeTextarea = () => {
-      const textarea = inputRef.current;
-      if (!textarea) return;
-      
-      // Reset height to calculate scroll height
-      textarea.style.height = 'auto';
-      
-      // Calculate new height based on content (capped at ~5 lines)
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 120);
-      textarea.style.height = `${newHeight}px`;
-    };
-    
-    // Resize on value change
-    if (inputRef.current) {
-      resizeTextarea();
-    }
+    adjustTextareaHeight();
   }, [value]);
-  
-  // Handle input change for @mention detection and auto-resize
+
+  // Adjust height on component mount
+  useEffect(() => {
+    if (inputRef.current && value) {
+      adjustTextareaHeight();
+    }
+  }, []);
+
+  // Tag management functions removed as functionality was moved to GroupHeader
+
+  // Handle input change for @mention detection
   const handleInputChange = (e) => {
     const val = e.target.value;
     onChange(val);
-    
-    // Detect @mention
+    // Close tag dropdown if open (though the dropdown UI was moved to GroupHeader)
+    if (showTagDropdown) {
+      setShowTagDropdown(false);
+    }
+    // Detect @mention and #tag
     const textarea = inputRef.current;
     if (textarea) {
       const cursorPos = textarea.selectionStart;
       const textUpToCursor = val.slice(0, cursorPos);
-      const match = textUpToCursor.match(/@([a-zA-Z0-9_\- ]*)$/);
-      if (match) {
-        const query = match[1] || '';
-        setMentionQuery(query);
+      
+      // Check for @mention
+      const mentionMatch = textUpToCursor.match(/@([a-zA-Z0-9_\- ]*)$/);
+      if (mentionMatch) {
+        const queryText = mentionMatch[1] || '';
+        setMentionQuery(queryText);
         // Filter members by name or username
         const filtered = members.filter(m => {
           const name = m.name || m.username || '';
-          return name.toLowerCase().includes(query.toLowerCase());
+          return name.toLowerCase().includes(queryText.toLowerCase());
         });
         setMentionCandidates(filtered.slice(0, 8));
         setShowMentionDropdown(true);
+        setShowTagAutocomplete(false); // Hide tag autocomplete when showing mentions
       } else {
         setShowMentionDropdown(false);
         setMentionQuery('');
+        
+        // Check for #tag
+        const tagMatch = textUpToCursor.match(/#([a-zA-Z0-9_-]*)$/);
+        if (tagMatch) {
+          const query = tagMatch[1] || '';
+          setTagQuery(query);
+          // Filter tags by name
+          const filtered = tags.filter(tag => {
+            return tag.name.toLowerCase().includes(query.toLowerCase());
+          });
+          setTagCandidates(filtered.slice(0, 5));
+          setShowTagAutocomplete(true);
+        } else {
+          setShowTagAutocomplete(false);
+          setTagQuery('');
+        }
       }
     }
-    
-    // Typing indicator
+    // ...existing typing logic...
     if (onTyping) onTyping(val.length > 0);
+    
+    // Adjust textarea height as user types
+    adjustTextareaHeight();
   };
 
   // Insert mention at cursor
@@ -162,19 +141,11 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
     // Only send if there's content
     if (value && value.trim()) {
       onSend(value);
-      
-      // Reset textarea height after sending
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.style.height = '40px';
-        }
-      }, 0);
     }
   };
 
-  // Emoji functionality removed as emoji row was removed
 
-  // Insert tag at cursor position
+  // Insert tag at cursor position (used for both dropdown and autocomplete)
   const handleTagInsert = (tag) => {
     const textarea = inputRef.current;
     const tagText = `#${tag.name}`;
@@ -185,96 +156,61 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
       const end = textarea.selectionEnd;
       const before = (value || '').slice(0, start);
       const after = (value || '').slice(end);
-      // Add a space if needed
-      const needsSpace = before && !/\s$/.test(before);
-      const insert = (needsSpace ? ' ' : '') + tagText + ' ';
-      const newValue = before + insert + after;
+      
+      // For autocomplete, replace the partial tag
+      let newBefore = before;
+      if (showTagAutocomplete) {
+        // Remove the partial #tag that was being typed
+        newBefore = before.replace(/#[a-zA-Z0-9_-]*$/, '');
+      } else {
+        // Add a space if needed when inserting from dropdown
+        const needsSpace = before && !/\s$/.test(before);
+        if (needsSpace) {
+          newBefore = before + ' ';
+        }
+      }
+      
+      const insert = tagText + ' ';
+      const newValue = newBefore + insert + after;
       onChange(newValue);
       setTimeout(() => {
         textarea.focus();
-        textarea.selectionStart = textarea.selectionEnd = start + insert.length;
+        textarea.selectionStart = textarea.selectionEnd = newBefore.length + insert.length;
       }, 0);
     }
-    setShowTagDropdown(false);
+    // Only need to hide tag autocomplete as dropdown was moved to GroupHeader
+    setShowTagAutocomplete(false);
   };
+  
+  // Handle tag selection from autocomplete
+  const handleTagAutocomplete = (tag) => {
+    handleTagInsert(tag);
+  };
+
+  // Event listener removed as tag dropdown was moved to GroupHeader
 
   return (
     <div className="flex w-full gap-2 items-end p-2 border-t border-gray-200 bg-white relative flex-col">
-      {/* Emoji row removed to fix layout issues */}
-      <div className="flex w-full gap-2 items-end">
-        {/* Tag button */}
-        <div className="relative">
+      {/* Reply preview: show full message when replying */}
+      {replyToMessage && (
+        <div className="w-full mb-2 p-2 rounded bg-gray-100 border-l-4 border-blue-400">
+          <div className="text-xs text-gray-500 mb-1">Replying to:</div>
+          <div className="text-sm text-gray-800 whitespace-pre-line break-words">{replyToMessage.content || replyToMessage.text || ''}</div>
           <button
             type="button"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ml-1"
-            onClick={() => setShowTagDropdown(v => !v)}
-            aria-label="Insert tag"
+            className="mt-1 text-xs text-blue-600 hover:underline focus:outline-none"
+            onClick={onCancelReply}
           >
-            <span className="text-lg font-bold">+</span>
+            Cancel Reply
           </button>
-          {showTagDropdown && (
-            <div className="absolute left-0 bottom-12 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[180px] max-h-64 overflow-y-auto p-2">
-              {/* Add tag input */}
-              <div className="flex gap-1 mb-2">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={e => setNewTag(e.target.value)}
-                  maxLength={20}
-                  placeholder="Add new tag..."
-                  className="border px-2 py-1 rounded text-xs flex-1"
-                />
-                <button
-                  onClick={handleAddTag}
-                  className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700"
-                >
-                  Add
-                </button>
-              </div>
-              {tagLoading ? (
-                <div className="p-2 text-xs text-gray-500">Loading...</div>
-              ) : tagError ? (
-                <div className="p-2 text-xs text-red-500">{tagError}</div>
-              ) : tags.length === 0 ? (
-                <div className="p-2 text-xs text-gray-400">No tags</div>
-              ) : (
-                tags.map(tag => (
-                  <div key={tag._id} className="flex items-center w-full">
-                    {editingTagId === tag._id ? (
-                      <>
-                        <input
-                          type="text"
-                          value={editingTagName}
-                          onChange={e => setEditingTagName(e.target.value)}
-                          maxLength={20}
-                          className="border px-1 py-0.5 rounded text-xs"
-                          style={{ width: 70 }}
-                        />
-                        <button onClick={() => handleEditTag(tag._id)} className="text-green-600 text-xs font-bold">✔</button>
-                        <button onClick={() => { setEditingTagId(null); setEditingTagName(''); }} className="text-gray-400 text-xs font-bold">✖</button>
-                      </>
-                    ) : (
-                      <div className="flex items-center w-full">
-                        <button
-                          className="inline-block bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium hover:bg-indigo-200 flex-shrink-0"
-                          onClick={() => handleTagInsert(tag)}
-                        >
-                          #{tag.name}
-                        </button>
-                        <div className="flex-1"></div>
-                        <button onClick={() => { setEditingTagId(tag._id); setEditingTagName(tag.name); }} className="text-blue-600 text-lg font-bold ml-2">✎</button>
-                        <button onClick={() => handleDeleteTag(tag._id)} className="text-red-600 text-lg font-bold ml-1">🗑</button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
         </div>
+      )}
+
+      <div className="flex w-full gap-2 items-start">
+        {/* Tag button removed and moved to GroupHeader */}
         <textarea
           ref={inputRef}
-          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none overflow-auto chat-input"
+          className="flex-1 min-w-0 px-2 py-1 rounded-2xl border border-gray-300 text-base focus:outline-none resize-none min-h-[28px] overflow-auto chat-input"
           placeholder="Type a message..."
           value={value}
           maxLength={1500}
@@ -285,20 +221,35 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
             if (onTyping) onTyping(false);
           }}
           onKeyDown={e => {
-            if (e.key === 'Enter' && e.shiftKey) {
-              e.preventDefault();
-              onSend(value);
+            if (e.key === 'Enter' && !e.shiftKey) {
+              const textarea = e.target;
+              const cursorPos = textarea.selectionStart;
+              const text = textarea.value;
+              // Get the text before the cursor
+              const beforeCursor = text.slice(0, cursorPos);
+              // Get the text after the cursor
+              const afterCursor = text.slice(cursorPos);
+              // Check if the line before the cursor is empty (i.e., double Enter)
+              const lines = beforeCursor.split('\n');
+              const lastLine = lines[lines.length - 1];
+              if (lastLine.trim() === '' && afterCursor.trim() === '') {
+                // Double Enter: send message
+                e.preventDefault();
+                handleSend(e);
+              } else {
+                // Single Enter: add newline
+                // Let default behavior happen, then adjust height
+                setTimeout(adjustTextareaHeight, 0);
+              }
+            } else if (e.key === 'Enter' && e.shiftKey) {
+              // Allow newline with Shift+Enter and adjust height
+              setTimeout(adjustTextareaHeight, 0);
             }
           }}
-          style={{
-            lineHeight: '1.5',
-            minHeight: '40px', // Default height (about 1-2 lines)
-            maxHeight: '120px', // Max height (about 4-5 lines)
-            transition: 'height 0.1s ease-in-out'
-          }}
+          style={{lineHeight: '1.5', overflow: 'hidden'}}
         />
         <button
-          className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0"
+          className="btn btn-primary flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full p-0 self-end"
           style={{ display: 'grid', placeItems: 'center' }}
           onTouchStart={(e) => {
             // Prevent default behavior on touch start
@@ -335,6 +286,24 @@ const ChatInputBox = ({ onSend, value, onChange, replyToMessage, onCancelReply, 
               )}
               <span className="font-medium">{member.name}</span>
               {member.username && <span className="text-xs text-gray-500">@{member.username}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      {/* Tag autocomplete dropdown */}
+      {showTagAutocomplete && tagCandidates.length > 0 && (
+        <div className="absolute left-12 bottom-14 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[150px] max-h-48 overflow-y-auto p-1">
+          {tagCandidates.map(tag => (
+            <button
+              key={tag._id}
+              className="w-full text-left px-3 py-1 hover:bg-indigo-100 rounded text-sm flex items-center gap-2"
+              type="button"
+              onClick={() => handleTagAutocomplete(tag)}
+            >
+              <span className="inline-block bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                #{tag.name}
+              </span>
             </button>
           ))}
         </div>

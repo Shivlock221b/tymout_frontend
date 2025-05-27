@@ -19,6 +19,8 @@ const userServiceClient = axios.create({
 // Intercept requests to add auth token
 userServiceClient.interceptors.request.use(
   config => {
+    console.log('API Request Config:', { url: config.url, method: config.method });
+    
     // Extract token from 'auth-storage' in localStorage
     const authStorage = localStorage.getItem('auth-storage');
     let token = null;
@@ -26,16 +28,24 @@ userServiceClient.interceptors.request.use(
       try {
         const parsed = JSON.parse(authStorage);
         token = parsed.state?.token;
+        console.log('Found auth token:', token ? 'Token exists' : 'No token');
       } catch (e) {
-        // Optionally log error
+        console.error('Error parsing auth storage:', e);
       }
+    } else {
+      console.warn('No auth-storage found in localStorage');
     }
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('No token available for request authentication');
     }
+    
     return config;
   },
   error => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -48,19 +58,30 @@ const settingsService = {
    */
   updateProfileSettings: async (profileData) => {
     try {
-      // In a production environment, this would be an API call
-      // const response = await axios.put('/api/settings/profile', profileData);
-      // return response.data;
+      console.log('Calling updateProfileSettings with data:', profileData);
       
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make a real API call to update profile settings
+      // The correct endpoint is /user/profile based on server.js configuration
+      const response = await userServiceClient.put('/user/profile', profileData);
       
-      return {
-        ...profileData,
-        updatedAt: new Date().toISOString()
-      };
+      console.log('Profile update API response:', response);
+      console.log('Profile update response data:', response.data);
+      
+      // Store updated profile data in localStorage for immediate access
+      // This ensures the data persists even if the page is refreshed
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('user-data') || '{}');
+        const updatedUser = { ...currentUser, ...profileData };
+        localStorage.setItem('user-data', JSON.stringify(updatedUser));
+        console.log('Updated user data in localStorage');
+      } catch (e) {
+        console.error('Error updating localStorage:', e);
+      }
+      
+      return response.data.data || response.data;
     } catch (error) {
       console.error('Error updating profile settings:', error);
+      console.error('Error details:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -72,17 +93,11 @@ const settingsService = {
    */
   updateAccountSettings: async (accountData) => {
     try {
-      // In a production environment, this would be an API call
-      // const response = await axios.put('/api/settings/account', accountData);
-      // return response.data;
+      // Make a real API call to update account settings
+      const response = await userServiceClient.put('/user/account', accountData);
+      console.log('Account update response:', response.data);
       
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return {
-        ...accountData,
-        updatedAt: new Date().toISOString()
-      };
+      return response.data.data || response.data;
     } catch (error) {
       console.error('Error updating account settings:', error);
       throw error;
@@ -96,17 +111,11 @@ const settingsService = {
    */
   updatePrivacySettings: async (privacyData) => {
     try {
-      // In a production environment, this would be an API call
-      // const response = await axios.put('/api/settings/privacy', privacyData);
-      // return response.data;
+      // Make a real API call to update privacy settings
+      const response = await userServiceClient.put('/user/preferences', privacyData);
+      console.log('Privacy update response:', response.data);
       
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return {
-        ...privacyData,
-        updatedAt: new Date().toISOString()
-      };
+      return response.data.data || response.data;
     } catch (error) {
       console.error('Error updating privacy settings:', error);
       throw error;
@@ -120,17 +129,11 @@ const settingsService = {
    */
   updateNotificationSettings: async (notificationData) => {
     try {
-      // In a production environment, this would be an API call
-      // const response = await axios.put('/api/settings/notifications', notificationData);
-      // return response.data;
+      // Make a real API call to update notification settings
+      const response = await userServiceClient.put('/user/preferences', notificationData);
+      console.log('Notification update response:', response.data);
       
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return {
-        ...notificationData,
-        updatedAt: new Date().toISOString()
-      };
+      return response.data.data || response.data;
     } catch (error) {
       console.error('Error updating notification settings:', error);
       throw error;

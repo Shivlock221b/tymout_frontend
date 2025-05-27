@@ -1,8 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 // Following Single Responsibility Principle - Footer only handles footer content
 const Footer = () => {
+  const location = useLocation();
+
+  // Do not render footer on chat/message pages
+  if (location.pathname.startsWith('/messages')) {
+    return null;
+  }
+
   return (
     <footer className="bg-gray-800 text-white py-8 w-full mt-auto relative">
       <div className="w-full px-4">

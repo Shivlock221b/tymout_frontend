@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import { useScrollToElement } from '../hooks/stores/useUIStoreHooks';
+import { useSearchParams } from 'react-router-dom';
+
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
 
@@ -21,26 +21,20 @@ import SpotlightEvents from '../components/explore/SpotlightEvents';
  * - Display logic is delegated to specialized components
  */
 const ExplorePage = () => {
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getScrollTarget, clearScrollTarget } = useScrollToElement();
   const { user } = useUserData();
   const pageRef = useRef(null);
   
   // State for user interests
   const [userInterests, setUserInterests] = useState([]);
-  
-  // Simplified hero banner without images - no state needed
 
   // Extract filter parameters from URL
   const searchQuery = searchParams.get('q') || '';
   const selectedTags = searchParams.getAll('tag');
   const activeSpecialTag = searchParams.get('view') || 'Explore';
-  // These parameters are available in URL but not currently used
-  // const distance = parseInt(searchParams.get('distance') || '10', 10);
-  // const sortBy = searchParams.get('sort') || 'relevance';
+  const distance = parseInt(searchParams.get('distance') || '10', 10);
+  const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
-  const [selectedFilter, setSelectedFilter] = useState(searchParams.get('filter') || 'All');
   
   // Fetch user interests when component mounts
   useEffect(() => {
@@ -67,69 +61,20 @@ const ExplorePage = () => {
   }, [user]);
   
   // Use React Query hook for data fetching with filters from URL parameters
-  const { data: results = [], isLoading, updateFilters, isFetching } = useExploreSearch({
+  const { 
+    data: results = [], 
+    isLoading, 
+    updateFilters 
+  } = useExploreSearch({
     query: searchQuery,
     tags: selectedTags,
-    city: selectedCity,
-    filter: selectedFilter
+    distance,
+    sortBy,
+    city: selectedCity, // Include the city parameter in the initial filters
+    view: activeSpecialTag, // Include the view parameter for special tags
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [] // Include user interests if 'Only For You' is selected
   });
 
-  // Add optimistic UI updates - show cached results immediately even while loading new data
-  const isRefetching = !isLoading && isFetching;
-
-  // Handle scroll position restoration
-  useEffect(() => {
-    // Check if we need to scroll to a specific element
-    const scrollToElementId = location.state?.scrollToElementId;
-    
-    if (scrollToElementId) {
-      // Wait for the DOM to be fully rendered and data to be loaded
-      const timer = setTimeout(() => {
-        const elementToScrollTo = document.getElementById(scrollToElementId);
-        if (elementToScrollTo) {
-          elementToScrollTo.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          
-          // Add a highlight effect to make it easier to identify the element
-          elementToScrollTo.classList.add('bg-indigo-50');
-          setTimeout(() => {
-            elementToScrollTo.classList.remove('bg-indigo-50');
-          }, 1500);
-        }
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // Check if we have a saved scroll target for this page
-      const savedElementId = getScrollTarget('explore');
-      if (savedElementId && !isLoading) {
-        // Wait for the DOM to be fully rendered
-        const timer = setTimeout(() => {
-          const elementToScrollTo = document.getElementById(savedElementId);
-          if (elementToScrollTo) {
-            elementToScrollTo.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            });
-            
-            // Clear the scroll target after using it
-            clearScrollTarget('explore');
-            
-            // Add a highlight effect
-            elementToScrollTo.classList.add('bg-indigo-50');
-            setTimeout(() => {
-              elementToScrollTo.classList.remove('bg-indigo-50');
-            }, 1500);
-          }
-        }, 100);
-        
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [location, isLoading, results, getScrollTarget, clearScrollTarget]);
-  
   // Update URL parameters and trigger data fetch when search changes
   const handleSearch = (query) => {
     const newParams = new URLSearchParams(searchParams);
@@ -153,55 +98,6 @@ const ExplorePage = () => {
     
     // Update filters with new city
     updateFilters({ city });
-  };
-  
-  // Handle filter change (gender, time-based)
-  const handleFilterChange = (filter) => {
-    setSelectedFilter(filter);
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('filter', filter);
-    setSearchParams(newParams);
-    
-    // Prepare filters object to pass to backend
-    let filterParams = { filter };
-    
-    // Handle time-based filters by converting them to date ranges
-    if (filter === 'Tonight') {
-      // Get today's date
-      const today = new Date();
-      // Set start time to current time
-      const startDate = new Date(today);
-      // Set end time to end of day (11:59:59 PM)
-      const endDate = new Date(today);
-      endDate.setHours(23, 59, 59, 999);
-      
-      // Add date range to filter parameters
-      filterParams.dateRange = {
-        start: startDate.toISOString(),
-        end: endDate.toISOString()
-      };
-      console.log('Tonight filter applied:', filterParams.dateRange);
-    } 
-    else if (filter === 'ThisWeek') {
-      // Get today's date
-      const today = new Date();
-      // Set start date to today
-      const startDate = new Date(today);
-      // Set end date to 7 days from now
-      const endDate = new Date(today);
-      endDate.setDate(today.getDate() + 6); // Add 6 days to include today (total 7 days)
-      endDate.setHours(23, 59, 59, 999);
-      
-      // Add date range to filter parameters
-      filterParams.dateRange = {
-        start: startDate.toISOString(),
-        end: endDate.toISOString()
-      };
-      console.log('This Week filter applied:', filterParams.dateRange);
-    }
-    
-    // Update filters with new filter parameters
-    updateFilters(filterParams);
   };
 
   // Update URL parameters and trigger data fetch when tags change
@@ -307,130 +203,79 @@ const ExplorePage = () => {
 
   return (
     <>
-      <style>{`
-        /* Hero styles - simplified without images */
-        .hero-full-bleed {
-          width: calc(100% - 0.001rem) !important;
-          max-width: 100% !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-          margin-top: 0 !important; /* Remove large margin, so hero sits just below city selector */
-          padding-top: 0 !important;
-          z-index: 1 !important;
-          padding: 0 !important;
-          position: relative !important;
-          box-sizing: border-box !important;
-          border-radius: 12px !important;
-          box-shadow: none !important;
-          overflow: hidden !important;
-          background: white !important;
+      <style jsx>{`        
+        /* City selector style */
+        .city-selector-container {
+          background-color: #ffffff;
+          border-radius: 12px;
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: 1px solid rgba(100, 116, 139, 0.2);
+          box-shadow: 0 2px 10px rgba(100, 116, 139, 0.1);
         }
         
-        /* Base page resets */
-        body, html { margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; background-color: #FFFFFF !important; }
-        #root > div:first-of-type { padding-top: 0 !important; margin-top: 0 !important; background-color: #FFFFFF !important; }
-        
+        .city-selector-container:hover {
+          box-shadow: 0 4px 12px rgba(100, 116, 139, 0.15);
+          border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
         /* Horizontal scrolling for tag filter */
         .tag-scroll-container {
           display: flex;
           overflow-x: auto;
+          overflow-y: hidden;
           white-space: nowrap;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none; /* Firefox */
           padding: 0 !important;
           margin: 0 !important;
+          max-width: 100%;
         }
         
         .tag-scroll-container::-webkit-scrollbar {
           display: none; /* Chrome, Safari */
         }
         
-        .tag-scroll-container .tag-item {
+        .tag-item {
           display: inline-block;
-          margin-right: 0.5rem;
           flex-shrink: 0;
         }
-        
-        .hero-container {
-          position: relative;
+
+        /* Ensure the page does not horizontally scroll at all */
+        body, html { 
+          overflow-x: hidden !important;
           width: 100%;
-          height: 100%;
+          max-width: 100vw;
+          position: relative;
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
         
-        /* City selector overlay styles */
-        .city-selector-container {
-          background-color: rgba(255, 255, 255, 0.75);
-          backdrop-filter: blur(8px);
-          border-radius: 12px;
-          padding: 2px 10px;
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border: none;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          font-size: 0.95rem;
-          min-height: 32px;
+        /* Force all content to stay within viewport */
+        .explore-container {
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden !important;
+          position: relative;
+          box-sizing: border-box;
         }
         
-        .city-selector-container:hover {
-          background-color: rgba(255, 255, 255, 0.9);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        /* Prevent any children from causing overflow */
+        .explore-container > * {
+          max-width: 100vw;
+          overflow-x: hidden !important;
+          box-sizing: border-box;
         }
       `}</style>
-      
-      {/* City Selector and Search Bar Row */}
-      <div className="w-full bg-transparent px-4 sticky top-0 z-30 pt-4 md:pt-5">
-        <div className="flex flex-row items-center justify-center gap-x-3 max-w-3xl mx-auto">
-          <div className="w-1/3">
-            <div className="city-selector-container">
-              <CitySelector 
-                currentCity={selectedCity}
-                onCityChange={handleCityChange}
-              />
-            </div>
-          </div>
-          <div className="w-2/3">
-            <ExploreSearch 
-              query={searchQuery} 
-              onSearch={handleSearch} 
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Hero banner - simplified without search bar */}
-      <div className="hero-full-bleed hero-section relative overflow-hidden h-24 md:h-28 flex items-center">
-        <div className="hero-container">
-          {/* No images, just gradient background applied via CSS */}
-        </div>
-        {/* Subtle gradient overlay for better text readability */}
-        
-        <div className="absolute inset-0 flex flex-col items-start justify-center px-2 sm:px-4">
-          <div className="w-full max-w-md">
-            {/* Removed ExploreSearch from hero banner */}
-          </div>
-          
-          {/* Tag filter positioned below the search bar */}
-          <div className="w-full">
-            <div className="tag-scroll-container w-full" ref={tagScrollRef}>
-              <TagFilter 
-                selectedTags={selectedTags}
-                onTagSelect={handleTagSelect}
-                onSpecialTagSelect={handleSpecialTagSelect}
-                activeSpecialTag={activeSpecialTag}
-                hideRegularTags={false}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* End hero + search */}
-      <div className="container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF' }}>
+      <div className="explore-container container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
 
       {/* Spotlight section - horizontally scrollable 2x3 grid */}
       {!isLoading && results && results.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-4">
           <SpotlightEvents 
             events={results.filter(event => 
               event.set_trending === 'in the spotlight'
@@ -439,41 +284,51 @@ const ExplorePage = () => {
         </div>
       )}
       
-      {/* Content section with heading and gender filter */}
-      <div className="mt-4">
-        <div className="flex flex-col mb-4 px-4">
-          <h2 className="text-xl font-bold text-indigo-600 mb-3">Find Your Table</h2>
-          
-          {/* Filter buttons for time */}
-          <div className="flex space-x-3">
-            <button
-              onClick={() => handleFilterChange('All')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => handleFilterChange('Tonight')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'Tonight' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              Tonight
-            </button>
-            <button
-              onClick={() => handleFilterChange('ThisWeek')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'ThisWeek' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              This Week
-            </button>
+      {/* City Selector - now positioned above the search bar with higher z-index */}
+      <div className="mt-5 px-4 mb-8" style={{ position: 'relative', zIndex: 50 }}>
+        <div className="max-w-xl mx-auto flex justify-start">
+          <div className="city-selector-container bg-white shadow-sm border border-gray-200 rounded-lg">
+            <CitySelector 
+              currentCity={selectedCity}
+              onCityChange={handleCityChange}
+            />
           </div>
         </div>
-        <div className="mt-6">
-          <ExploreResults 
-            results={results} 
-            isLoading={isLoading} 
-            isRefetching={isRefetching}
-            emptyMessage="No results found. Try adjusting your search or filters."
+      </div>
+      
+      {/* Search bar placed above the tag filter with lower z-index */}
+      <div className="mt-4 px-4 mb-2" style={{ position: 'relative', zIndex: 20 }}>
+        <div className="max-w-xl mx-auto">
+          <ExploreSearch 
+            query={searchQuery} 
+            onSearch={handleSearch} 
           />
         </div>
+      </div>
+      
+      {/* Tag filter now placed above the content section with lowest z-index */}
+      <div className="mt-3 px-2" style={{ position: 'relative', zIndex: 10 }}>
+        <div className="tag-scroll-container w-full" ref={tagScrollRef}>
+          <TagFilter 
+            selectedTags={selectedTags}
+            onTagSelect={handleTagSelect}
+            onSpecialTagSelect={handleSpecialTagSelect}
+            activeSpecialTag={activeSpecialTag}
+            hideRegularTags={false}
+          />
+        </div>
+      </div>
+        
+      {/* Content section with heading */}
+      <div className="mt-5">
+        <div className="flex items-center mb-4 px-4">
+          <h2 className="text-xl font-bold text-gray-800">Find Your Table</h2>
+        </div>
+        <ExploreResults 
+          results={results} 
+          isLoading={isLoading}
+          emptyMessage="No results found. Try adjusting your search or filters."
+        />
       </div>
     </div>
     </>

@@ -60,7 +60,7 @@ const MembersTab = ({ members = [], event }) => {
   // Handle profile click
   const handleProfileClick = (userId) => {
     if (!userId) return;
-    navigate(`/profile/${userId}`);
+    navigate(`/users/${userId}`);
   };
   
   // Show confirmation popup before removing member

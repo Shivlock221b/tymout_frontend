@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar, FaComment } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTag, FaClock, FaCalendarAlt, FaUsers, FaStar } from 'react-icons/fa';
 import useEventCard from '../../hooks/useEventCard';
-import axios from 'axios';
 
 /**
  * Universal EventCard Component
@@ -35,61 +34,30 @@ const EventCard = ({
     isPending
   } = useEventCard(source);
   
-  // State for last message
-  const [lastMessage, setLastMessage] = useState(null);
-  
-  // Extract properties safely with default empty object to prevent errors
-  const {
-    id = '',
-    title = '',
-    description = '',
-    location = '',
-    distance = '',
-    participants = 0,
-    maxParticipants = 0,
-    tags = [],
-    image = '',
-    event_image = '', // Add event_image field
-    host = {},
-    date = '',
-    time = '',
-    recommendation = null,
-    memberCount = 0,
-    attendees = [],
-    rating = 0,
-    place = {}, // Extract place data from item
-    lastMessage: propLastMessage = null // Last message passed as prop
-  } = item || {};
-  
-  // Fetch last message if not provided as prop
-  useEffect(() => {
-    // Skip if no item
-    if (!item) return;
-    
-    const fetchLastMessage = async () => {
-      // Only fetch for events and when in myevents context
-      if (type === 'event' && source === 'myevents' && id && !propLastMessage) {
-        const API_URL = `${process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020'}/api/messages`;
-        
-        try {
-          const res = await axios.get(`${API_URL}/${id}/last`);
-          if (res.data && res.data.text) {
-            setLastMessage(res.data);
-          }
-        } catch (err) {
-          console.error('Error fetching last message:', err);
-        }
-      } else if (propLastMessage) {
-        // Use the last message passed as prop
-        setLastMessage(propLastMessage);
-      }
-    };
-    
-    fetchLastMessage();
-  }, [item, id, type, source, propLastMessage]);
-  
-  // Early return after all hooks are called
+  // Handle null/undefined checks for properties
   if (!item) return null;
+  
+  const {
+    id,
+    title,
+    description,
+    location,
+    distance,
+    participants,
+    maxParticipants,
+    tags,
+    image,
+    event_image, // Add event_image field
+    host,
+    date,
+    time,
+    recommendation,
+    memberCount,
+    attendees,
+    rating,
+    activity,
+    place // Extract place data from item
+  } = item;
   
   // Use event_image as fallback if image is not available
   const displayImage = image || event_image;
@@ -129,21 +97,21 @@ const EventCard = ({
   const sizeClasses = {
     small: {
       card: fullWidth ? 'w-full' : 'max-w-xs',
-      image: 'h-44', // Increased image height
+      image: 'h-40',
       title: 'text-lg',
-      description: 'line-clamp-2 text-sm', // Limit to 2 lines for small cards
+      description: 'line-clamp-2', // Limit to 2 lines for small cards
     },
     medium: {
       card: fullWidth ? 'w-full' : 'max-w-sm',
-      image: 'h-52', // Increased image height
+      image: 'h-48',
       title: 'text-xl',
-      description: 'line-clamp-3 text-base', // Limit to 3 lines for medium cards
+      description: 'line-clamp-3', // Limit to 3 lines for medium cards
     },
     large: {
       card: fullWidth ? 'w-full' : 'max-w-md',
-      image: 'h-60', // Increased image height
+      image: 'h-56',
       title: 'text-2xl',
-      description: 'line-clamp-4 text-lg', // Limit to 4 lines for large cards
+      description: 'line-clamp-4', // Limit to 4 lines for large cards
     }
   };
 
@@ -204,106 +172,168 @@ const EventCard = ({
     }
   };
 
-  // WhatsApp-style chat card layout for explore variant
+  // Horizontal layout for explore variant
   if (variant === 'explore') {
     return (
       <div 
         id={cardElementId}
-        className="w-full bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer border border-gray-100"
+        className="w-full bg-white overflow-hidden hover:bg-gray-50 transition-all duration-300 cursor-pointer mb-2"
         onClick={onCardClick}
       >
-        {/* No host information at the top */}
+        {/* Removed separate host section from the top */}
         
-        {/* WhatsApp-style chat card layout */}
-        <div className="p-3 flex items-center">
-          {/* Left: Event Image (as profile photo) */}
-          <div className="flex-shrink-0 mr-3">
-            <img 
-              src={displayImage || (getPerson() && getPerson().image)} 
-              alt={title || (getPerson() && getPerson().name) || 'Event'} 
-              className="w-14 h-14 rounded-full object-cover border border-gray-200 shadow-sm"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://via.placeholder.com/48?text=Event'; // Fallback image
-              }}
-            />
+        {/* Main Card Content - WhatsApp Chat-like Layout */}
+        <div className="flex p-4">
+          {/* Left: Event Image (as profile picture) */}
+          <div className="flex-shrink-0">
+            {displayImage ? (
+              <div className="relative">
+                <img
+                  src={displayImage}
+                  alt={(type || "Item") + " Image"}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-gray-200"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    e.target.parentNode.classList.add('bg-indigo-100', 'rounded-full', 'w-14', 'h-14', 'flex', 'items-center', 'justify-center');
+                    const textElement = document.createElement('div');
+                    textElement.className = 'text-indigo-500 font-medium text-lg';
+                    textElement.innerText = title?.charAt(0) || type.charAt(0).toUpperCase();
+                    e.target.parentNode.appendChild(textElement);
+                  }}
+                />
+                {activity && (
+                  <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="font-medium text-xs">{activity}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // If no image is provided, show initials in a circle
+              <div className="bg-indigo-100 w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-200">
+                <span className="text-indigo-500 font-medium text-lg">{title?.charAt(0) || type.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
           </div>
           
-          {/* Right: Event Information */}
-          <div className="flex-1 min-w-0">
-            {/* Title and timestamp */}
+          {/* Right: Content Section (like a chat bubble) */}
+          <div className="ml-4 flex-1 flex flex-col">
+            {/* Title and Date Row */}
             <div className="flex justify-between items-start mb-1">
-              <h3 className="text-base font-bold text-gray-900 truncate pr-2">{title}</h3>
-              <span className="text-xs text-gray-500 whitespace-nowrap">{date || time}</span>
+              {/* Title (like contact name) */}
+              <h3 className="text-base font-bold line-clamp-1">{title}</h3>
+              
+              {/* Date right-aligned */}
+              {date && (
+                <div className="flex items-center text-xs text-gray-500 ml-auto">
+                  <FaCalendarAlt className="h-3 w-3 mr-1" />
+                  <span>{date}</span>
+                </div>
+              )}
             </div>
             
-            {/* Short description */}
-            <div className="flex items-start">
-              <p className="text-sm text-gray-600 truncate">
-                {getShortDescription(description)}
-              </p>
+            {/* Description (like message preview) */}
+            {description && showDescription && (
+              <p className="text-sm text-gray-600 line-clamp-2 mb-1">{getShortDescription(description)}</p>
+            )}
+            
+            {/* Hosted By section removed from here and moved to location line */}
+            
+            {/* Rating - WhatsApp style with green checkmarks */}
+            {rating && (
+              <div className="flex items-center mb-1.5">
+                <div className="flex items-center">
+                  <FaStar className="h-3.5 w-3.5 text-yellow-500 mr-1" />
+                  <span className="text-xs text-gray-700">{rating}</span>
+                  <span className="mx-1 text-xs text-gray-400">•</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Info row with time, location, participants */}
+            <div className="flex flex-wrap items-center gap-2 mt-auto">
+              {/* Time */}
+              {time && (
+                <div className="flex items-center text-xs text-gray-500">
+                  <FaClock className="h-3 w-3 mr-1" />
+                  <span>{time}</span>
+                </div>
+              )}
+              
+              {/* Location and Host Info */}
+              <div className="flex w-full justify-between">
+                {(location || place?.name) && (
+                  <div className="flex items-center text-xs text-gray-500">
+                    <FaMapMarkerAlt className="h-3 w-3 text-gray-500 mr-1" />
+                    <span>
+                      {place?.name ? place.name : location}
+                      {distance && (
+                        <span className="ml-1">• {distance} km</span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Hosted By section - right aligned */}
+                {getPerson() && Object.keys(getPerson()).length > 0 && (
+                  <div className="flex items-center text-xs text-gray-500 ml-auto cursor-pointer" onClick={onProfileClick}>
+                    <span className="text-xs text-gray-600 mr-1">Host:</span>
+                    <img 
+                      src={getPerson().image} 
+                      alt={getPerson().name} 
+                      className="w-4 h-4 rounded-full object-cover mx-1"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/16?text=U';
+                      }}
+                    />
+                    <span className="text-xs font-medium text-gray-700">
+                      {getPerson().name} {getPerson().verified && '✓'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Participants/Attendees with blue ticks like WhatsApp read receipts */}
+              {getParticipantCount() > 0 && (
+                <div className="flex items-center text-xs text-gray-500 ml-auto">
+                  <FaUsers className="h-3 w-3 mr-1 text-blue-500" />
+                  <span className="text-blue-500">{getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''}</span>
+                </div>
+              )}
             </div>
             
-            {/* Tags */}
+            {/* Tags as chat labels */}
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-0.5 mt-0.5 mb-0.5">
-                {tags.slice(0, 3).map((tag, index) => {
-                  // Array of tag color combinations with lighter backgrounds
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.slice(0, 2).map((tag, index) => {
+                  // More subtle colors for WhatsApp style
                   const tagColors = [
                     { bg: 'bg-blue-50', text: 'text-blue-600' },
                     { bg: 'bg-green-50', text: 'text-green-600' },
+                    { bg: 'bg-yellow-50', text: 'text-yellow-600' },
                     { bg: 'bg-purple-50', text: 'text-purple-600' },
+                    { bg: 'bg-pink-50', text: 'text-pink-600' },
                     { bg: 'bg-indigo-50', text: 'text-indigo-600' },
                   ];
                   
-                  // Select a color based on the tag string to ensure consistency
                   const colorIndex = tag.length % tagColors.length;
                   const { bg, text } = tagColors[colorIndex];
                   
                   return (
                     <span
                       key={`tag-${index}`}
-                      className={`${bg} ${text} text-xs px-2 py-0.5 rounded-full leading-tight inline-block font-medium`}
+                      className={`${bg} ${text} text-xs px-2 py-0.5 rounded-full`}
                     >
                       {tag}
                     </span>
                   );
                 })}
-                {tags.length > 3 && (
-                  <span className="text-gray-500 text-xs font-medium px-2 py-0.5">+{tags.length - 3}</span>
+                {tags.length > 2 && (
+                  <span className="text-gray-400 text-xs">+{tags.length - 2}</span>
                 )}
               </div>
             )}
-            
-            {/* Location or participant count with right-aligned host info */}
-            <div className="mt-1 flex items-center justify-between w-full">
-              <div className="flex items-center text-xs text-gray-500">
-                {location || place?.name ? (
-                  <>
-                    <FaMapMarkerAlt className="h-3 w-3 text-gray-400 mr-1" />
-                    <span className="truncate">{place?.name || location}</span>
-                  </>
-                ) : (
-                  <>
-                    <FaUsers className="h-3 w-3 text-gray-400 mr-1" />
-                    <span>{getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants</span>
-                  </>
-                )}
-              </div>
-              
-              {/* Host information - right aligned */}
-              {getPerson() && Object.keys(getPerson()).length > 0 && (
-                <div 
-                  className="flex items-center text-xs text-gray-500 ml-2 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onProfileClick(e);
-                  }}
-                >
-                  <span className="font-medium">Host: {getPerson().name}{getPerson().verified ? ' ✓' : ''}</span>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -341,7 +371,7 @@ const EventCard = ({
       
       <div className="relative">
         {/* Card Image */}
-        <div className={`relative ${classes.image} overflow-hidden rounded-lg`}>
+        <div className={`relative ${classes.image} overflow-hidden`}>
           <img 
             src={displayImage} 
             alt={title} 
@@ -374,7 +404,7 @@ const EventCard = ({
       
       <div className="p-4">
         {/* Title */}
-        <h3 className={`${classes.title} font-extrabold text-gray-900 mb-2`}>{title}</h3>
+        <h3 className={`${classes.title} font-bold text-gray-800 mb-2`}>{title}</h3>
         
         {/* Description */}
         {showDescription && (
@@ -427,7 +457,7 @@ const EventCard = ({
             {tags.slice(0, 3).map((tag, index) => (
               <span 
                 key={index} 
-                className="inline-flex items-center text-sm bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full"
+                className="inline-flex items-center text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full"
               >
                 <FaTag className="mr-1 text-xs text-indigo-600" />
                 {tag}

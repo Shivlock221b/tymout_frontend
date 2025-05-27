@@ -13,9 +13,6 @@ export const useExploreItems = (filters = {}, options = {}) => {
   return useQuery({
     queryKey: ['explore', filters],
     queryFn: () => exploreService.getExploreItems(filters),
-    staleTime: 2 * 60 * 1000, // 2 minutes before data is considered stale
-    cacheTime: 10 * 60 * 1000, // 10 minutes before unused data is garbage collected
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
     ...options
   });
 };
@@ -50,25 +47,15 @@ export const useExploreSearch = (initialFilters = {}) => {
   // Fetch explore items with current filters
   const query = useExploreItems(initialFilters, {
     keepPreviousData: true,
-    suspense: false,       // Don't use React Suspense, handle loading state manually
-    retry: 1,             // Only retry once on failure to improve perceived performance
-    refetchOnMount: false, // Don't refetch when component mounts if we have cached data
   });
   
   // Optimized handler for updating filters that prevents unnecessary re-renders
   const updateFilters = (newFilters) => {
-    // Merge filters
-    const mergedFilters = { ...initialFilters, ...newFilters };
-    
     // Prefetch the data with new filters
     queryClient.prefetchQuery({
-      queryKey: ['explore', mergedFilters],
-      queryFn: () => exploreService.getExploreItems(mergedFilters),
-      staleTime: 30 * 1000, // Consider prefetched data fresh for 30 seconds
+      queryKey: ['explore', { ...initialFilters, ...newFilters }],
+      queryFn: () => exploreService.getExploreItems({ ...initialFilters, ...newFilters }),
     });
-    
-    // Return the merged filters for immediate UI updates
-    return mergedFilters;
   };
   
   return {

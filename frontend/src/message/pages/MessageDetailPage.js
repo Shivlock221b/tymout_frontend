@@ -1,20 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaEllipsisV, FaPhone, FaVideo } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
+import chatApi from '../services/chatApi';
+import { useAuthStore } from '../../stores/authStore';
 
 // Import components for message UI
 import MessageBubble from '../components/MessageBubble';
 import MessageInput from '../components/MessageInput';
 import MessageTypingIndicator from '../components/MessageTypingIndicator';
-
-// Import mock data - following the mock data separation rule
-
+import UserChatHeader from '../components/UserChatHeader';
 
 // Import WebSocket service
 import { useMessageWebSocket } from '../services/messageWebSocketService';
-
-// TODO: Replace this placeholder with real data import/API call when backend is ready
-let messageDetailData = {};
 
 /**
  * MessageDetailPage Component
@@ -28,6 +25,7 @@ const MessageDetailPage = () => {
   const { threadId } = useParams();
   const navigate = useNavigate();
   const [conversation, setConversation] = useState(null);
+  const [fetchError, setFetchError] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
@@ -41,31 +39,33 @@ const MessageDetailPage = () => {
     sendTypingIndicator
   } = useMessageWebSocket(threadId);
   
+  const { user } = useAuthStore();
+  
   // Fetch conversation data
   useEffect(() => {
     const fetchConversation = async () => {
       try {
-        // In a production app, this would be an API call
-        // const response = await api.get(`/messages/threads/${threadId}`);
-        // setConversation(response.data);
-        // setMessages(response.data.messages);
-        
-        // Using mock data for development
-        setTimeout(() => {
-          if (messageDetailData[threadId]) {
-            setConversation(messageDetailData[threadId]);
-            setMessages(messageDetailData[threadId].messages || []);
-          }
-          setLoading(false);
-        }, 300);
+        // Fetch chat from chat service
+        const chat = await chatApi.getChat(threadId);
+        const other = chat.participants?.find(p => p.userId !== user?._id) || chat.participants?.[0] || {};
+        setConversation({
+          id: chat.chatId,
+          name: other.name || 'User',
+          avatar: other.avatar || '',
+          online: false,
+          _id: other.userId // Add the user ID for the shop icon
+        });
+        setMessages(chat.messages || []);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching conversation:', error);
+        setFetchError(true);
         setLoading(false);
       }
     };
     
     fetchConversation();
-  }, [threadId]);
+  }, [threadId, user?._id]);
   
   // Process incoming messages from WebSocket
   useEffect(() => {
@@ -92,45 +92,74 @@ const MessageDetailPage = () => {
   }, [messages]);
   
   // Handle sending a new message
-  const handleSendMessage = (content) => {
+  const handleSendMessage = async (content) => {
     if (!content.trim()) return;
     
-    // Create new message object
-    const newMessage = {
-      id: String.raw`m${Date.now()}`,
+    // Generate a client-side message ID to track this message
+    const clientMsgId = String.raw`m${Date.now()}`;
+    
+    // Create temporary message object for optimistic UI update
+    const tempMessage = {
+      id: clientMsgId,
       sender: 'me',
       content,
       timestamp: new Date().toISOString(),
       status: 'sending'
     };
     
-    // Add to messages state
-    setMessages(prev => [...prev, newMessage]);
+    // Add to messages state (optimistic update)
+    setMessages(prev => [...prev, tempMessage]);
     
-    // Send via WebSocket
-    sendMessage(content);
-    
-    // After a delay, update the message status to reflect delivery
-    setTimeout(() => {
+    try {
+      // Actually save the message to the database
+      const savedMessage = await chatApi.sendMessage({
+        chatId: threadId,
+        senderId: user?._id,
+        senderName: user?.name || 'Me',
+        senderAvatar: user?.profileImage || '',
+        text: content,
+        clientMsgId
+      });
+      
+      // Update message status to delivered after successful save
       setMessages(prev => 
         prev.map(msg => 
-          msg.id === newMessage.id 
-            ? { ...msg, status: 'delivered' } 
+          msg.id === clientMsgId
+            ? { 
+                ...msg, 
+                id: savedMessage._id || clientMsgId,
+                status: 'delivered' 
+              } 
             : msg
         )
       );
       
-      // After another delay, update to "read" status
+      // Also send via WebSocket for real-time updates to other users
+      sendMessage(content);
+      
+      // After a delay, update to "read" status
       setTimeout(() => {
         setMessages(prev => 
           prev.map(msg => 
-            msg.id === newMessage.id 
+            msg.id === clientMsgId 
               ? { ...msg, status: 'read' } 
               : msg
           )
         );
       }, 2000);
-    }, 1000);
+      
+    } catch (error) {
+      console.error('Failed to save message:', error);
+      
+      // Mark message as failed if API call fails
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === clientMsgId
+            ? { ...msg, status: 'failed' } 
+            : msg
+        )
+      );
+    }
   };
   
   // Handle typing indicator
@@ -140,7 +169,8 @@ const MessageDetailPage = () => {
   
   // Handle going back
   const handleGoBack = () => {
-    navigate('/messages');
+    // Navigate to MyEvents page with personal tab active
+    navigate('/myevents', { state: { activeTab: 'personal' } });
   };
   
   // Loading state
@@ -196,8 +226,8 @@ const MessageDetailPage = () => {
     );
   }
   
-  // Conversation not found
-  if (!conversation) {
+  // Conversation not found (only show if explicit error)
+  if (fetchError) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 overflow-x-hidden max-w-full">
         <div className="sticky top-0 z-10 bg-white shadow-sm">
@@ -225,7 +255,7 @@ const MessageDetailPage = () => {
               onClick={handleGoBack}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
             >
-              Back to Messages
+              Back to Personal Chats
             </button>
           </div>
         </div>
@@ -235,68 +265,29 @@ const MessageDetailPage = () => {
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 overflow-x-hidden max-w-full">
-      {/* Conversation header */}
-      <div className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="container mx-auto px-4 overflow-x-hidden">
-          <div className="flex items-center h-16">
-            <button 
-              onClick={handleGoBack}
-              className="text-indigo-600 mr-4"
-              aria-label="Go back"
-            >
-              <FaArrowLeft />
-            </button>
-            
-            <div className="flex items-center flex-1">
-              <div className="relative">
-                <img 
-                  src={conversation.avatar} 
-                  alt={conversation.name} 
-                  className="w-10 h-10 rounded-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/40?text=User';
-                  }}
-                />
-                {conversation.online && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                )}
-              </div>
-              <div className="ml-3">
-                <h2 className="font-medium">{conversation.name}</h2>
-                <p className="text-xs text-gray-500">
-                  {conversation.online ? 'Online' : 'Offline'}
-                  {isTyping && ' • Typing...'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex">
-              <button className="p-2 text-gray-600 hover:text-indigo-600 transition" aria-label="Call">
-                <FaPhone />
-              </button>
-              <button className="p-2 text-gray-600 hover:text-indigo-600 transition" aria-label="Video call">
-                <FaVideo />
-              </button>
-              <button className="p-2 text-gray-600 hover:text-indigo-600 transition" aria-label="More options">
-                <FaEllipsisV />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Consistent header */}
+      <UserChatHeader user={{ 
+        name: conversation.name, 
+        avatar: conversation.avatar, 
+        online: conversation.online,
+        _id: conversation._id // Pass the user ID to UserChatHeader
+      }} onBack={handleGoBack} />
       
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20 pt-4 md:pb-16">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-28 pt-20 md:pb-24">
         <div className="container mx-auto px-4 overflow-x-hidden">
           <div className="max-w-3xl mx-auto space-y-4">
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={message.sender === 'me'}
-              />
-            ))}
+            {messages.map((message) => {
+              const isOwn = message.senderId === user?._id || message.sender === user?._id || message.sender === 'me';
+              return (
+                <MessageBubble
+                  key={message._id || message.id}
+                  message={message}
+                  isOwn={isOwn}
+                  avatar={conversation.avatar}
+                />
+              );
+            })}
             {isTyping && <MessageTypingIndicator />}
             <div ref={messagesEndRef} />
           </div>
@@ -304,7 +295,7 @@ const MessageDetailPage = () => {
       </div>
       
       {/* Message input */}
-      <div className="sticky bottom-0 z-10 bg-white border-t shadow-sm pb-20 md:pb-0">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t shadow-sm">
         <div className="container mx-auto px-4 py-2 overflow-x-hidden">
           <div className="max-w-3xl mx-auto">
             <MessageInput 

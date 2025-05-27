@@ -18,81 +18,93 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
   const location = useLocation();
   const [showLoginTooltip, setShowLoginTooltip] = useState(false);
   
-  // Popular tags used for filtering with emojis and their colors
+  // Popular tags used for filtering - all possible tags for backend logic
+  // Many are hidden from UI but kept for backend functionality
+  /* eslint-disable no-unused-vars */
   const availableTags = [
-    { name: 'Only For You', emoji: '✨', color: 'indigo', hidden: true }, // Hidden tag, kept for future use
-    { name: 'Food', emoji: '🍽️', color: 'rose' },
-    { name: 'Play', emoji: '👟', color: 'violet' },
-    { name: 'Socialize', emoji: '🎉', color: 'fuchsia' },
-    { name: 'Travel', emoji: '✈️', color: 'cyan' }
+    'Only For You', 'Food', 'Play', 'Art', 'Learn', 'Serve', 
+    'Socialize', 'Travel', 'Culture', 'Wellness'
   ];
-
-  // Get color classes for a tag
-  const getTagColorClasses = (tag) => {
-    const isSelected = selectedTags.includes(tag.name) || (tag.name === 'Only For You' && activeSpecialTag === 'Only For You');
-    
-    if (!isSelected) {
-      return 'bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400';
-    }
-
-    const colorMap = {
-      indigo: 'bg-indigo-600 text-white border-indigo-600',
-      rose: 'bg-rose-600 text-white border-rose-600',
-      violet: 'bg-violet-600 text-white border-violet-600',
-      amber: 'bg-amber-600 text-white border-amber-600',
-      emerald: 'bg-emerald-600 text-white border-emerald-600',
-      sky: 'bg-sky-600 text-white border-sky-600',
-      fuchsia: 'bg-fuchsia-600 text-white border-fuchsia-600',
-      cyan: 'bg-cyan-600 text-white border-cyan-600',
-      orange: 'bg-orange-600 text-white border-orange-600',
-      teal: 'bg-teal-600 text-white border-teal-600'
-    };
-
-    return colorMap[tag.color] || 'bg-indigo-600 text-white border-indigo-600';
+  /* eslint-enable no-unused-vars */
+  
+  // Tags with emojis that should be visible in the UI
+  // Excluding 'Only For You', 'Learn', 'Art', 'Serve', and 'Culture' as requested
+  const tagEmojis = {
+    'Food': '🍽️',
+    'Play': '👟', // Changed to shoes emoji
+    'Socialize': '🎉', // Changed to party emoji
+    'Travel': '✈️',
+    'Wellness': '🧘'
   };
+  
+  // Color schemes for each tag when selected
+  const tagColors = {
+    'Food': {
+      bg: 'bg-orange-100',
+      border: 'border-orange-400',
+      text: 'text-orange-700'
+    },
+    'Play': {
+      bg: 'bg-blue-100',
+      border: 'border-blue-400',
+      text: 'text-blue-700'
+    },
+    'Socialize': {
+      bg: 'bg-pink-100',
+      border: 'border-pink-400',
+      text: 'text-pink-700'
+    },
+    'Travel': {
+      bg: 'bg-green-100',
+      border: 'border-green-400',
+      text: 'text-green-700'
+    },
+    'Wellness': {
+      bg: 'bg-purple-100',
+      border: 'border-purple-400',
+      text: 'text-purple-700'
+    }
+  };
+  
+  // Only show tags that have emojis assigned (our visible tags)
+  const visibleTags = Object.keys(tagEmojis);
 
   // Handle single tag selection/deselection (single-select)
-  const handleTagClick = (tagName) => {
-    if (selectedTags[0] === tagName) {
+  const handleTagClick = (tag) => {
+    if (selectedTags[0] === tag) {
       // Deselect if already selected
       onTagSelect([]);
     } else {
       // Only one tag can be selected at a time
-      onTagSelect([tagName]);
+      onTagSelect([tag]);
     }
   };
 
-  // Special navigation/filter options
-  const handleSpecialTagClick = (tagName) => {
-    // For 'Only For You', check if user is authenticated
-    if (tagName === 'Only For You' && !isAuthenticated) {
-      // Redirect to login page with message
-      navigate('/login', { 
-        state: { 
-          from: location,
-          message: 'Please log in to see personalized recommendations' 
-        } 
-      });
-      return;
-    }
-    
-    // Pass the clicked special tag to parent component
-    onSpecialTagSelect(tagName);
-  };
-  
-  // Handle click on 'Only For You' when not authenticated
-  const handleOnlyForYouClick = () => {
-    if (!isAuthenticated) {
-      // Show tooltip briefly before redirecting
-      setShowLoginTooltip(true);
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            from: location,
-            message: 'Please log in to see personalized recommendations' 
-          } 
-        });
-      }, 800);
+  // Simplified function for handling special tags like 'Only For You'
+  // This is kept for the hidden functionality but not directly exposed in UI
+  // NOTE: This function is intentionally preserved but currently unused.
+  // It will be called programmatically from ExplorePage.js when needed
+  // through the onSpecialTagSelect prop to maintain the 'Only For You' functionality
+  /* eslint-disable no-unused-vars */
+  const handleSpecialTag = (tag) => {
+    // Keep this function to maintain special tag functionality
+    // even though the UI elements are hidden
+    if (tag === 'Only For You') {
+      if (!isAuthenticated) {
+        setShowLoginTooltip(true);
+        setTimeout(() => {
+          navigate('/login', { 
+            state: { 
+              from: location,
+              message: 'Please log in to see personalized recommendations' 
+            } 
+          });
+        }, 800);
+        return;
+      }
+      
+      // Pass the special tag to parent component for processing
+      onSpecialTagSelect('Only For You');
     }
   };
 
@@ -106,38 +118,38 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
       `}</style>
       {/* Only show regular tag filter section if not hiding regular tags */}
       {!hideRegularTags && (
-        <div className="flex items-center justify-center gap-1.5 px-2 py-1.5 mx-auto whitespace-nowrap overflow-x-auto">
+        <div className="tag-scroll-container">
           
-          {/* Available tags */}
-          {availableTags.filter(tag => !tag.hidden).map(tag => (
-            <div key={tag.name} className="relative inline-block flex-shrink-0">
-              {tag.name === 'Only For You' && showLoginTooltip && !isAuthenticated && (
-                <div className="absolute -top-12 left-0 right-0 mx-auto w-48 bg-indigo-600 text-white text-xs rounded py-1 px-2 z-50 text-center">
-                  Login required for personalized content
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-indigo-600"></div>
-                </div>
-              )}
+          {/* Only display visible tags (excludes 'Only For You') */}
+          {visibleTags.map(tag => (
+            <div key={tag} className="relative">
               <button
-                onClick={() => {
-                  if (tag.name === 'Only For You' && !isAuthenticated) {
-                    handleOnlyForYouClick();
-                  } else if (tag.name === 'Only For You') {
-                    handleSpecialTagClick(tag.name);
-                  } else {
-                    handleTagClick(tag.name);
-                  }
-                }}
+                onClick={() => handleTagClick(tag)}
                 className={`
-                  tag-item px-3 py-1.5 font-medium text-sm transition flex items-center justify-center rounded-full
-                  ${getTagColorClasses(tag)}
-                  ${tag.name === 'Only For You' && !isAuthenticated ? 'cursor-pointer opacity-80 hover:opacity-100' : ''}
+                  tag-item px-5 py-3 text-lg transition-all duration-200 flex items-center justify-center
+                  ${selectedTags.includes(tag)
+                    ? `${tagColors[tag].bg} ${tagColors[tag].text} border-b-2 ${tagColors[tag].border} rounded-t-lg` 
+                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:rounded-t-lg'}
                 `}
               >
-                <span className="mr-0.5 text-xs">{tag.emoji}</span>
-                <span className="font-medium text-xs">{tag.name}</span>
+                <div className="flex items-center justify-center h-full">
+                  <span className="text-xl mr-1">{tagEmojis[tag]}</span>
+                  <span className="font-bold text-gray-800">{tag}</span>
+                </div>
               </button>
             </div>
           ))}
+          
+          {/* Keep 'Only For You' functionality but hide the button */}
+          {/* This is a hidden element that maintains the functionality */}
+          <div className="hidden">
+            {showLoginTooltip && !isAuthenticated && (
+              <div className="absolute -top-12 left-0 right-0 mx-auto w-48 bg-indigo-600 text-white text-xs rounded py-1 px-2 z-50 text-center">
+                Login required for personalized content
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-indigo-600"></div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>

@@ -1,4 +1,5 @@
 import React, { useState, useRef, forwardRef, useMemo } from 'react';
+import './ChatMessageBubble.css'; // Import the CSS file for animations
 import { getColorForName } from './name-colors';
 
 const LONG_PRESS_DURATION = 600; // ms
@@ -145,11 +146,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
         )}
         {/* Message bubble */}
         <div
-          className={`flex flex-col gap-1 max-w-[85%] relative ${
-            message.status === 'pending' ? 'border-2 border-indigo-200' : ''
-          } ${
-            message.status === 'failed' ? 'border-2 border-red-500' : ''
-          }`}
+          className={`flex flex-col gap-1 max-w-[85%] relative`}
           style={{ order: 1 }}
         >
           {/* Reply indicator */}
@@ -176,8 +173,8 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
                       (message.replyTo.sender.name || message.replyTo.sender.username)) || 
                     'Unknown'}
                 </span>
-                <span className="text-xs text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px]">
-                  {message.replyTo.text ? message.replyTo.text.slice(0, 60) + (message.replyTo.text.length > 60 ? '…' : '') : '[deleted]'}
+                <span className="text-[11px] text-gray-600 whitespace-pre-line break-words">
+                  {message.replyTo.text || message.replyTo.content || '[deleted]'}
                 </span>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 text-gray-400 flex-shrink-0">
@@ -189,11 +186,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
           
           {/* Message bubble with glass effect */}
           <div
-            className={`rounded-lg px-3 py-2 text-base break-words whitespace-pre-line relative ${
-              isOwn 
-                ? 'chat-bubble-glass-own bg-gray-100 text-gray-900' 
-                : 'chat-bubble-glass text-gray-900'
-            }`}
+            className="rounded-lg px-3 py-2 shadow-sm max-w-[85vw] break-words whitespace-pre-line relative text-[13px] leading-snug bg-gray-100 text-gray-900"
             aria-label={isOwn ? 'Your message' : 'Member message'}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
@@ -207,7 +200,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
             onClick={handleReplyClick}
           >
             {/* Sender name above bubble */}
-            <div className={`text-xs mb-1 font-medium ${isOwn ? 'text-right text-gray-600' : `text-left ${senderColorClass}`}`}>
+            <div className={`text-[11px] mb-1 font-medium ${isOwn ? 'text-right text-gray-600' : `text-left ${senderColorClass}`}`}>
               {isOwn ? 'You' : (
                 message.senderName ||
                 (typeof message.sender === 'object' && (message.sender.name || message.sender.username || message.sender.email || message.sender._id || message.sender.id)) ||
@@ -257,11 +250,9 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
               {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               {isOwn && !(message.isDeleted || message.deleted) && (
                 message.pending || message.status === 'pending' ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <div className="blinking-dot"></div>
                 ) : (
-                  // Single tick for sent (WhatsApp style)
+                  // Tick for sent message
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-indigo-500" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M13.485 1.929a.75.75 0 010 1.06L6.06 10.414a.75.75 0 01-1.06 0L2.515 7.93a.75.75 0 111.06-1.06l2.004 2.003 6.36-6.36a.75.75 0 011.06 0z" />
                   </svg>

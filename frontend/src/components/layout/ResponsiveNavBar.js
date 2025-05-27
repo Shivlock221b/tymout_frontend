@@ -16,7 +16,13 @@ const ResponsiveNavBar = () => {
   
   // Don't show nav on login or signup pages
   const publicPages = ['/login', '/signup', '/'];
+  // Hide nav on auth pages
   if (publicPages.includes(location.pathname)) {
+    return null;
+  }
+
+  // Hide nav on chat/message detail pages (e.g., /messages/123)
+  if (location.pathname.startsWith('/messages')) {
     return null;
   }
 

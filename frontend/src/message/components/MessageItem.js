@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { format, isToday, isYesterday } from 'date-fns';
+import { FaComment } from 'react-icons/fa';
 
 /**
  * MessageItem Component
@@ -40,47 +41,58 @@ const MessageItem = ({ thread, onClick }) => {
   
   return (
     <div 
-      className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-150"
+      className="p-3 cursor-pointer transition-all duration-300 hover:shadow-md rounded-xl m-2 bg-white border border-gray-100"
       onClick={onClick}
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-center gap-3">
         {/* Avatar with online indicator */}
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <img 
-            src={avatar} 
+            src={avatar || 'https://via.placeholder.com/48?text=U'} 
             alt={`${name}'s avatar`}
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-12 h-12 rounded-lg object-cover shadow-sm border border-gray-200 bg-gray-50"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://via.placeholder.com/48?text=U';
+            }}
           />
           {online && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></span>
           )}
         </div>
         
         {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-baseline">
-            <h3 className="font-medium text-gray-900 truncate">{name}</h3>
+        <div className="flex-1 min-w-0 py-1">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-gray-900 truncate">{name}</h3>
             <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{formattedTime}</span>
           </div>
           
-          <p className="text-sm text-gray-600 line-clamp-1 mb-1">{lastMessage}</p>
+          <p className="text-sm text-gray-600 line-clamp-1 mt-0.5">{lastMessage}</p>
           
-          {/* Tag (single) */}
-          {tag && (
-            <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium border ${getTagStyle(tag)}`}>
-              {tag}
-            </span>
-          )}
-        </div>
-        
-        {/* Unread count */}
-        {unread > 0 && (
-          <div className="ml-2 mt-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
-              {unread}
-            </span>
+          <div className="flex justify-between items-center mt-1">
+            {/* Tag (single) */}
+            {tag && (
+              <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium border ${getTagStyle(tag)}`}>
+                {tag}
+              </span>
+            )}
+            
+            {/* Unread count */}
+            {unread > 0 ? (
+              <div className="flex items-center gap-1">
+                <FaComment className="text-indigo-500" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                  {unread}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-gray-400">
+                <FaComment />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -5,8 +5,8 @@ import { useChatSocket } from '../../hooks/useChatSocket';
 import './typing-indicator.css';
 import '../../../styles/chat-custom.css';
 
-const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo, typingUsers = [] }) => {
-  const { deleteMessage, sendMessage, setMessages } = useChatSocket(eventId);
+const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onReplyTo, typingUsers = [], unreadCount = 0 }) => {
+  const { deleteMessage, sendMessage, setMessages, markMessagesAsRead } = useChatSocket(eventId);
   const listRef = useRef(null);
   // internal state to track if user is near the bottom
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -16,6 +16,12 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
   const prevMessageCount = useRef(0);
   // Track first render per event
   const isFirstRender = useRef(true);
+  // Track if we've scrolled to unread messages
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  // Store the first unread message ID
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
+  // Track if there's an unread divider displayed
+  const [showUnreadDivider, setShowUnreadDivider] = useState(false);
 
   // Function to scroll to a specific message by ID
   const scrollToMessage = (messageId) => {
@@ -61,18 +67,101 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
     }
   }, [propMessages]);
 
-  // Reset firstRender when event changes
+  // Reset state when event changes
   useEffect(() => {
+    console.log('Event changed, resetting chat state');
     isFirstRender.current = true;
+    setHasScrolledToUnread(false);
+    setFirstUnreadMessageId(null);
+    setShowUnreadDivider(false);
+    
+    // Clear message refs when changing events
+    messageRefs.current = {};
+    prevMessageCount.current = 0;
   }, [eventId]);
 
-  // Ensure view starts at bottom on first render (before paint)
+  // Find the first unread message and scroll to it on first render
   useLayoutEffect(() => {
-    if (isFirstRender.current && listRef.current && Array.isArray(propMessages) && propMessages.length > 0) {
+    console.log('ChatMessageList useLayoutEffect - messages, unreadCount:', propMessages.length, unreadCount);
+    
+    // Only process if we have messages and the component is mounted
+    if (!listRef.current || !Array.isArray(propMessages) || propMessages.length === 0) return;
+    
+    // If this is the first render and we have unread messages
+    if (isFirstRender.current && unreadCount > 0 && !hasScrolledToUnread) {
+      console.log('Processing unread messages, count:', unreadCount);
+      
+      // Find messages not sent by current user and not read by current user
+      const unreadMessages = propMessages.filter(msg => {
+        // Skip messages sent by this user
+        if (String(msg.senderId) === String(currentUserId)) return false;
+        // Check if user has read this message
+        const hasRead = msg.readBy && msg.readBy.some(read => String(read.userId) === String(currentUserId));
+        return !hasRead;
+      });
+      
+      console.log('Found unread messages:', unreadMessages.length);
+      
+      if (unreadMessages.length > 0) {
+        // Sort by timestamp to get the oldest unread message
+        unreadMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const firstUnread = unreadMessages[0];
+        console.log('First unread message:', firstUnread);
+        
+        setFirstUnreadMessageId(firstUnread._id);
+        setShowUnreadDivider(true);
+        
+        // Use a series of timeouts with increasing delays to ensure the DOM is ready
+        // This helps with race conditions where the refs might not be set yet
+        const scrollToUnreadMessage = (attempt = 1) => {
+          console.log(`Attempt ${attempt} to scroll to unread message`);
+          
+          if (messageRefs.current[firstUnread._id]) {
+            // Scroll to the first unread message
+            messageRefs.current[firstUnread._id].scrollIntoView({ behavior: 'auto', block: 'center' });
+            
+            // Add a visual highlight
+            messageRefs.current[firstUnread._id].classList.add('bg-yellow-100');
+            setTimeout(() => {
+              if (messageRefs.current[firstUnread._id]) {
+                messageRefs.current[firstUnread._id].classList.remove('bg-yellow-100');
+              }
+            }, 2000);
+            
+            // Mark that we've scrolled to unread
+            setHasScrolledToUnread(true);
+            
+            // Mark messages as read after a short delay
+            setTimeout(() => {
+              markMessagesAsRead(eventId);
+            }, 1000);
+            
+            console.log('Successfully scrolled to unread message');
+          } else if (attempt < 5) {
+            // Try again with increasing delay (exponential backoff)
+            setTimeout(() => scrollToUnreadMessage(attempt + 1), 100 * Math.pow(2, attempt));
+          } else {
+            console.log('Failed to scroll to unread message after multiple attempts');
+            // Fallback to bottom scroll if we can't find the message after several attempts
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+          }
+        };
+        
+        // Start the scroll attempt process
+        scrollToUnreadMessage();
+      } else {
+        // If no unread messages found, scroll to bottom as usual
+        console.log('No unread messages found, scrolling to bottom');
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+      }
+    } else if (isFirstRender.current) {
+      // If no unread messages, scroll to bottom as usual
+      console.log('No unread count, scrolling to bottom');
       listRef.current.scrollTop = listRef.current.scrollHeight;
-      isFirstRender.current = false;
     }
-  }, [propMessages]);
+    
+    isFirstRender.current = false;
+  }, [propMessages, unreadCount, currentUserId, eventId, hasScrolledToUnread, markMessagesAsRead]);
 
   // Handle virtual keyboard resize on mobile browsers
   useEffect(() => {
@@ -225,12 +314,28 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
                   ref={el => (messageRefs.current[msg._id] = el)}
                   className="w-full"
                 >
+                  {/* Unread messages divider */}
+                  {showUnreadDivider && firstUnreadMessageId === msg._id && (
+                    <div className="flex items-center justify-center my-2">
+                      <div className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full font-medium shadow-sm animate-pulse">
+                        Unread Messages ({unreadCount})
+                      </div>
+                    </div>
+                  )}
                   <ChatMessageBubble
                     message={msg}
                     isOwn={isOwn}
                     userPhoto={msg.senderAvatar || msg.avatar || msg.photo || undefined}
                     onDelete={deleteMessage}
-                    onReplyTo={onReplyTo}
+                    onReplyTo={(message, messageId) => {
+                      // If messageId is provided, scroll to that message
+                      if (messageId) {
+                        scrollToMessage(messageId);
+                      } else {
+                        // Otherwise, use the original onReplyTo handler
+                        onReplyTo && onReplyTo(message);
+                      }
+                    }}
                     onResend={handleResend}
                   />
                 </div>

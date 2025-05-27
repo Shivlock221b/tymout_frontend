@@ -298,11 +298,41 @@ export function useChatSocket(eventId) {
     }
   }, [eventId, user, debouncedStopTyping]);
 
-  // Add markAsRead function
-  const markAsRead = useCallback(() => {
+  // Enhanced markMessagesAsRead function to properly mark messages as read
+  const markMessagesAsRead = useCallback(async () => {
     if (!socketRef.current || !user || !eventId) return;
-    socketRef.current.emit('markAsRead', { eventId, userId: user._id });
-  }, [eventId, user]);
+    
+    try {
+      // Call the API to mark messages as read
+      await axios.post(`${API_URL}/${eventId}/read`, { userId: user._id });
+      
+      // Update local state to reflect messages as read
+      setMessages(prev => prev.map(msg => {
+        // Skip messages sent by this user
+        if (String(msg.senderId) === String(user._id)) return msg;
+        
+        // Check if user has already read this message
+        const hasRead = msg.readBy && msg.readBy.some(read => String(read.userId) === String(user._id));
+        if (hasRead) return msg;
+        
+        // Add user to readBy array
+        return {
+          ...msg,
+          readBy: [...(msg.readBy || []), { userId: user._id, readAt: new Date() }]
+        };
+      }));
+      
+      // Notify other clients that messages have been read
+      socketRef.current.emit('messagesRead', { eventId, userId: user._id });
+      
+      // Trigger update of unread counts
+      socketRef.current.emit('unreadCountsChanged', { eventId });
+      
+      console.log('Marked all messages as read for event:', eventId);
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  }, [eventId, user, setMessages]);
 
   return {
     messages,
@@ -311,6 +341,6 @@ export function useChatSocket(eventId) {
     setMessages,
     typingUsers,
     updateTypingStatus,
-    markAsRead
+    markMessagesAsRead
   };
 }

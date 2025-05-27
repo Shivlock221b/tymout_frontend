@@ -5,7 +5,7 @@ import { isPast } from 'date-fns';
 import eventService from '../../services/eventService';
 
 // Only use global CSS classes!
-const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnreadBadge = false }) => {
+const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnreadBadge = false, lastMessage = '', lastMessageTime }) => {
   console.log('CARD BADGE', { eventTitle: event.title, unreadCount, showUnreadBadge });
   const navigate = useNavigate();
 
@@ -20,15 +20,19 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
       })()
     : 'Date not available'; // Fallback if date or start is missing
     
+  // Format timestamp to relative time (HH:MM or Date)
+  const formatTime = (ts) => {
+    if (!ts) return '';
+    const date = new Date(ts);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+    
   // Check if event is in the past
   const isPastEvent = event.date && event.date.start 
     ? isPast(new Date(event.date.start))
     : false;
 
-  // Format the location object into a readable string
-  const formattedLocation = event.location 
-    ? (event.location.type === 'physical' ? event.location.city : 'Online Event')
-    : 'Location not available'; // Fallback if location is missing
+  // Get location type for display - will be used in location display
 
   // Create a formatted location with access type
   const locationWithAccess = () => {
@@ -161,38 +165,38 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
           )}
         </div>
         <div className="flex-1">
-          <div className="flex justify-between items-center">
-            <div className="font-semibold text-base text-primary mb-0.5">{event.title}</div>
-            {!isPending && !isPastEvent && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent card click
-                  handleCopyLink(e);
-                }}
-                className={`flex items-center justify-center py-1 px-2.5 rounded text-sm font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-              >
-                {copied ? (
-                  <>
-                    <FaCheck className="mr-1" size={12} />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <FaShare className="mr-1" size={12} />
-                    Share
-                  </>
-                )}
-              </button>
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-1">
+              <div className="font-semibold text-base text-primary mb-0.5">{event.title}</div>
+              {locationWithAccess()}
+            </div>
+            {lastMessageTime && (
+              <span className="text-xs text-gray-400">{formatTime(lastMessageTime)}</span>
             )}
           </div>
-          {/* Use the formatted date and location strings */}
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-0.5 rounded-full">
-              {formattedDate}
-            </span>
-            {locationWithAccess()}
+          {/* Last message preview */}
+          <div className="text-xs text-gray-600 truncate pr-2">
+            {typeof lastMessage === 'string' ? lastMessage : lastMessage?.text || 'No messages yet'}
           </div>
-          <div className="text-xs text-theme-accent"><span className="font-mono">{event.ticketCode}</span></div>
+          <div className="flex justify-between items-center mt-1">
+            <div className="text-xs text-theme-accent"><span className="font-mono">{event.ticketCode}</span></div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block bg-white text-indigo-600 text-xs font-semibold px-0 py-0.5">
+                {formattedDate}
+              </span>
+              {!isPending && !isPastEvent && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    handleCopyLink(e);
+                  }}
+                  className={`flex items-center justify-center p-1.5 rounded text-sm font-medium transition ${copied ? 'bg-green-100 text-green-700' : 'bg-white hover:bg-gray-50 text-indigo-600'}`}
+                >
+                  {copied ? <FaCheck className="text-green-700" size={14} /> : <FaShare className="text-indigo-600" size={14} />}
+                </button>
+              )}
+            </div>
+          </div>
           {/* Removed status display */}
         </div>
       </div>

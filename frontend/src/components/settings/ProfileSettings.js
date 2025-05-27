@@ -106,15 +106,34 @@ const ProfileSettings = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Log the form data being submitted
+    console.log('Submitting profile data:', formData);
+    
+    // Ensure we're sending the right fields in the correct format
+    const profileDataToSubmit = {
+      name: formData.name,
+      bio: formData.bio,
+      location: formData.location,
+      interests: formData.interests
+      // Don't include profileImage as it's handled separately
+    };
+    
+    console.log('Formatted profile data for submission:', profileDataToSubmit);
+    
     // Use React Query mutation to save settings
-    updateProfile.mutate(formData, {
-      onSuccess: () => {
+    updateProfile.mutate(profileDataToSubmit, {
+      onSuccess: (data) => {
+        // Log the successful response
+        console.log('Profile update successful, response:', data);
+        
         // Show success message
         setSuccessMessage('Profile updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       },
       onError: (error) => {
         console.error('Error updating profile:', error);
+        setSuccessMessage(`Error: ${error.message || 'Failed to update profile'}`);
+        setTimeout(() => setSuccessMessage(''), 5000);
       }
     });
   };

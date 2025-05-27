@@ -2,7 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuthStore } from '../../../stores/authStore';
 
-const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
+// Configure service URL with better fallback handling for production
+const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 
+  (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:3020');
+
+// Log the configured URL for debugging
+console.log('Chat service URL configured as:', SOCKET_URL);
+
 const API_URL = `${SOCKET_URL}/api/messages`;
 
 /**
@@ -19,10 +25,24 @@ export function useChatPreviews(eventIds = []) {
     if (!eventIds.length || !userId) return {};
     
     try {
+      console.log('Fetching chat previews for events:', eventIds, 'userId:', userId);
+      console.log('Using API URL:', API_URL);
+      
+      // Configure axios with timeout and headers
+      const axiosConfig = {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      };
+      
       // Fetch last messages for each event
-      const previewPromises = eventIds.map(eventId => 
-        axios.get(`${API_URL}/chat-preview/${eventId}?userId=${userId}`)
-      );
+      const previewPromises = eventIds.map(eventId => {
+        const url = `${API_URL}/chat-preview/${eventId}?userId=${userId}`;
+        console.log('Fetching chat preview from:', url);
+        return axios.get(url, axiosConfig);
+      });
       
       const results = await Promise.all(previewPromises);
       console.log('DEBUG useChatPreviews API results:', results);
@@ -41,14 +61,43 @@ export function useChatPreviews(eventIds = []) {
         
         // Extract data from response or use defaults
         const previewData = res.data || defaultPreview;
+        console.log(`Chat preview for event ${eventId}:`, previewData);
         
         acc[eventId] = previewData;
         return acc;
       }, {});
       
+      // Store the latest results in localStorage as a fallback
+      try {
+        localStorage.setItem('chat-previews', JSON.stringify({
+          timestamp: new Date().toISOString(),
+          data: chatPreviews
+        }));
+      } catch (e) {
+        console.warn('Failed to store chat previews in localStorage:', e);
+      }
+      
       return chatPreviews;
     } catch (error) {
       console.error("Error fetching chat previews:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      // Try to use cached data from localStorage as fallback
+      try {
+        const cached = localStorage.getItem('chat-previews');
+        if (cached) {
+          const parsedCache = JSON.parse(cached);
+          console.log('Using cached chat previews from:', parsedCache.timestamp);
+          return parsedCache.data;
+        }
+      } catch (e) {
+        console.warn('Failed to retrieve cached chat previews:', e);
+      }
+      
       return {};
     }
   };
@@ -59,7 +108,12 @@ export function useChatPreviews(eventIds = []) {
     queryFn: fetchChatPreviews,
     enabled: Boolean(eventIds.length && userId),
     staleTime: 0, // Always fetch fresh data
-    refetchInterval: false, // No polling
+    refetchInterval: 60000, // Poll every minute as a fallback for socket issues
+    retry: 3, // Retry failed requests up to 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    onError: (error) => {
+      console.error('Chat preview query error:', error);
+    }
   });
 
   return { chatPreviews, isLoading };

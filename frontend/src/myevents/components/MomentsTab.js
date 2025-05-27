@@ -46,11 +46,8 @@ const MomentsTab = ({ photos = [], event }) => {
           { eventId: event?._id || event?.id, imageFile: file },
           {
             onSuccess: (data) => {
-              console.log('Upload success response:', data);
-              // Extract the URL from the response - handle both formats
-              const imageUrl = data.data.media?.url || data.data.imageUrl;
               // Add the new photo URL to the local state
-              setLocalPhotos(prev => [...prev, imageUrl]);
+              setLocalPhotos(prev => [...prev, data.data.imageUrl]);
               resolve(data);
             },
             onError: (error) => {

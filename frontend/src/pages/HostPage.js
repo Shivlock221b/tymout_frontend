@@ -20,13 +20,22 @@ const HostPage = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Host Dashboard</h1>
             <p className="mt-1 text-gray-600">Choose what you'd like to host or create</p>
           </div>
-          <button
-            onClick={() => navigate('/host/create-table')}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
-          >
-            <FaCalendarPlus className="h-5 w-5 mr-2" />
-            <span className="font-medium">Create a Table</span>
-          </button>
+          <div className="flex flex-col md:flex-row gap-4">
+            <button
+              onClick={() => navigate('/host/create-table')}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
+            >
+              <FaCalendarPlus className="h-5 w-5 mr-2" />
+              <span className="font-medium">Create a Table</span>
+            </button>
+            <button
+              onClick={() => navigate('/host/business')}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
+            >
+              <FaCalendarPlus className="h-5 w-5 mr-2" />
+              <span className="font-medium">Host a Business</span>
+            </button>
+          </div>
         </div>
         
         {/* Main Content Area */}

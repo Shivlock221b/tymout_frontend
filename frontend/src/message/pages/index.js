@@ -6,5 +6,5 @@
  * Following the Single Responsibility Principle by centralizing exports.
  */
 
-export { default as MessageIndexPage } from './MessageIndexPage';
-export { default as MessageDetailPage } from './MessageDetailPage';
+export { default as MessageIndexPage } from './ChatsPage';
+export { default as MessageDetailPage } from './ChatPage';

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMyEvents } from '../hooks/queries/useMyEventsQueries';
 import MyEventTicketCard from './MyEventTicketCard';
 import { isPast } from 'date-fns';
@@ -6,15 +7,28 @@ import { FaSearch } from 'react-icons/fa';
 import { useChatPreviews } from '../hooks/queries/useChatPreviewQuery';
 import { queryClient } from '../../query/queryClient';
 import { io } from 'socket.io-client';
+import PersonalChatCard from '../components/PersonalChatCard';
 import { useAuthStore } from '../../stores/authStore';
+import chatApi from '../../message/services/chatApi';
+
+// useAuthStore import removed as it's not being used
 
 const SOCKET_URL = process.env.REACT_APP_CHAT_SERVICE_URL || 'http://localhost:3020';
 
 const MyEventsPage = () => {
   const { data: events = [], isLoading, isError } = useMyEvents();
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'upcoming');
+  
+  // Reset location state after using it
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
   const [searchQuery, setSearchQuery] = useState('');
-  const currentUserId = useAuthStore(state => state.user?._id);
+  // currentUserId removed as it's not being used
+  // const currentUserId = useAuthStore(state => state.user?._id);
 
   // Helper function to check if an event is in the past
   const isEventPast = (event) => {
@@ -42,17 +56,122 @@ const MyEventsPage = () => {
   const eventIds = filteredEvents.map(event => event._id);
   const { chatPreviews } = useChatPreviews(eventIds);
 
-  // Real-time unread counter update
+  // Personal one-on-one chats state
+  const { user } = useAuthStore();
+  const [personalChats, setPersonalChats] = useState([]);
+  const [isLoadingPersonal, setIsLoadingPersonal] = useState(true);
+
   useEffect(() => {
-    const socket = io(SOCKET_URL);
-    socket.on('unreadCountsChanged', (data) => {
-      console.log('Received unreadCountsChanged', data, 'refetching chatPreviews');
+    const fetchPersonal = async () => {
+      if (!user?._id) {
+        setIsLoadingPersonal(false);
+        return;
+      }
+      try {
+        setIsLoadingPersonal(true);
+        const chats = await chatApi.getUserChats(user._id);
+        const formatted = (chats || []).map(chat => {
+          const other = chat.otherUser || chat.participants?.find(p => p.userId !== user._id) || chat.participants?.[0] || {};
+          const lastMsg = chat.lastMessage || {};
+          return {
+            id: chat.chatId || chat._id,
+            name: other.name || 'User',
+            avatar: other.avatar || 'https://via.placeholder.com/48?text=U',
+            lastMessage: lastMsg.text || lastMsg,
+            timestamp: lastMsg.timestamp || lastMsg.createdAt || chat.lastActivity || new Date().toISOString(),
+            unread: chat.unreadCount || 0,
+            online: other.online || false
+          };
+        });
+        setPersonalChats(formatted);
+      } catch (err) {
+        console.error('Error loading personal chats', err);
+        setPersonalChats([]);
+      } finally {
+        setIsLoadingPersonal(false);
+      }
+    };
+    fetchPersonal();
+  }, [user]);
+
+  // Real-time updates for unread counts and attendee status changes
+  useEffect(() => {
+    // Log the environment and URL being used
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Setting up socket connection to:', SOCKET_URL);
+    
+    // Enhanced socket connection with better options for production
+    const socket = io(SOCKET_URL, {
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 30000,
+      transports: ['websocket', 'polling'], // Try WebSocket first, then fallback to polling
+      withCredentials: true, // Enable CORS credentials
+      forceNew: true // Force a new connection
+    });
+    
+    // Connection event handlers with improved logging
+    socket.on('connect', () => {
+      console.log('Socket connected successfully with ID:', socket.id);
+      // Force refetch chat previews on successful connection
       queryClient.refetchQueries({ queryKey: ['chatPreviews'], exact: false });
     });
+    
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      console.error('Socket connection error details:', {
+        message: error.message,
+        description: error.description,
+        type: error.type
+      });
+      
+      // Fallback: Periodically refetch chat previews even if socket fails
+      const intervalId = setInterval(() => {
+        console.log('Fallback: Refetching chat previews due to socket connection issues');
+        queryClient.refetchQueries({ queryKey: ['chatPreviews'], exact: false });
+      }, 30000); // Every 30 seconds
+      
+      return () => clearInterval(intervalId);
+    });
+    
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+    
+    // Listen for unread count changes
+    socket.on('unreadCountsChanged', (data) => {
+      console.log('Received unreadCountsChanged event:', data);
+      queryClient.refetchQueries({ queryKey: ['chatPreviews'], exact: false });
+    });
+    
+    // Listen for attendee status updates
+    socket.on('attendeeStatusUpdated', (data) => {
+      console.log('Received attendeeStatusUpdated event:', data);
+      
+      // Force immediate refetch of all relevant queries
+      Promise.all([
+        queryClient.refetchQueries({ queryKey: ['myEvents'], force: true }),
+        queryClient.refetchQueries({ queryKey: ['eventsAttending'], force: true }),
+        queryClient.refetchQueries({ queryKey: ['hostedEvents'], force: true })
+      ]).then(() => {
+        console.log('Successfully refetched all event data after status update');
+      }).catch(error => {
+        console.error('Error refetching event data:', error);
+      });
+    });
+    
+    // Send a test event after 5 seconds to verify socket is working
+    const testTimer = setTimeout(() => {
+      console.log('Sending test attendee update event');
+      socket.emit('testAttendeeUpdate', { test: true, timestamp: new Date().toISOString() });
+    }, 5000);
+    
     return () => {
+      clearTimeout(testTimer);
       socket.disconnect();
+      console.log('Socket disconnected on component unmount');
     };
-  }, []);
+  }, []); // queryClient is stable and doesn't need to be in deps
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -81,17 +200,27 @@ const MyEventsPage = () => {
             onClick={() => setActiveTab('upcoming')}
             className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
               ${activeTab === 'upcoming'
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-indigo-600 text-white shadow'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
               }`}
           >
             My Tables
           </button>
           <button
+            onClick={() => setActiveTab('personal')}
+            className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
+              ${activeTab === 'personal'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+              }`}
+          >
+            Personal
+          </button>
+          <button
             onClick={() => setActiveTab('pending')}
             className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
               ${activeTab === 'pending'
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-indigo-600 text-white shadow'
                 : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
               }`}
           >
@@ -115,7 +244,19 @@ const MyEventsPage = () => {
         </div>
       </div>
 
-      {isLoading ? (
+      {activeTab === 'personal' ? (
+        isLoadingPersonal ? (
+          <div className="text-gray-500">Loading personal chats...</div>
+        ) : personalChats.length ? (
+          <div className="flex flex-col space-y-3">
+            {personalChats.map(chat => (
+              <PersonalChatCard key={chat.id} chat={chat} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-gray-500">No personal chats.</div>
+        )
+      ) : isLoading ? (
         <div className="text-gray-500">Loading events...</div>
       ) : isError ? (
         <div className="text-red-500">Failed to load events.</div>
@@ -138,6 +279,8 @@ const MyEventsPage = () => {
                   isPending={activeTab === 'pending'}
                   unreadCount={preview.unreadCount || 0}
                   showUnreadBadge={showUnreadBadge}
+                  lastMessage={preview.lastMessage}
+                  lastMessageTime={preview.lastMessageTime}
                 />
               </div>
             );

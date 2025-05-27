@@ -169,7 +169,7 @@ const AboutTab = ({ event }) => {
         location: { city: editData.location },
         tags: editData.tags.split(',').map(t => t.trim()).filter(Boolean),
       };
-      await axios.put(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, payload, {
+      await axios.put(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`, payload, {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       setShowEditModal(false);
@@ -192,7 +192,7 @@ const AboutTab = ({ event }) => {
     setAnnouncementError('');
     try {
       const eventId = event._id || event.id;
-      await axios.put(`${process.env.REACT_APP_EVENT_SERVICE_URL || 'http://localhost:3002'}/events/${eventId}`, { announcement: announcementDraft }, {
+      await axios.put(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`, { announcement: announcementDraft }, {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       setShowAnnouncementEdit(false);
@@ -460,8 +460,7 @@ const AboutTab = ({ event }) => {
                     setIsDeleting(true);
                     setError(null);
                     const eventId = event._id || event.id;
-                    await axios.delete(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'}/api/events/${eventId}`);
-                    console.log(`Deleting event at: ${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'}/api/events/${eventId}`);
+                    await axios.delete(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`);
                     navigate('/explore');
                     window.location.reload();
                   } catch (err) {

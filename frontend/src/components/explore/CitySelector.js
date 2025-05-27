@@ -25,18 +25,18 @@ const CitySelector = ({ currentCity, onCityChange }) => {
     <div className="relative">
       {/* Current City Display */}
       <div 
-        className="flex items-center cursor-pointer py-1.5 px-4 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm"
+        className="flex items-center cursor-pointer py-2 text-gray-700"
         onClick={() => setShowCityModal(!showCityModal)}
       >
-        <FaMapMarkerAlt className="text-white mr-2 text-base" />
-        <span className="text-sm font-medium mr-2">{currentCity || 'Select City'}</span>
-        <FaChevronDown className="text-white text-xs" />
+        <FaMapMarkerAlt className="text-gray-700 mr-2" />
+        <span className="text-base font-medium mr-2">{currentCity || 'Select City'}</span>
+        <FaChevronDown className="text-gray-700" />
       </div>
       
       {/* City Selection Modal */}
       {showCityModal && (
-        <div className="absolute top-full left-0 mt-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-lg z-50 border border-gray-200">
-          <div className="p-3 border-b border-gray-200 bg-gray-50 bg-opacity-80">
+        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg z-[9999] border border-gray-200">
+          <div className="p-3 border-b border-gray-200 bg-gray-50">
             <h3 className="text-base font-medium text-center">Select City</h3>
           </div>
           
@@ -44,11 +44,11 @@ const CitySelector = ({ currentCity, onCityChange }) => {
             {cities.map(city => (
               <div 
                 key={city.id}
-                className="flex items-center p-4 hover:bg-gray-100 hover:bg-opacity-70 cursor-pointer transition-colors duration-200"
+                className="flex items-center p-4 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
                 onClick={() => handleCitySelect(city.name)}
               >
-                {city.icon}
-                <span className="ml-2 text-base">{city.name}</span>
+                <FaMapMarkerAlt className="text-gray-700" />
+                <span className="ml-2 text-base text-gray-800">{city.name}</span>
               </div>
             ))}
           </div>

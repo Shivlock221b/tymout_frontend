@@ -10,8 +10,10 @@ import { FaCheck, FaCheckDouble } from 'react-icons/fa';
  * - Only responsible for displaying a single message bubble
  * - Handles different states (own/received messages) and status indicators
  */
-const MessageBubble = ({ message, isOwn }) => {
-  const { content, timestamp, status } = message;
+const MessageBubble = ({ message, isOwn, avatar }) => {
+  const content = message.content || message.text || '';
+  const timestamp = message.timestamp || message.createdAt || new Date().toISOString();
+  const status = message.status;
   
   // Format the timestamp to relative time
   const formattedTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -35,25 +37,22 @@ const MessageBubble = ({ message, isOwn }) => {
   };
   
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-      <div 
-        className={`
-          relative px-4 py-2 rounded-xl max-w-xs md:max-w-md break-words
-          ${isOwn ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}
-        `}
-      >
+    <div className={`flex items-end mb-1 w-full ${isOwn ? 'justify-end' : 'justify-start'}`}>  
+      {/* Avatar for other user */}
+      {!isOwn && avatar && (
+        <img
+          src={avatar || 'https://via.placeholder.com/32?text=U'}
+          alt="User avatar"
+          className="w-8 h-8 rounded-full object-cover border border-gray-200 bg-gray-50 mr-2"
+          onError={(e)=>{e.target.onerror=null;e.target.src='https://via.placeholder.com/32?text=U';}}
+        />
+      )}
+      
+      <div className={`rounded-lg px-3 py-2 text-sm break-words whitespace-pre-line relative max-w-[80%] ${isOwn ? 'chat-bubble-glass-own bg-gray-200 text-gray-900' : 'chat-bubble-glass bg-white text-gray-900'}`}>
         {content}
-        
-        <div className={`
-          flex items-center text-xs mt-1
-          ${isOwn ? 'text-indigo-200' : 'text-gray-500'}
-        `}>
+        <div className={`flex items-center text-xs mt-1 text-gray-600`}>
           <span>{formattedTime}</span>
-          {getStatusIcon() && (
-            <span className="ml-1">
-              {getStatusIcon()}
-            </span>
-          )}
+          {getStatusIcon() && <span className="ml-1">{getStatusIcon()}</span>}
         </div>
       </div>
     </div>
@@ -63,12 +62,15 @@ const MessageBubble = ({ message, isOwn }) => {
 MessageBubble.propTypes = {
   message: PropTypes.shape({
     id: PropTypes.string.isRequired,
-    content: PropTypes.string.isRequired,
-    timestamp: PropTypes.string.isRequired,
-    sender: PropTypes.string.isRequired,
+    content: PropTypes.string,
+    text: PropTypes.string,
+    timestamp: PropTypes.string,
+    createdAt: PropTypes.string,
+    senderId: PropTypes.string,
     status: PropTypes.oneOf(['sending', 'sent', 'delivered', 'read'])
   }).isRequired,
-  isOwn: PropTypes.bool.isRequired
+  isOwn: PropTypes.bool.isRequired,
+  avatar: PropTypes.string
 };
 
 export default MessageBubble;

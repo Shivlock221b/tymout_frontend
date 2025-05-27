@@ -6,6 +6,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // NotificationsProvider -> MIGRATED to useNotificationQueries hooks (React Query)
 // ScrollToElementProvider -> MIGRATED to useUIStore (Zustand)
 import { useAuthStore } from './stores/authStore';
+// HomePage import removed as it's not being used
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AuthSuccess from './pages/AuthSuccess';
@@ -29,6 +30,7 @@ import PoliciesPage from './pages/info/PoliciesPage';
 import TableCreationPage from './hosting/pages/TableCreationPage';
 import CircleCreationPage from './hosting/pages/CircleCreationPage';
 import BusinessListingPage from './hosting/pages/BusinessListingPage';
+import BusinessSetupPage from './hosting/pages/BusinessSetupPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicRoute from './components/auth/PublicRoute';
 import Header from './components/layout/Header';
@@ -37,10 +39,20 @@ import Footer from './components/layout/Footer';
 import ResponsiveNavBar from './components/layout/ResponsiveNavBar';
 import MyEventsPage from './myevents/pages/MyEventsPage';
 import EventPage from './myevents/pages/EventPage';
+import ShopRouter from './shop/router/ShopRouter';
 import EventChatPage from './myevents/pages/EventChatPage';
 import EventAboutPage from './myevents/pages/EventAboutPage';
 import JoinRequestsPage from './myevents/pages/JoinRequestsPage';
 import EventGroupPage from './myevents/pages/EventGroupPage';
+// Shop components
+// Shop routes now handled by ShopRouter
+import ShopEditPage from './shop/pages/ShopEditPage';
+import CatalogueEditPage from './shop/pages/CatalogueEditPage';
+import ProductsPage from './shop/pages/ProductsPage';
+import CategoriesPage from './shop/pages/CategoriesPage';
+import InventoryPage from './shop/pages/InventoryPage';
+import TemplatePage from './shop/pages/TemplatePage';
+import FeedbackPage from './shop/pages/FeedbackPage';
 import './styles/App.css';
 
 // Following Single Responsibility Principle - App component only handles setup
@@ -66,8 +78,10 @@ const App = () => {
   }, [isAuthenticated]);
   
   const location = useLocation();
-  // Hide header on event chat pages, event detail pages, and join requests page
-  const isNoHeaderPage = /\/myevents\/[^/]+(\/chat|\/requests)?$/.test(location.pathname);
+  // Hide header on event chat pages, event detail pages, join requests page, message detail pages, and shop page
+  const isNoHeaderPage = /\/myevents\/[^/]+(\/chat|\/requests)?$/.test(location.pathname) || 
+                       /\/messages\/[^/]+$/.test(location.pathname) || 
+                       /^\/shop(\/.+)?$/.test(location.pathname);
   // Hide bottom nav only on event chat page
   const isEventChatPage = /\/myevents\/[^/]+\/chat$/.test(location.pathname);
   // Hide Footer on My Events page
@@ -207,10 +221,95 @@ const App = () => {
               } 
             />
             <Route 
-              path="/profile/:id" 
+              path="/users/:id" 
+              element={
+                <PublicRoute>
+                  <UserProfilePage />
+                </PublicRoute>
+              } 
+            />
+            
+            {/* Shop routes */}
+            <Route 
+              path="/shop/edit" 
               element={
                 <ProtectedRoute>
-                  <UserProfilePage />
+                  <ShopEditPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/catalogue" 
+              element={
+                <ProtectedRoute>
+                  <CatalogueEditPage />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Catalogue section pages */}
+            <Route 
+              path="/shop/catalogue/products" 
+              element={
+                <ProtectedRoute>
+                  <ProductsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/catalogue/categories" 
+              element={
+                <ProtectedRoute>
+                  <CategoriesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/catalogue/inventory" 
+              element={
+                <ProtectedRoute>
+                  <InventoryPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/catalogue/template" 
+              element={
+                <ProtectedRoute>
+                  <TemplatePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/:shopId/feedback" 
+              element={
+                <ProtectedRoute>
+                  <FeedbackPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/*" 
+              element={
+                <ProtectedRoute>
+                  <ShopRouter />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Messages routes */}
+            <Route 
+              path="/messages" 
+              element={
+                <ProtectedRoute>
+                  <MessageIndexPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/messages/:threadId" 
+              element={
+                <ProtectedRoute>
+                  <MessageDetailPage />
                 </ProtectedRoute>
               } 
             />
@@ -241,6 +340,14 @@ const App = () => {
               } 
             />
             <Route 
+              path="/host/business" 
+              element={
+                <ProtectedRoute>
+                  <BusinessSetupPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/host/list-business" 
               element={
                 <ProtectedRoute>
@@ -259,24 +366,6 @@ const App = () => {
               } 
             />
             
-            {/* Messaging routes */}
-            <Route 
-              path="/messages" 
-              element={
-                <ProtectedRoute>
-                  <MessageIndexPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/messages/:threadId" 
-              element={
-                <ProtectedRoute>
-                  <MessageDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            
             {/* Default redirect for unmatched routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -285,9 +374,7 @@ const App = () => {
       {!isEventChatPage && <ResponsiveNavBar />}
       {/* Hide Footer on EventDetailPage, HostPage, and UserProfilePage routes */}
       {(() => {
-        // Hide Footer on Explore page and related paths
-        if (location.pathname === '/explore' || location.pathname.startsWith('/explore')) return null;
-        if (isEventChatPage || isMyEventsPage) return null;
+        if (isEventChatPage || isMyEventsPage || location.pathname === '/explore') return null;
         // Hide Footer on event detail pages
         if (/^\/(events|tables|circles)\/[^/]+$/.test(location.pathname)) return null;
         // Hide Footer on host dashboard and host subpages
@@ -298,6 +385,8 @@ const App = () => {
         if (location.pathname === '/profile') return null;
         // Hide Footer on EventGroupPage
         if (/^\/myevents\/[^/]+\/group$/.test(location.pathname)) return null;
+        // Hide Footer on shop pages
+        if (/^\/shop(\/.*)?$/.test(location.pathname)) return null;
         return <Footer />;
       })()}
 

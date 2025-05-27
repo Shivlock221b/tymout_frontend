@@ -11,10 +11,11 @@ import { useMyEvents } from '../hooks/queries/useMyEventsQueries';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { useEventMembersQuery } from '../hooks/queries/useEventMembersQuery';
+import { useChatPreview } from '../hooks/queries/useChatPreviewQuery';
 
 
 const EventChatPage = () => {
-  // Add meta viewport tag to prevent zooming when keyboard opens and handle mobile keyboard appearance better
+  // Add meta viewport tag to prevent zooming when keyboard opens
   useEffect(() => {
     // Get existing viewport meta tag
     let viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -26,71 +27,12 @@ const EventChatPage = () => {
       document.head.appendChild(viewportMeta);
     }
     
-    // Set viewport properties to prevent zooming and handle keyboard better
-    // Adding interactive-widget=resizes-content helps modern browsers handle keyboard appearance
-    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content';
-    
-    // Add class to body to prevent scrolling when chat is open
-    document.body.classList.add('chat-open');
+    // Set viewport properties to prevent zooming
+    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     
     // Cleanup function to restore original viewport settings
     return () => {
       viewportMeta.content = 'width=device-width, initial-scale=1.0';
-      document.body.classList.remove('chat-open');
-    };
-  }, []);
-  
-  // Improved keyboard handling that works consistently across browsers
-  useEffect(() => {
-    // Function to handle keyboard appearance without causing layout shifts
-    const handleKeyboardAppearance = () => {
-      // Get the chat container and input container
-      const chatContainer = document.querySelector('.chat-messages-container');
-      const inputContainer = document.querySelector('.chat-input-container');
-      
-      if (!chatContainer || !inputContainer) return;
-      
-      // When keyboard appears, we need to ensure the input stays visible
-      // and the messages container adjusts its size appropriately
-      if (window.visualViewport) {
-        // Calculate the difference between window height and visual viewport height
-        // This difference approximates the keyboard height
-        const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
-        
-        // Only make adjustments if keyboard is likely visible (height difference > 150px)
-        if (keyboardHeight > 150) {
-          // Adjust padding to ensure content doesn't hide behind keyboard
-          chatContainer.style.paddingBottom = `${inputContainer.offsetHeight + 10}px`;
-          
-          // Scroll to bottom to keep the latest messages visible
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-          }
-        } else {
-          // Reset when keyboard is hidden
-          chatContainer.style.paddingBottom = '80px';
-        }
-      }
-    };
-    
-    // Initial setup
-    handleKeyboardAppearance();
-    
-    // Add listeners for both regular resize and visualViewport resize
-    window.addEventListener('resize', handleKeyboardAppearance);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleKeyboardAppearance);
-      // Additional event for scroll adjustments
-      window.visualViewport.addEventListener('scroll', handleKeyboardAppearance);
-    }
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleKeyboardAppearance);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleKeyboardAppearance);
-        window.visualViewport.removeEventListener('scroll', handleKeyboardAppearance);
-      }
     };
   }, []);
   
@@ -111,6 +53,11 @@ const EventChatPage = () => {
   // Fetch user's events and find the current event from backend
   const { data: events = [] } = useMyEvents();
   const { data: members = [] } = useEventMembersQuery(eventId);
+  // Get chat preview with unread count for this event
+  const { preview } = useChatPreview(eventId);
+  const unreadCount = preview?.unreadCount || 0;
+  console.log('Chat preview for current event:', preview);
+  console.log('Unread count for current event:', unreadCount);
   console.log('Fetched events from useMyEvents:', events);
   
   // Find event by either _id or id, with detailed logging
@@ -122,7 +69,7 @@ const EventChatPage = () => {
   
   console.log('Resolved event from events list:', event);
   // useChatSocket returns an array of message objects as per the backend structure
-  const { messages, sendMessage, typingUsers, updateTypingStatus, markAsRead } = useChatSocket(eventId);
+  const { messages, sendMessage, typingUsers, updateTypingStatus, markMessagesAsRead } = useChatSocket(eventId);
   const [input, setInput] = useState('');
   const [replyToMessage, setReplyToMessage] = useState(null);
 
@@ -147,39 +94,37 @@ const EventChatPage = () => {
   useEffect(() => {
     if (!eventId) return;
     // Mark as read on mount
-    markAsRead();
+    markMessagesAsRead();
     // Mark as read when window regains focus
-    const handleFocus = () => markAsRead();
+    const handleFocus = () => markMessagesAsRead();
     window.addEventListener('focus', handleFocus);
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
-  }, [eventId, markAsRead]);
+  }, [eventId, markMessagesAsRead]);
 
+  // Function to scroll to bottom of chat
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Handle sending messages
   const handleSend = (text) => {
-    if (!text.trim()) return;
-    sendMessage(text, replyToMessage);
+    // Ensure text is a string and not empty
+    const textStr = typeof text === 'string' ? text : String(text || '');
+    if (!textStr.trim()) return;
+    
+    // Send the message - sendMessage expects (text, replyToMessage)
+    sendMessage(textStr, replyToMessage);
+    
+    // Clear the input but prepare it with the selected tag if one exists
+    setInput(selectedTag ? `#${selectedTag.name} ` : '');
     setReplyToMessage(null);
     
-    // Clear the input first
-    setInput('');
-    
-    // If a tag is selected, re-insert it into the input field for the next message
-    if (selectedTag) {
-      // Use a separate function to insert tag after input is cleared
-      setTimeout(() => {
-        // Insert tag directly without using the previous input value
-        const tagText = `#${selectedTag.name} `;
-        setInput(tagText);
-        
-        // Focus on the input field after inserting tag
-        const textarea = document.querySelector('textarea');
-        if (textarea) {
-          textarea.focus();
-          textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
-        }
-      }, 100); // Increased delay to ensure input is cleared first
-    }
+    // Scroll to bottom after sending
+    scrollToBottom();
   };
 
   const handleReplyTo = (message) => {
@@ -195,41 +140,22 @@ const EventChatPage = () => {
   // Debug: Log the event object to inspect its structure
   console.log('EventChatPage event:', event);
 
-  // Add global styles for the chat background with improved positioning for mobile keyboard
+  // Add global styles for the chat background
   useEffect(() => {
     // Create a style element
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
-      /* Prevent body scrolling when chat is open */
-      body.chat-open {
-        overflow: hidden;
-        /* Changed from fixed to avoid keyboard issues */
+      .chat-background-container {
         position: relative;
         width: 100%;
-        height: 100%;
-      }
-      
-      .chat-background-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
         padding-left: 0;
         padding-right: 0;
         margin-left: auto;
         margin-right: auto;
         overflow-x: hidden;
         background-color: #ffffff;
-        display: flex;
-        flex-direction: column;
-        /* Ensure content adapts to keyboard */
-        padding-bottom: env(safe-area-inset-bottom, 0);
       }
       
-      /* Improved header positioning for keyboard compatibility */
       .chat-header-container {
         position: fixed;
         top: 0;
@@ -243,7 +169,7 @@ const EventChatPage = () => {
       }
       
       .chat-header-glass {
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
         border-bottom-left-radius: 16px;
         border-bottom-right-radius: 16px;
@@ -261,18 +187,6 @@ const EventChatPage = () => {
         padding: 0 4px;
       }
       
-      /* Improved chat messages container with proper padding for header and input */
-      .chat-messages-container {
-        flex: 1;
-        overflow-y: auto;
-        padding-top: 70px; /* Space for header */
-        padding-bottom: 80px; /* Space for input */
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-        /* Ensure content doesn't get cut off */
-        min-height: 0;
-      }
-      
-      /* Improved input positioning to stay visible with keyboard */
       .chat-input-container {
         position: fixed;
         bottom: 0;
@@ -283,12 +197,10 @@ const EventChatPage = () => {
         width: 100%;
         margin: 0 auto;
         transition: all 0.3s ease;
-        /* Ensure input stays above keyboard */
-        transform: translateZ(0);
       }
       
       .chat-input-glass {
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
@@ -298,18 +210,9 @@ const EventChatPage = () => {
       }
       
       .chat-content-wrapper {
-        position: relative;
-        height: 100%;
         padding-left: 0;
         padding-right: 0;
         max-width: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-      
-      /* Ensure inputs don't get hidden by keyboard */
-      textarea, input {
-        font-size: 16px !important;
       }
     `;
     
@@ -352,41 +255,97 @@ const EventChatPage = () => {
 
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState(null);
-  
-  // Handle tag filter and insertion
   const handleTagFilter = (tag) => {
     setSelectedTag(tag);
     
-    // If tag is selected, also insert it into the chat input
+    // If a tag is selected, automatically add it to the input field
     if (tag) {
-      handleTagInsert(tag);
+      const tagText = `#${tag.name}`;
+      const currentText = input.trim();
+      
+      // Only add the tag if it's not already at the beginning of the input
+      if (currentText === '') {
+        setInput(tagText + ' ');
+      } else if (!currentText.startsWith(tagText)) {
+        setInput(tagText + ' ' + currentText);
+      }
+      
+      // Focus the input field
+      setTimeout(() => {
+        const inputField = document.querySelector('.chat-input');
+        if (inputField) {
+          inputField.focus();
+        }
+      }, 50);
     }
   };
   
-  const handleClearTagFilter = () => setSelectedTag(null);
-  
-  // Insert tag into chat input
-  const handleTagInsert = (tag) => {
-    const tagText = `#${tag.name}`;
-    // Add a space if needed
-    const needsSpace = input && !/\s$/.test(input);
-    const insert = (needsSpace ? ' ' : '') + tagText + ' ';
-    setInput(input + insert);
+  // Clear tag filter and remove tag from input
+  const handleClearTagFilter = () => {
+    setSelectedTag(null);
     
-    // Focus on the input field after inserting tag
-    setTimeout(() => {
-      const textarea = document.querySelector('textarea');
-      if (textarea) {
-        textarea.focus();
-        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    // If input starts with the tag, remove it
+    if (selectedTag) {
+      const tagText = `#${selectedTag.name}`;
+      const currentText = input.trim();
+      
+      if (currentText.startsWith(tagText)) {
+        setInput(currentText.substring(tagText.length).trim());
       }
-    }, 0);
+    }
+  };
+  
+  // Handle inserting a tag into the chat input
+  const handleTagClick = (tag) => {
+    // Add the tag as the first word in the input
+    // If there's already text, add a space after the tag
+    const tagText = `#${tag.name}`;
+    const currentText = input.trim();
+    if (currentText === '') {
+      setInput(tagText + ' ');
+    } else if (currentText.startsWith(tagText)) {
+      // If the input already starts with this tag, don't add it again
+      return;
+    } else {
+      // Add the tag at the beginning and keep the existing text
+      setInput(tagText + ' ' + currentText);
+    }
+    
+    // Focus the input field after inserting the tag
+    setTimeout(() => {
+      const inputField = document.querySelector('.chat-input');
+      if (inputField) {
+        inputField.focus();
+      }
+    }, 50);
   };
 
   // Filter messages by selected tag
   const filteredMessages = selectedTag
     ? messages.filter(msg => msg.text && msg.text.includes(`#${selectedTag.name}`))
     : messages;
+
+  // Tag visibility state
+  const [showTags, setShowTags] = useState(false);
+
+  // Hide tags on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showTags) setShowTags(false);
+    };
+    const chatContent = chatContainerRef.current;
+    if (chatContent) {
+      chatContent.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (chatContent) {
+        chatContent.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [showTags]);
+
+  // Toggle function
+  const toggleShowTags = () => setShowTags((prev) => !prev);
 
   if (showGroupTabs) {
     return (
@@ -450,9 +409,9 @@ const EventChatPage = () => {
   }
 
   return (
-    <div className="chat-background-container">
-      <div className="max-w-[600px] mx-auto w-full relative z-10 chat-content-wrapper">
-        {/* Header with glassy effect - now positioned absolutely within container */}
+    <div className="flex flex-col h-screen bg-white relative chat-background-container">
+      <div className="max-w-[600px] mx-auto w-full flex flex-col h-full relative z-10 chat-content-wrapper">
+        {/* Header with glassy effect */}
         <div className="chat-header-container">
           <div className="chat-header-glass">
             <div className="chat-header-content">
@@ -471,14 +430,20 @@ const EventChatPage = () => {
                   isAdmin={isAdmin}
                   onTagFilter={handleTagFilter}
                   selectedTag={selectedTag}
+                  onTagClick={handleTagClick}
+                  showTags={showTags}
+                  toggleShowTags={toggleShowTags}
                 />
               )}
             </div>
           </div>
         </div>
         
-        {/* Chat messages with scrolling - now in a dedicated container with proper padding */}
-        <div className="chat-messages-container" ref={chatContainerRef}>
+        {/* Add padding to account for fixed header */}
+        <div className="pt-16"></div>
+        
+        {/* Chat messages with scrolling */}
+        <div className="chat-content-wrapper flex flex-col flex-1 overflow-hidden" ref={chatContainerRef}>
           <ChatMessageList
             messages={filteredMessages}
             currentUserId={user?._id}
@@ -486,6 +451,7 @@ const EventChatPage = () => {
             eventId={eventId}
             onReplyTo={handleReplyTo}
             typingUsers={typingUsers}
+            unreadCount={unreadCount}
           />
         </div>
         {/* Input box - fixed to viewport bottom for consistent behavior across webviews */}

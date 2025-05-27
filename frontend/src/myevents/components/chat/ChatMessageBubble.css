@@ -1,0 +1,27 @@
+/* Blinking dot animation for pending messages */
+.blinking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #818cf8; /* Indigo-400 */
+  animation: blink 1.2s infinite;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+/* Remove any border animations */
+.message-sent {
+  transition: all 0.3s ease;
+}
