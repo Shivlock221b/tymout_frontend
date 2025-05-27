@@ -164,13 +164,22 @@ const HostDashboardPage = () => {
             <p className="text-gray-600 mt-1">Manage your hosted events</p>
           </div>
           
-          <button
-            onClick={handleCreateEvent}
-            className="mt-4 md:mt-0 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-          >
-            <FaPlus className="mr-2" />
-            Create New Event
-          </button>
+          <div className="mt-4 md:mt-0 flex flex-col md:flex-row gap-3">
+            <button
+              onClick={handleCreateEvent}
+              className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              <FaPlus className="mr-2" />
+              Create a Table
+            </button>
+            <button
+              onClick={() => navigate('/host/business')}
+              className="flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+            >
+              <FaPlus className="mr-2" />
+              Host a Business
+            </button>
+          </div>
         </div>
         
         {/* Filter Tabs */}

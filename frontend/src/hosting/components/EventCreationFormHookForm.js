@@ -71,35 +71,14 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
   // Watch for changes
   const selectedCity = watch('city');
   
-  // State for managing tags
-  const [tagInput, setTagInput] = useState('');
-  
-  // Handle adding a new tag
-  const handleAddTag = () => {
-    if (tagInput.trim()) {
-      const currentTags = watch('tags') || [];
-      // Only add if the tag doesn't already exist
-      if (!currentTags.includes(tagInput.trim())) {
-        const newTags = [...currentTags, tagInput.trim()];
-        setValue('tags', newTags);
-      }
-      setTagInput(''); // Clear the input field
-    }
-  };
-  
-  // Handle removing a tag
-  const handleRemoveTag = (tagToRemove) => {
-    const currentTags = watch('tags') || [];
-    const newTags = currentTags.filter(tag => tag !== tagToRemove);
-    setValue('tags', newTags);
-  };
-  
-  // Handle key press in tag input (add tag on Enter)
-  const handleTagInputKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent form submission
-      handleAddTag();
-    }
+  // Handle tags input (comma-separated)
+  const handleTagsChange = (e, onChange) => {
+    const tagText = e.target.value;
+    onChange(tagText); // Update the form input value
+    
+    // Convert comma-separated text to array for actual submission
+    const tagsArray = tagText.split(',').map(tag => tag.trim()).filter(tag => tag);
+    setValue('tagsArray', tagsArray);
   };
   
   const user = useAuthStore(state => state.user);
@@ -182,7 +161,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
           name: user && user.name ? user.name : 'Test Host'
         },
         attendees: [],
-        tags: Array.isArray(data.tags) ? data.tags : [],
+        tags: typeof data.tags === 'string' ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : data.tags,
         type: 'table',
         status: 'pending',
         maxAttendees: data.maxAttendees,
@@ -293,43 +272,19 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 <Controller
                   name="date"
                   control={control}
-                  rules={{ 
-                    required: 'Date is required',
-                    validate: value => {
-                      // Get today's date without time component
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      
-                      // Convert the selected date to a Date object
-                      const selectedDate = new Date(value);
-                      selectedDate.setHours(0, 0, 0, 0);
-                      
-                      // Check if the selected date is today or in the future
-                      return selectedDate >= today || 'Date cannot be in the past';
-                    }
-                  }}
-                  render={({ field }) => {
-                    // Get today's date in YYYY-MM-DD format for min attribute
-                    const today = new Date();
-                    const year = today.getFullYear();
-                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                    const day = String(today.getDate()).padStart(2, '0');
-                    const minDate = `${year}-${month}-${day}`;
-                    
-                    return (
-                      <input
-                        type="date"
-                        id="date"
-                        min={minDate}
-                        className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
-                          errors.date
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                        }`}
-                        {...field}
-                      />
-                    );
-                  }}
+                  rules={{ required: 'Date is required' }}
+                  render={({ field }) => (
+                    <input
+                      type="date"
+                      id="date"
+                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                        errors.date
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                      }`}
+                      {...field}
+                    />
+                  )}
                 />
                 {errors.date && (
                   <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
@@ -349,64 +304,25 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 <Controller
                   name="time"
                   control={control}
-                  rules={{ 
-                    required: 'Time is required',
-                    validate: value => {
-                      const selectedDate = new Date(watch('date'));
-                      const today = new Date();
-                      
-                      // Only validate time if the selected date is today
-                      if (selectedDate.toDateString() === today.toDateString()) {
-                        const now = new Date();
-                        const currentHour = now.getHours();
-                        const currentMinute = now.getMinutes();
-                        
-                        // Parse the selected time (format: HH:MM)
-                        const [hours, minutes] = value.split(':').map(Number);
-                        
-                        // Check if the selected time is in the future
-                        if (hours < currentHour || (hours === currentHour && minutes < currentMinute)) {
-                          return 'Time cannot be in the past';
-                        }
-                      }
-                      
-                      return true;
-                    }
-                  }}
-                  render={({ field }) => {
-                    const selectedDate = new Date(watch('date'));
-                    const today = new Date();
-                    const isToday = selectedDate.toDateString() === today.toDateString();
-                    const currentHour = today.getHours();
-                    const currentMinute = today.getMinutes();
-                    
-                    // Filter time options if the selected date is today
-                    const filteredTimeOptions = isToday 
-                      ? timeOptions.filter(option => {
-                          const [hours, minutes] = option.value.split(':').map(Number);
-                          return hours > currentHour || (hours === currentHour && minutes >= currentMinute);
-                        })
-                      : timeOptions;
-                    
-                    return (
-                      <select
-                        id="time"
-                        className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
-                          errors.time 
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                        }`}
-                        {...field}
-                      >
-                        <option value="">Select a time</option>
-                        {filteredTimeOptions.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    );
-                  }}
+                  rules={{ required: 'Time is required' }}
+                  render={({ field }) => (
+                    <select
+                      id="time"
+                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                        errors.time 
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                      }`}
+                      {...field}
+                    >
+                      <option value="">Select a time</option>
+                      {timeOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 />
                 {errors.time && (
                   <p className="mt-1 text-sm text-red-600">{errors.time.message}</p>
@@ -523,66 +439,36 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
               </span>
             </label>
             <div className="mt-1">
-              {!selectedPlace ? (
-                // Show PlaceSearch only if no place is selected
-                <Controller
-                  name="place"
-                  control={control}
-                  rules={{ 
-                    validate: value => {
-                      if (!selectedPlace) return 'Please select a place';
-                      return true;
-                    } 
-                  }}
-                  render={({ field }) => (
-                    <PlaceSearch 
-                      city={selectedCity}
-                      onPlaceSelect={(place) => {
-                        setSelectedPlace(place);
-                        field.onChange(place ? place.name : '');
-                      }}
-                      error={errors.place?.message}
-                    />
-                  )}
-                />
-              ) : (
-                // Show static display when place is selected
-                <div className="p-4 border-2 border-gray-300 rounded-md bg-gray-50">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium text-gray-800">{selectedPlace.name}</h4>
-                      <p className="text-sm text-gray-600">{selectedPlace.address}</p>
-                      {selectedPlace.category && (
-                        <p className="text-xs text-gray-500 mt-1">Category: {selectedPlace.category}</p>
-                      )}
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setSelectedPlace(null);
-                        setValue('place', '');
-                      }}
-                      className="text-gray-500 hover:text-red-500 focus:outline-none"
-                      aria-label="Clear selected place"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Hidden controller to maintain form state when place is selected */}
-              {selectedPlace && (
-                <Controller
-                  name="place"
-                  control={control}
-                  defaultValue={selectedPlace.name}
-                  render={() => null}
-                />
-              )}
+              <Controller
+                name="place"
+                control={control}
+                rules={{ 
+                  validate: value => {
+                    if (!selectedPlace) return 'Please select a place';
+                    return true;
+                  } 
+                }}
+                render={({ field }) => (
+                  <PlaceSearch 
+                    city={selectedCity}
+                    onPlaceSelect={(place) => {
+                      setSelectedPlace(place);
+                      field.onChange(place ? place.name : '');
+                    }}
+                    error={errors.place?.message}
+                  />
+                )}
+              />
             </div>
+            {selectedPlace && (
+              <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                <h4 className="font-medium text-gray-700">{selectedPlace.name}</h4>
+                <p className="text-sm text-gray-500">{selectedPlace.address}</p>
+                {selectedPlace.category && (
+                  <p className="text-xs text-gray-400 mt-1">Category: {selectedPlace.category}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Category Field */}
@@ -686,59 +572,27 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             <label htmlFor="tags" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaTags className="mr-2 text-gray-400" />
-                Tags
+                Tags (comma separated)
               </span>
             </label>
             <div className="mt-1">
-              <div className="flex flex-wrap gap-2 mb-2">
-                {/* Display existing tags as pills */}
-                {(watch('tags') || []).map((tag, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm"
-                  >
-                    <span>{tag}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveTag(tag)} 
-                      className="ml-2 text-indigo-600 hover:text-indigo-800 focus:outline-none"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Tag input field with add button */}
-              <div className="flex">
-                <input
-                  type="text"
-                  id="tagInput"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={handleTagInputKeyPress}
-                  placeholder="e.g., coffee, networking, casual"
-                  className="block flex-grow rounded-l-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Add
-                </button>
-              </div>
-              
-              {/* Hidden controller to manage the actual form value */}
               <Controller
                 name="tags"
                 control={control}
-                defaultValue={[]}
-                render={() => null} // We don't need to render anything here as we're managing the value through setValue
+                render={({ field: { onChange, value } }) => (
+                  <input
+                    type="text"
+                    id="tags"
+                    value={value}
+                    onChange={(e) => handleTagsChange(e, onChange)}
+                    placeholder="e.g., coffee, networking, casual"
+                    className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                )}
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Add relevant tags to help people find your table (press Enter or click Add)
+              Add relevant tags to help people find your table
             </p>
           </div>
 

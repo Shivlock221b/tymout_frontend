@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaMapMarkerAlt, FaExternalLinkAlt, FaTrash, FaUser, FaTag, FaClock, FaCalendarAlt, FaUsers, FaRupeeSign, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaExternalLinkAlt, FaTrash, FaTag, FaClock, FaCalendarAlt, FaUsers, FaRupeeSign, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../../../stores/authStore';
@@ -207,7 +207,7 @@ const AboutTab = ({ event }) => {
   return (
     <div className="p-2 sm:p-4 text-gray-700 space-y-4 overflow-x-hidden">
       {/* Announcement Section */}
-      <div className="bg-gray-200 rounded-xl p-4 mb-2 flex flex-col gap-2">
+      <div className="bg-gray-100 rounded-xl p-4 mb-2 flex flex-col gap-2">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">📌</span>
           <span className="font-semibold text-base">Announcement</span>
@@ -243,7 +243,7 @@ const AboutTab = ({ event }) => {
               <div className="flex justify-end gap-2 mt-4">
                 <button
                   onClick={() => setShowAnnouncementEdit(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   disabled={announcementLoading}
                 >
                   Cancel
@@ -262,7 +262,7 @@ const AboutTab = ({ event }) => {
       </div>
 
       {/* About Card */}
-      <div className="bg-gray-200 rounded-xl p-4 mb-2">
+      <div className="bg-gray-100 rounded-xl p-4 mb-2">
         <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
           <FaInfoCircle className="text-indigo-500" /> About this {type}
         </h2>
@@ -270,7 +270,7 @@ const AboutTab = ({ event }) => {
       </div>
 
       {/* Details Card */}
-      <div className="bg-gray-200 rounded-xl p-4 mb-2">
+      <div className="bg-gray-100 rounded-xl p-4 mb-2">
         <h3 className="text-base font-semibold flex items-center gap-2 mb-3">
           <FaCalendarAlt className="text-indigo-500" /> Details
         </h3>
@@ -288,9 +288,9 @@ const AboutTab = ({ event }) => {
           {event.capacity && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaUsers className="text-indigo-400" /> Capacity:</div><div className="flex items-center justify-end"><span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">{event.capacity}</span></div></>}
 
           <div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaTag className="text-indigo-400" /> Type:</div>
-          <div className="flex items-center justify-end">Table</div>
+          <div className="flex items-center justify-end">{type}</div>
 
-          {/* {price !== undefined && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaRupeeSign className="text-indigo-400" /> Price:</div><div className="flex items-center justify-end"><span className={`inline-block px-2 py-0.5 rounded-full ${price === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'} text-xs font-semibold`}>{price === 0 ? 'Free' : `₹${price}`}</span></div></>} */}
+          {price !== undefined && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaRupeeSign className="text-indigo-400" /> Price:</div><div className="flex items-center justify-end"><span className={`inline-block px-2 py-0.5 rounded-full ${price === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'} text-xs font-semibold`}>{price === 0 ? 'Free' : `₹${price}`}</span></div></>}
 
           {rsvp && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaClock className="text-indigo-400" /> RSVP by:</div><div className="flex items-center justify-end">{formatDate(rsvp)}</div></>}
 
@@ -301,7 +301,7 @@ const AboutTab = ({ event }) => {
 
       {/* Tags Card */}
       {tags.length > 0 && (
-        <div className="bg-gray-200 rounded-xl p-4 mb-2">
+        <div className="bg-gray-100 rounded-xl p-4 mb-2">
           <h3 className="text-base font-semibold flex items-center gap-2 mb-3">
             <FaTag className="text-indigo-500" /> Tags
           </h3>
@@ -316,7 +316,7 @@ const AboutTab = ({ event }) => {
       )}
 
       {/* Location Card */}
-      <div className="bg-gray-200 rounded-xl p-4 mb-2">
+      <div className="bg-gray-100 rounded-xl p-4 mb-2">
         <h3 className="text-base font-semibold flex items-center gap-2 mb-3">
           <FaMapMarkerAlt className="text-indigo-500" /> Location
         </h3>
@@ -342,7 +342,7 @@ const AboutTab = ({ event }) => {
           )}
           <button
             onClick={handleCopyAddress}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-100 text-gray-700 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition-colors"
           >
             <FaMapMarkerAlt className="mr-1.5 text-indigo-400" />
             Copy address
@@ -354,7 +354,7 @@ const AboutTab = ({ event }) => {
       {/* Host/Organizer Card */}
       {host && (
         <div
-          className="bg-gray-200 rounded-xl p-4 mb-2 flex items-center gap-4 cursor-pointer group"
+          className="bg-gray-100 rounded-xl p-4 mb-2 flex items-center gap-4 cursor-pointer group"
           title="View profile"
           tabIndex={0}
           onClick={() => host?.id && navigate(`/profile/${host.id}`)}
@@ -379,7 +379,7 @@ const AboutTab = ({ event }) => {
 
       {/* Host Actions (Edit/Delete) */}
       {isHost && (
-        <div className="bg-gray-200 rounded-xl p-4 mb-2 flex flex-col gap-2">
+        <div className="bg-gray-100 rounded-xl p-4 mb-2 flex flex-col gap-2">
           <div className="flex gap-2">
             <button
               onClick={handleEditClick}
@@ -423,7 +423,7 @@ const AboutTab = ({ event }) => {
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 disabled={editLoading}
               >
                 Cancel
@@ -449,7 +449,7 @@ const AboutTab = ({ event }) => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowConfirmation(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 disabled={isDeleting}
               >
                 Cancel
@@ -460,7 +460,8 @@ const AboutTab = ({ event }) => {
                     setIsDeleting(true);
                     setError(null);
                     const eventId = event._id || event.id;
-                    await axios.delete(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`);
+                    await axios.delete(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'}/api/events/${eventId}`);
+                    console.log(`Deleting event at: ${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:3000'}/api/events/${eventId}`);
                     navigate('/explore');
                     window.location.reload();
                   } catch (err) {
