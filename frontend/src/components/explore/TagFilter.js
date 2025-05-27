@@ -20,9 +20,9 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
   
   // Popular tags used for filtering with emojis and their colors
   const availableTags = [
-    { name: 'Only For You', emoji: '✨', color: 'indigo' },
+    { name: 'Only For You', emoji: '✨', color: 'indigo', hidden: true }, // Hidden tag, kept for future use
     { name: 'Food', emoji: '🍽️', color: 'rose' },
-    { name: 'Play', emoji: '🎮', color: 'violet' },
+    { name: 'Play', emoji: '👟', color: 'violet' },
     { name: 'Socialize', emoji: '🎉', color: 'fuchsia' },
     { name: 'Travel', emoji: '✈️', color: 'cyan' }
   ];
@@ -106,10 +106,10 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
       `}</style>
       {/* Only show regular tag filter section if not hiding regular tags */}
       {!hideRegularTags && (
-        <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto whitespace-nowrap">
+        <div className="flex items-center justify-center gap-1.5 px-2 py-1.5 mx-auto whitespace-nowrap overflow-x-auto">
           
           {/* Available tags */}
-          {availableTags.map(tag => (
+          {availableTags.filter(tag => !tag.hidden).map(tag => (
             <div key={tag.name} className="relative inline-block flex-shrink-0">
               {tag.name === 'Only For You' && showLoginTooltip && !isAuthenticated && (
                 <div className="absolute -top-12 left-0 right-0 mx-auto w-48 bg-indigo-600 text-white text-xs rounded py-1 px-2 z-50 text-center">
@@ -128,13 +128,13 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
                   }
                 }}
                 className={`
-                  tag-item px-4 py-2 text-sm transition-all duration-200 flex items-center justify-center rounded-full border h-10 shadow-sm hover:shadow-md
+                  tag-item px-2 py-1 text-xs transition-all duration-200 flex items-center justify-center rounded-full border h-7 shadow-sm hover:shadow-md
                   ${getTagColorClasses(tag)}
                   ${tag.name === 'Only For You' && !isAuthenticated ? 'cursor-pointer opacity-80 hover:opacity-100' : ''}
                 `}
               >
-                <span className="mr-1.5 text-base">{tag.emoji}</span>
-                <span className="font-medium text-sm">{tag.name}</span>
+                <span className="mr-0.5 text-xs">{tag.emoji}</span>
+                <span className="font-medium text-xs">{tag.name}</span>
               </button>
             </div>
           ))}

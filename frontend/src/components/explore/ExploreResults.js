@@ -9,11 +9,11 @@ import EventCard from '../common/EventCard';
  * - It uses the type property of each item to determine how to display it
  */
 const ExploreResults = ({ results, isLoading }) => {
-  // Render loading skeleton
+  // Render minimalistic loading skeleton
   const renderSkeleton = () => (
-    <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3, 4, 5, 6].map(i => (
-        <div key={i} className="bg-gray-200 h-48 rounded-lg"></div>
+        <div key={i} className="bg-gray-100 border border-gray-200 h-48 rounded-lg shadow-sm"></div>
       ))}
     </div>
   );
@@ -33,26 +33,34 @@ const ExploreResults = ({ results, isLoading }) => {
     );
   }
   
-  // Render results - now using grid for desktop and keeping responsive for mobile
+  // Render results - now using list format for mobile and grid for desktop
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-      {results.map(item => {
+    <div className="flex flex-col space-y-2 sm:grid sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-10 sm:space-y-0">
+      {results.map((item, index) => {
         // Make sure the item is valid
         if (!item || !item.id) {
           console.warn('Invalid item in results', item);
           return null;
         }
         
-        // Render unified EventCard using the item's type property
+        // For the list view (mobile), add dividers between items (except the last one)
+        const isLastItem = index === results.length - 1;
+        
         return (
-          <EventCard 
-            key={item.id} 
-            item={item} 
-            type={item.type || 'event'} // Default to 'event' if type is missing
-            source="explore"
-            fullWidth={true} // Add fullWidth prop to make cards fill their grid cells
-            variant="explore"
-          />
+          <div key={item.id} className="flex flex-col">
+            <EventCard 
+              item={item} 
+              type={item.type || 'event'} // Default to 'event' if type is missing
+              source="explore"
+              fullWidth={true} // Add fullWidth prop to make cards fill their grid cells
+              variant="explore"
+            />
+            {!isLastItem && (
+              <div className="sm:hidden mx-auto w-4/5 my-2">
+                <div className="h-px bg-gray-200"></div>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

@@ -168,8 +168,46 @@ const ExplorePage = () => {
     newParams.set('filter', filter);
     setSearchParams(newParams);
     
-    // Update filters with new filter value
-    updateFilters({ filter });
+    // Prepare filters object to pass to backend
+    let filterParams = { filter };
+    
+    // Handle time-based filters by converting them to date ranges
+    if (filter === 'Tonight') {
+      // Get today's date
+      const today = new Date();
+      // Set start time to current time
+      const startDate = new Date(today);
+      // Set end time to end of day (11:59:59 PM)
+      const endDate = new Date(today);
+      endDate.setHours(23, 59, 59, 999);
+      
+      // Add date range to filter parameters
+      filterParams.dateRange = {
+        start: startDate.toISOString(),
+        end: endDate.toISOString()
+      };
+      console.log('Tonight filter applied:', filterParams.dateRange);
+    } 
+    else if (filter === 'ThisWeek') {
+      // Get today's date
+      const today = new Date();
+      // Set start date to today
+      const startDate = new Date(today);
+      // Set end date to 7 days from now
+      const endDate = new Date(today);
+      endDate.setDate(today.getDate() + 6); // Add 6 days to include today (total 7 days)
+      endDate.setHours(23, 59, 59, 999);
+      
+      // Add date range to filter parameters
+      filterParams.dateRange = {
+        start: startDate.toISOString(),
+        end: endDate.toISOString()
+      };
+      console.log('This Week filter applied:', filterParams.dateRange);
+    }
+    
+    // Update filters with new filter parameters
+    updateFilters(filterParams);
   };
 
   // Update URL parameters and trigger data fetch when tags change
@@ -410,28 +448,29 @@ const ExplorePage = () => {
       
       {/* Content section with heading and gender filter */}
       <div className="mt-4">
-        <div className="flex items-center justify-between mb-4 px-4">
-          <h2 className="text-xl font-bold text-indigo-600">Find Your Table</h2>
+        <div className="flex flex-col mb-4 px-4">
+          <h2 className="text-xl font-bold text-indigo-600 mb-3">Find Your Table</h2>
           
-          {/* Filter dropdown for gender and time */}
-          <div className="relative">
-            <select
-              value={selectedFilter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              aria-label="Filter events"
+          {/* Filter buttons for time */}
+          <div className="flex space-x-3">
+            <button
+              onClick={() => handleFilterChange('All')}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
-              <option value="All">All</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Tonight">Tonight</option>
-              <option value="ThisWeek">This Week</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </div>
+              All
+            </button>
+            <button
+              onClick={() => handleFilterChange('Tonight')}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'Tonight' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              Tonight
+            </button>
+            <button
+              onClick={() => handleFilterChange('ThisWeek')}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedFilter === 'ThisWeek' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              This Week
+            </button>
           </div>
         </div>
         <ExploreResults 

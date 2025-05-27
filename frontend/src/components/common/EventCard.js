@@ -205,114 +205,56 @@ const EventCard = ({
     }
   };
 
-  // Horizontal layout for explore variant
+  // WhatsApp-style chat card layout for explore variant
   if (variant === 'explore') {
     return (
       <div 
         id={cardElementId}
-        className="w-full bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-gray-200"
+        className="w-full bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer border border-gray-100"
         onClick={onCardClick}
       >
-        {/* Host/Admin Information - At the very top (explore variant) */}
-        {!hideHeader && getPerson() && Object.keys(getPerson()).length > 0 && (
-          <div 
-            className="py-2 px-4 bg-gray-50 flex items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-            onClick={onProfileClick}
-          >
+        {/* No host information at the top */}
+        
+        {/* WhatsApp-style chat card layout */}
+        <div className="p-3 flex items-center">
+          {/* Left: Event Image (as profile photo) */}
+          <div className="flex-shrink-0 mr-3">
             <img 
-              src={getPerson().image} 
-              alt={getPerson().name} 
-              className="w-8 h-8 rounded-full object-cover mr-2"
+              src={displayImage || (getPerson() && getPerson().image)} 
+              alt={title || (getPerson() && getPerson().name) || 'Event'} 
+              className="w-12 h-12 rounded-full object-cover border border-gray-200"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = 'https://via.placeholder.com/32?text=User'; // Fallback image
+                e.target.src = 'https://via.placeholder.com/48?text=Event'; // Fallback image
               }}
             />
-            <div className="flex-1">
-              <p className="text-sm font-medium">{getPerson().name}</p>
-              <p className="text-xs text-gray-500">{getPersonTitle()} {getPerson().verified && '✓'}</p>
-            </div>
-            {/* More options (three dots) */}
-            <div className="text-gray-400 hover:text-gray-600 p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-              </svg>
-            </div>
-          </div>
-        )}
-        
-        {/* Main Card Content - Horizontal Layout */}
-        <div className="flex p-3">
-          {/* Left: Card Image */}
-          <div className="w-1/3 relative">
-            {displayImage ? (
-              <>
-                <img
-                  src={displayImage}
-                  alt={(type || "Item") + " Image"}
-                  className="w-full h-40 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.parentNode.classList.add('bg-indigo-100');
-                    const textElement = document.createElement('div');
-                    textElement.className = 'flex items-center justify-center h-full w-full text-indigo-500 font-medium';
-                    textElement.innerText = type.charAt(0).toUpperCase() + type.slice(1);
-                    e.target.parentNode.appendChild(textElement);
-                  }}
-                />
-                {/* Discount/Deal Overlay */}
-                {recommendation && (
-                  <div className="absolute bottom-0 left-0 w-full px-3 py-2 bg-black bg-opacity-70 text-white font-bold text-lg">
-                    {Math.round(recommendation.score * 100)}% OFF
-                  </div>
-                )}
-                {/* No heart icon */}
-              </>
-            ) : (
-              // If no image is provided, show a colored background with text
-              <div className="bg-indigo-100 w-full h-full flex items-center justify-center">
-                <span className="text-indigo-500 font-medium">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
-              </div>
-            )}
-            {activity && (
-              <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                <span className="font-medium">{activity}</span>
-              </div>
-            )}
           </div>
           
-          {/* Right: Content Section */}
-          <div className="w-2/3 pl-4 flex flex-col">
-            {/* Title */}
-            <h3 className="text-base font-semibold mb-1 line-clamp-2">{title}</h3>
+          {/* Right: Event Information */}
+          <div className="flex-1 min-w-0">
+            {/* Title and timestamp */}
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="text-base font-medium text-gray-900 truncate pr-2">{title}</h3>
+              <span className="text-xs text-gray-500 whitespace-nowrap">{date || time}</span>
+            </div>
             
-            {/* Rating */}
-            {rating && (
-              <div className="flex items-center mb-2">
-                <div className="flex items-center text-green-600 bg-green-100 rounded-full px-2 py-0.5">
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="ml-1 text-xs font-medium">{rating}</span>
-                  <span className="mx-1 text-xs">•</span>
-                  <span className="text-xs">25-30 mins</span>
-                </div>
-              </div>
-            )}
+            {/* Short description */}
+            <div className="flex items-start">
+              <p className="text-xs text-gray-600 truncate">
+                {getShortDescription(description)}
+              </p>
+            </div>
             
-            {/* Categories/Tags */}
+            {/* Tags */}
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {tags.slice(0, 2).map((tag, index) => {
-                  // Array of tag color combinations
+              <div className="flex flex-wrap gap-0.5 mt-0.5 mb-0.5">
+                {tags.slice(0, 3).map((tag, index) => {
+                  // Array of tag color combinations with lighter backgrounds
                   const tagColors = [
-                    { bg: 'bg-blue-100', text: 'text-blue-700' },
-                    { bg: 'bg-green-100', text: 'text-green-700' },
-                    { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-                    { bg: 'bg-purple-100', text: 'text-purple-700' },
-                    { bg: 'bg-pink-100', text: 'text-pink-700' },
-                    { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+                    { bg: 'bg-blue-50', text: 'text-blue-600' },
+                    { bg: 'bg-green-50', text: 'text-green-600' },
+                    { bg: 'bg-purple-50', text: 'text-purple-600' },
+                    { bg: 'bg-indigo-50', text: 'text-indigo-600' },
                   ];
                   
                   // Select a color based on the tag string to ensure consistency
@@ -322,72 +264,47 @@ const EventCard = ({
                   return (
                     <span
                       key={`tag-${index}`}
-                      className={`${bg} ${text} text-xs px-2 py-0.5 rounded-full`}
+                      className={`${bg} ${text} text-[9px] px-1 py-0 rounded-full leading-tight inline-block`}
                     >
                       {tag}
                     </span>
                   );
                 })}
-                {tags.length > 2 && (
-                  <span className="text-gray-500 text-xs">+{tags.length - 2} more</span>
+                {tags.length > 3 && (
+                  <span className="text-gray-400 text-[9px]">+{tags.length - 3}</span>
                 )}
               </div>
             )}
             
-            {/* Date, Time and Location - Combined in one row */}
-            <div className="flex flex-wrap gap-3 mb-2 mt-3 pt-3 border-t border-gray-100">
-              {/* Date */}
-              {date && (
-                <div className="flex items-center">
-                  <FaCalendarAlt className="h-3 w-3 text-gray-500 mr-1" />
-                  <span className="text-xs text-gray-600">{date}</span>
-                </div>
-              )}
-              
-              {/* Time */}
-              {time && (
-                <div className="flex items-center">
-                  <FaClock className="h-3 w-3 text-gray-500 mr-1" />
-                  <span className="text-xs text-gray-600">{time}</span>
-                </div>
-              )}
-              
-              {/* Location */}
-              {(location || place?.name) && (
-                <div className="flex items-center bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                  <FaMapMarkerAlt className="h-3.5 w-3.5 text-red-500 mr-1" />
-                  <span>
-                    {place?.name ? place.name : location}
-                    {distance && (
-                      <span className="ml-1 text-gray-500">• {distance} km</span>
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Participants/Attendees - Only show if available */}
-            <div className="flex items-center gap-1 mt-2">
-              <FaUsers className="text-gray-500 h-3 w-3" />
-              <span className="text-xs text-gray-600">
-                {getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants
-              </span>
-            </div>
-            
-            {/* Last message - Show if available */}
-            {(lastMessage || propLastMessage) && (
-              <div className="flex items-start gap-1 mt-2 bg-gray-50 p-2 rounded-md">
-                <FaComment className="text-indigo-500 h-3 w-3 mt-0.5 flex-shrink-0" />
-                <div className="flex flex-col">
-                  <span className="font-medium text-xs text-gray-700">
-                    {lastMessage?.sender?.name || propLastMessage?.sender?.name || 'Someone'}
-                  </span>
-                  <span className="line-clamp-1">
-                    {lastMessage?.text || propLastMessage?.text || ''}
-                  </span>
-                </div>
+            {/* Location or participant count with right-aligned host info */}
+            <div className="mt-1 flex items-center justify-between w-full">
+              <div className="flex items-center text-xs text-gray-500">
+                {location || place?.name ? (
+                  <>
+                    <FaMapMarkerAlt className="h-3 w-3 text-gray-400 mr-1" />
+                    <span className="truncate">{place?.name || location}</span>
+                  </>
+                ) : (
+                  <>
+                    <FaUsers className="h-3 w-3 text-gray-400 mr-1" />
+                    <span>{getParticipantCount()}{maxParticipants ? `/${maxParticipants}` : ''} participants</span>
+                  </>
+                )}
               </div>
-            )}
+              
+              {/* Host information - right aligned */}
+              {getPerson() && Object.keys(getPerson()).length > 0 && (
+                <div 
+                  className="flex items-center text-xs text-gray-500 ml-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onProfileClick(e);
+                  }}
+                >
+                  <span className="font-medium">Host: {getPerson().name}{getPerson().verified ? ' ✓' : ''}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
