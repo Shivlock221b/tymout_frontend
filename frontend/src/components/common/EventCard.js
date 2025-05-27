@@ -57,7 +57,6 @@ const EventCard = ({
     memberCount = 0,
     attendees = [],
     rating = 0,
-    activity = '',
     place = {}, // Extract place data from item
     lastMessage: propLastMessage = null // Last message passed as prop
   } = item || {};
@@ -130,21 +129,21 @@ const EventCard = ({
   const sizeClasses = {
     small: {
       card: fullWidth ? 'w-full' : 'max-w-xs',
-      image: 'h-40',
+      image: 'h-44', // Increased image height
       title: 'text-lg',
-      description: 'line-clamp-2', // Limit to 2 lines for small cards
+      description: 'line-clamp-2 text-sm', // Limit to 2 lines for small cards
     },
     medium: {
       card: fullWidth ? 'w-full' : 'max-w-sm',
-      image: 'h-48',
+      image: 'h-52', // Increased image height
       title: 'text-xl',
-      description: 'line-clamp-3', // Limit to 3 lines for medium cards
+      description: 'line-clamp-3 text-base', // Limit to 3 lines for medium cards
     },
     large: {
       card: fullWidth ? 'w-full' : 'max-w-md',
-      image: 'h-56',
+      image: 'h-60', // Increased image height
       title: 'text-2xl',
-      description: 'line-clamp-4', // Limit to 4 lines for large cards
+      description: 'line-clamp-4 text-lg', // Limit to 4 lines for large cards
     }
   };
 
@@ -222,7 +221,7 @@ const EventCard = ({
             <img 
               src={displayImage || (getPerson() && getPerson().image)} 
               alt={title || (getPerson() && getPerson().name) || 'Event'} 
-              className="w-12 h-12 rounded-full object-cover border border-gray-200"
+              className="w-14 h-14 rounded-full object-cover border border-gray-200 shadow-sm"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://via.placeholder.com/48?text=Event'; // Fallback image
@@ -234,13 +233,13 @@ const EventCard = ({
           <div className="flex-1 min-w-0">
             {/* Title and timestamp */}
             <div className="flex justify-between items-start mb-1">
-              <h3 className="text-base font-medium text-gray-900 truncate pr-2">{title}</h3>
+              <h3 className="text-base font-bold text-gray-900 truncate pr-2">{title}</h3>
               <span className="text-xs text-gray-500 whitespace-nowrap">{date || time}</span>
             </div>
             
             {/* Short description */}
             <div className="flex items-start">
-              <p className="text-xs text-gray-600 truncate">
+              <p className="text-sm text-gray-600 truncate">
                 {getShortDescription(description)}
               </p>
             </div>
@@ -264,14 +263,14 @@ const EventCard = ({
                   return (
                     <span
                       key={`tag-${index}`}
-                      className={`${bg} ${text} text-[9px] px-1 py-0 rounded-full leading-tight inline-block`}
+                      className={`${bg} ${text} text-xs px-2 py-0.5 rounded-full leading-tight inline-block font-medium`}
                     >
                       {tag}
                     </span>
                   );
                 })}
                 {tags.length > 3 && (
-                  <span className="text-gray-400 text-[9px]">+{tags.length - 3}</span>
+                  <span className="text-gray-500 text-xs font-medium px-2 py-0.5">+{tags.length - 3}</span>
                 )}
               </div>
             )}
@@ -342,7 +341,7 @@ const EventCard = ({
       
       <div className="relative">
         {/* Card Image */}
-        <div className={`relative ${classes.image} overflow-hidden`}>
+        <div className={`relative ${classes.image} overflow-hidden rounded-lg`}>
           <img 
             src={displayImage} 
             alt={title} 
@@ -375,7 +374,7 @@ const EventCard = ({
       
       <div className="p-4">
         {/* Title */}
-        <h3 className={`${classes.title} font-bold text-gray-800 mb-2`}>{title}</h3>
+        <h3 className={`${classes.title} font-extrabold text-gray-900 mb-2`}>{title}</h3>
         
         {/* Description */}
         {showDescription && (
@@ -428,7 +427,7 @@ const EventCard = ({
             {tags.slice(0, 3).map((tag, index) => (
               <span 
                 key={index} 
-                className="inline-flex items-center text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full"
+                className="inline-flex items-center text-sm bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full"
               >
                 <FaTag className="mr-1 text-xs text-indigo-600" />
                 {tag}

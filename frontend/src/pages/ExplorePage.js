@@ -36,8 +36,9 @@ const ExplorePage = () => {
   const searchQuery = searchParams.get('q') || '';
   const selectedTags = searchParams.getAll('tag');
   const activeSpecialTag = searchParams.get('view') || 'Explore';
-  const distance = parseInt(searchParams.get('distance') || '10', 10);
-  const sortBy = searchParams.get('sort') || 'relevance';
+  // These parameters are available in URL but not currently used
+  // const distance = parseInt(searchParams.get('distance') || '10', 10);
+  // const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
   const [selectedFilter, setSelectedFilter] = useState(searchParams.get('filter') || 'All');
   
@@ -66,22 +67,15 @@ const ExplorePage = () => {
   }, [user]);
   
   // Use React Query hook for data fetching with filters from URL parameters
-  const { 
-    data: results = [], 
-    isLoading, 
-    updateFilters 
-  } = useExploreSearch({
+  const { data: results = [], isLoading, updateFilters, isFetching } = useExploreSearch({
     query: searchQuery,
     tags: selectedTags,
-    distance,
-    sortBy,
-    city: selectedCity, // Include the city parameter in the initial filters
-    view: activeSpecialTag, // Include the view parameter for special tags
-    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [], // Include user interests if 'Only For You' is selected
+    city: selectedCity,
     filter: selectedFilter
   });
 
-  // No hero image loading effect needed
+  // Add optimistic UI updates - show cached results immediately even while loading new data
+  const isRefetching = !isLoading && isFetching;
 
   // Handle scroll position restoration
   useEffect(() => {
@@ -365,7 +359,7 @@ const ExplorePage = () => {
         
         /* City selector overlay styles */
         .city-selector-container {
-          background-color: rgba(255, 255, 255, 0.20);
+          background-color: rgba(255, 255, 255, 0.75);
           backdrop-filter: blur(8px);
           border-radius: 12px;
           padding: 2px 10px;
@@ -373,16 +367,15 @@ const ExplorePage = () => {
           align-items: center;
           cursor: pointer;
           transition: all 0.3s ease;
-          border: 1px solid rgba(79, 70, 229, 0.15);
-          box-shadow: 0 1px 2px rgba(79, 70, 229, 0.06);
+          border: none;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           font-size: 0.95rem;
           min-height: 32px;
         }
         
         .city-selector-container:hover {
-          background-color: rgba(255, 255, 255, 0.30);
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
-          border: 1px solid rgba(79, 70, 229, 0.3);
+          background-color: rgba(255, 255, 255, 0.9);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
       `}</style>
       
@@ -473,11 +466,14 @@ const ExplorePage = () => {
             </button>
           </div>
         </div>
-        <ExploreResults 
-          results={results} 
-          isLoading={isLoading}
-          emptyMessage="No results found. Try adjusting your search or filters."
-        />
+        <div className="mt-6">
+          <ExploreResults 
+            results={results} 
+            isLoading={isLoading} 
+            isRefetching={isRefetching}
+            emptyMessage="No results found. Try adjusting your search or filters."
+          />
+        </div>
       </div>
     </div>
     </>

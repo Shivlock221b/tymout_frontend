@@ -128,7 +128,7 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
                   }
                 }}
                 className={`
-                  tag-item px-2 py-1 text-xs transition-all duration-200 flex items-center justify-center rounded-full border h-7 shadow-sm hover:shadow-md
+                  tag-item px-3 py-1.5 font-medium text-sm transition flex items-center justify-center rounded-full
                   ${getTagColorClasses(tag)}
                   ${tag.name === 'Only For You' && !isAuthenticated ? 'cursor-pointer opacity-80 hover:opacity-100' : ''}
                 `}
