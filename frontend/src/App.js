@@ -27,6 +27,7 @@ import GuidelinesPage from './pages/info/GuidelinesPage';
 import FAQPage from './pages/info/FAQPage';
 import ContactPage from './pages/info/ContactPage';
 import PoliciesPage from './pages/info/PoliciesPage';
+import CitySelectPage from './pages/CitySelectPage';
 import TableCreationPage from './hosting/pages/TableCreationPage';
 import CircleCreationPage from './hosting/pages/CircleCreationPage';
 import BusinessListingPage from './hosting/pages/BusinessListingPage';
@@ -115,6 +116,16 @@ const App = () => {
             <Route path="/policies" element={<PoliciesPage />} />
             
             {/* Main navigation routes */}
+            
+            {/* City Selection Page */}
+            <Route
+              path="/city-select"
+              element={
+                <PublicRoute>
+                  <CitySelectPage />
+                </PublicRoute>
+              }
+            />
 
             <Route 
               path="/explore" 
@@ -372,21 +383,30 @@ const App = () => {
         </main>
       </div>
       {!isEventChatPage && <ResponsiveNavBar />}
-      {/* Hide Footer on EventDetailPage, HostPage, and UserProfilePage routes */}
+      {/* Hide Footer on specific routes */}
       {(() => {
-        if (isEventChatPage || isMyEventsPage || location.pathname === '/explore') return null;
+        // Hide Footer on basic system pages
+        if (isEventChatPage || isMyEventsPage) return null;
+        
+        // Hide Footer on ExplorePage
+        if (location.pathname === '/explore' || location.pathname === '/city-select') return null;
+        
         // Hide Footer on event detail pages
         if (/^\/(events|tables|circles)\/[^/]+$/.test(location.pathname)) return null;
+        
         // Hide Footer on host dashboard and host subpages
         if (/^\/host(\/.*)?$/.test(location.pathname)) return null;
-        // Hide Footer on user profile page
-        if (/^\/profile\/[^/]+$/.test(location.pathname)) return null;
-        // Hide Footer on ProfilePage (/profile)
-        if (location.pathname === '/profile') return null;
+        
+        // Hide Footer on ALL profile pages (both main profile and user profiles)
+        if (location.pathname === '/profile' || /^\/profile\/.*$/.test(location.pathname)) return null;
+        
         // Hide Footer on EventGroupPage
         if (/^\/myevents\/[^/]+\/group$/.test(location.pathname)) return null;
+        
         // Hide Footer on shop pages
         if (/^\/shop(\/.*)?$/.test(location.pathname)) return null;
+        
+        // Show Footer on all other pages
         return <Footer />;
       })()}
 

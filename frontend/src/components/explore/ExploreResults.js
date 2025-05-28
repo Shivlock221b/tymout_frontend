@@ -36,23 +36,30 @@ const ExploreResults = ({ results, isLoading }) => {
   // Render results - now using grid for desktop and keeping responsive for mobile
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-      {results.map(item => {
-        // Make sure the item is valid
+      {results.map((item, index) => {
+        // Skip null or invalid items
         if (!item || !item.id) {
           console.warn('Invalid item in results', item);
           return null;
         }
         
-        // Render unified EventCard using the item's type property
+        // Render unified EventCard with divider, except for the last item
         return (
-          <EventCard 
-            key={item.id} 
-            item={item} 
-            type={item.type || 'event'} // Default to 'event' if type is missing
-            source="explore"
-            fullWidth={true} // Add fullWidth prop to make cards fill their grid cells
-            variant="explore"
-          />
+          <div key={item.id} className="event-card-container">
+            <EventCard 
+              item={item} 
+              type={item.type || 'event'} // Default to 'event' if type is missing
+              source="explore"
+              fullWidth={true} // Add fullWidth prop to make cards fill their grid cells
+              variant="explore"
+            />
+            {/* Add divider line after every card except the last one */}
+            {index < results.length - 1 && (
+              <div className="mx-auto my-1 px-4">
+                <div className="h-px bg-gray-200 w-full max-w-[85%] mx-auto" style={{ marginLeft: '60px' }}></div>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

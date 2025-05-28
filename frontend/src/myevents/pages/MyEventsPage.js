@@ -7,9 +7,11 @@ import { FaSearch } from 'react-icons/fa';
 import { useChatPreviews } from '../hooks/queries/useChatPreviewQuery';
 import { queryClient } from '../../query/queryClient';
 import { io } from 'socket.io-client';
-import PersonalChatCard from '../components/PersonalChatCard';
-import { useAuthStore } from '../../stores/authStore';
-import chatApi from '../../message/services/chatApi';
+// Personal chat functionality will be implemented in the future
+// import PersonalChatCard from '../components/PersonalChatCard';
+// import { useAuthStore } from '../../stores/authStore'; // Will be used when personal chat functionality is implemented
+// Chat API will be used when personal chat functionality is implemented
+// import chatApi from '../../message/services/chatApi';
 
 // useAuthStore import removed as it's not being used
 
@@ -56,8 +58,9 @@ const MyEventsPage = () => {
   const eventIds = filteredEvents.map(event => event._id);
   const { chatPreviews } = useChatPreviews(eventIds);
 
-  // Personal one-on-one chats state
-  const { user } = useAuthStore();
+  // Personal one-on-one chats state - will be implemented in the future
+  // const { user } = useAuthStore(); // Will be used when personal chat functionality is implemented
+  /* Personal chat functionality will be implemented in the future
   const [personalChats, setPersonalChats] = useState([]);
   const [isLoadingPersonal, setIsLoadingPersonal] = useState(true);
 
@@ -93,6 +96,7 @@ const MyEventsPage = () => {
     };
     fetchPersonal();
   }, [user]);
+  */
 
   // Real-time updates for unread counts and attendee status changes
   useEffect(() => {
@@ -206,6 +210,7 @@ const MyEventsPage = () => {
           >
             My Tables
           </button>
+          {/* Personal tab hidden - will be implemented in the future
           <button
             onClick={() => setActiveTab('personal')}
             className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
@@ -216,6 +221,7 @@ const MyEventsPage = () => {
           >
             Personal
           </button>
+          */}
           <button
             onClick={() => setActiveTab('pending')}
             className={`px-3 py-1.5 rounded-full font-medium text-sm transition 
@@ -244,19 +250,8 @@ const MyEventsPage = () => {
         </div>
       </div>
 
-      {activeTab === 'personal' ? (
-        isLoadingPersonal ? (
-          <div className="text-gray-500">Loading personal chats...</div>
-        ) : personalChats.length ? (
-          <div className="flex flex-col space-y-3">
-            {personalChats.map(chat => (
-              <PersonalChatCard key={chat.id} chat={chat} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-gray-500">No personal chats.</div>
-        )
-      ) : isLoading ? (
+      {/* Personal tab content hidden - will be implemented in the future */}
+      {isLoading ? (
         <div className="text-gray-500">Loading events...</div>
       ) : isError ? (
         <div className="text-red-500">Failed to load events.</div>

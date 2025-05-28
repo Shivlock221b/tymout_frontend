@@ -94,7 +94,11 @@ const SpotlightEvents = ({ events }) => {
   return (
     <div className="w-full overflow-hidden py-4">
       <div className="flex items-center mb-3 px-4">
-        <h2 className="text-lg font-bold text-gray-800">In the Spotlight ✨</h2>
+        <h2 className="text-lg font-bold text-indigo-600 relative">
+          <span className="relative inline-block">In the Spotlight ✨
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 transform translate-y-1"></span>
+          </span>
+        </h2>
       </div>
       
       {/* Horizontally scrollable container */}

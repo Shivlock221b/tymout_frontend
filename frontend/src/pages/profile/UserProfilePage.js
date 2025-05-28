@@ -6,7 +6,8 @@ import { useUserHostedEvents } from '../../hooks/queries/useUserHostedEvents';
 import UniversalEventCard from '../../components/common/EventCard';
 import SkeletonLoader from '../../components/ui/SkeletonLoader';
 import { useAuthStore } from '../../stores/authStore';
-import { useStartDirectChat } from '../../message/hooks/queries/useChatQueries';
+// Chat functionality will be implemented in the future
+// import { useStartDirectChat } from '../../message/hooks/queries/useChatQueries';
 
 /**
  * UserProfilePage Component
@@ -51,7 +52,8 @@ const UserProfilePage = () => {
   const currentUserId = useAuthStore(state => state.user?._id);
   // Debug: log IDs for conditional rendering
   console.debug('UserProfilePage IDs', { viewedId: id, currentUserId });
-  const startChatMutation = useStartDirectChat();
+  // Chat functionality will be implemented in the future
+  // const startChatMutation = useStartDirectChat();
 
   const logout = useAuthStore(state => state.logout);
 
@@ -60,6 +62,7 @@ const UserProfilePage = () => {
     navigate('/');
   };
 
+  /* Chat functionality will be implemented in the future
   const handleStartChat = () => {
     if (!currentUserId) return;
     
@@ -82,6 +85,7 @@ const UserProfilePage = () => {
       }
     );
   };
+  */
   
   if (isLoading) {
     return (
@@ -250,6 +254,7 @@ const UserProfilePage = () => {
         {/* Action Buttons */}
         <div className="border-t border-gray-200 pt-6 mt-6">
           <div className="flex flex-wrap justify-start gap-4">
+            {/* Chat button hidden - will be implemented in the future
             {currentUserId && currentUserId !== id && (
               <button
                 onClick={handleStartChat}
@@ -259,6 +264,7 @@ const UserProfilePage = () => {
                 {startChatMutation.isPending ? 'Starting…' : 'Chat'}
               </button>
             )}
+            */}
             
             {currentUserId && currentUserId === id && (
               <>

@@ -20,30 +20,53 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
   const [selectedPlace, setSelectedPlace] = useState(null);
   const fileInputRef = useRef(null);
   
-  // Generate time options in half-hour increments
-  const generateTimeOptions = () => {
-    const options = [];
-    for (let hour = 0; hour < 24; hour++) {
-      // Convert to 12-hour format
-      const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
-      const ampm = hour < 12 ? 'AM' : 'PM';
-      
-      // Store in 24-hour format for backend, but display in 12-hour format
-      const hour24 = hour.toString().padStart(2, '0');
-      
-      options.push({
-        value: `${hour24}:00`,
-        label: `${displayHour}:00 ${ampm}`
-      });
-      options.push({
-        value: `${hour24}:30`,
-        label: `${displayHour}:30 ${ampm}`
-      });
-    }
-    return options;
-  };
+  // State for AM/PM selection
+  const [timeAmPm, setTimeAmPm] = useState('AM');
   
-  const timeOptions = generateTimeOptions();
+  // Format time from user input (HH:MM) and AM/PM to 24-hour format
+  const formatTimeFor24Hour = (timeInput, ampm) => {
+    if (!timeInput) return '';
+    
+    // If the time is already in 24-hour format, return it
+    if (timeInput.includes(':') && timeInput.length === 5) {
+      const [hours, minutes] = timeInput.split(':');
+      const hoursInt = parseInt(hours, 10);
+      
+      // If valid 24-hour format, return it
+      if (hoursInt >= 0 && hoursInt < 24) {
+        return timeInput;
+      }
+    }
+    
+    // Parse the time input - accept different formats
+    let hours = 0;
+    let minutes = 0;
+    
+    // Handle different formats (8:30, 8.30, 830, 8)
+    if (timeInput.includes(':')) {
+      [hours, minutes] = timeInput.split(':').map(num => parseInt(num, 10));
+    } else if (timeInput.includes('.')) {
+      [hours, minutes] = timeInput.split('.').map(num => parseInt(num, 10));
+    } else if (timeInput.length <= 2) {
+      // If just hours provided (e.g., "8")
+      hours = parseInt(timeInput, 10);
+      minutes = 0;
+    } else if (timeInput.length <= 4) {
+      // If time provided without separator (e.g., "830")
+      hours = parseInt(timeInput.substring(0, timeInput.length - 2), 10);
+      minutes = parseInt(timeInput.substring(timeInput.length - 2), 10);
+    }
+    
+    // Handle AM/PM conversion
+    if (ampm === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (ampm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    // Format to HH:MM
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
   
   const { 
     control, 
@@ -71,14 +94,62 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
   // Watch for changes
   const selectedCity = watch('city');
   
-  // Handle tags input (comma-separated)
-  const handleTagsChange = (e, onChange) => {
-    const tagText = e.target.value;
-    onChange(tagText); // Update the form input value
+  // State for tag input
+  const [tagInput, setTagInput] = useState('');
+  
+  // Handle tag input change
+  const handleTagInputChange = (e) => {
+    setTagInput(e.target.value);
+  };
+  
+  // Add a tag when the plus button is clicked
+  const handleAddTag = (onChange, currentTags) => {
+    if (!tagInput.trim()) return;
     
-    // Convert comma-separated text to array for actual submission
-    const tagsArray = tagText.split(',').map(tag => tag.trim()).filter(tag => tag);
-    setValue('tagsArray', tagsArray);
+    // Format tag with first letter capitalized and rest lowercase
+    const formattedTag = tagInput.trim().toLowerCase();
+    const capitalizedTag = formattedTag.charAt(0).toUpperCase() + formattedTag.slice(1);
+    
+    // Convert current tags string to array if it's a string
+    const currentTagsArray = typeof currentTags === 'string' 
+      ? currentTags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      : Array.isArray(currentTags) ? currentTags : [];
+    
+    // Check if tag already exists (case-insensitive)
+    const tagExists = currentTagsArray.some(tag => 
+      tag.toLowerCase() === capitalizedTag.toLowerCase()
+    );
+    
+    // Add the new tag if it's not already in the array
+    if (!tagExists) {
+      const updatedTags = [...currentTagsArray, capitalizedTag];
+      
+      // Update the form value with the comma-separated string
+      onChange(updatedTags.join(', '));
+      
+      // Also store the array version
+      setValue('tagsArray', updatedTags);
+    }
+    
+    // Clear the input
+    setTagInput('');
+  };
+  
+  // Remove a tag
+  const handleRemoveTag = (tagToRemove, onChange, currentTags) => {
+    // Convert current tags string to array
+    const currentTagsArray = typeof currentTags === 'string' 
+      ? currentTags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      : Array.isArray(currentTags) ? currentTags : [];
+    
+    // Remove the tag
+    const updatedTags = currentTagsArray.filter(tag => tag !== tagToRemove);
+    
+    // Update the form value
+    onChange(updatedTags.join(', '));
+    
+    // Also update the array version
+    setValue('tagsArray', updatedTags);
   };
   
   const user = useAuthStore(state => state.user);
@@ -211,10 +282,10 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                   <input
                     type="text"
                     id="title"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border border-black ${
                       errors.title 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        : 'focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
                     {...field}
                   />
@@ -240,10 +311,10 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                   <textarea
                     id="description"
                     rows="4"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                    className={`block w-full rounded-md shadow-sm sm:text-sm border border-black ${
                       errors.description
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        : 'focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
                     {...field}
                   />
@@ -256,6 +327,49 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             <p className="mt-1 text-sm text-gray-500">
               Describe what your table is about and what participants can expect.
             </p>
+            
+            {/* Ready-made description suggestions */}
+            <div className="mt-3">
+              <p className="text-sm font-medium text-gray-700 mb-2">Category-based descriptions:</p>
+              <div className="flex flex-wrap gap-2">
+                {/* Socialize description */}
+                <button
+                  type="button"
+                  onClick={() => setValue('description', 'Join us for a social gathering at _______ where we can connect, share stories, and make new friends in a relaxed setting. Perfect for anyone looking to expand their social circle!')}
+                  className="text-xs px-3 py-1.5 bg-fuchsia-50 text-fuchsia-700 rounded-full hover:bg-fuchsia-100 transition-colors"
+                >
+                  Socialize template
+                </button>
+                
+                {/* Food description */}
+                <button
+                  type="button"
+                  onClick={() => setValue('description', 'Let\'s enjoy delicious _______ cuisine together! This table is for food lovers who want to explore new flavors while making connections. All dietary preferences welcome!')}
+                  className="text-xs px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full hover:bg-rose-100 transition-colors"
+                >
+                  Food template
+                </button>
+                
+                {/* Play description */}
+                <button
+                  type="button"
+                  onClick={() => setValue('description', 'Come join us for a fun _______ activity! Whether you\'re experienced or a beginner, this is a great opportunity to stay active and meet like-minded people. All skill levels welcome!')}
+                  className="text-xs px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full hover:bg-violet-100 transition-colors"
+                >
+                  Play template
+                </button>
+                
+                {/* Travel description */}
+                <button
+                  type="button"
+                  onClick={() => setValue('description', 'Explore _______ with a group of fellow travelers! We\'ll discover hidden gems, share travel stories, and create memorable experiences together. Great for both locals and visitors!')}
+                  className="text-xs px-3 py-1.5 bg-cyan-50 text-cyan-700 rounded-full hover:bg-cyan-100 transition-colors"
+                >
+                  Travel template
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Tip: Replace the blank spaces (______) with your specific details.</p>
+            </div>
           </div>
 
           {/* Date & Time Row */}
@@ -277,10 +391,10 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                     <input
                       type="date"
                       id="date"
-                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+                      className={`block w-full rounded-md shadow-sm sm:text-sm border border-black ${
                         errors.date
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                          : 'focus:ring-indigo-500 focus:border-indigo-500'
                       }`}
                       {...field}
                     />
@@ -304,25 +418,130 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 <Controller
                   name="time"
                   control={control}
-                  rules={{ required: 'Time is required' }}
-                  render={({ field }) => (
-                    <select
-                      id="time"
-                      className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
-                        errors.time 
-                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                      }`}
-                      {...field}
-                    >
-                      <option value="">Select a time</option>
-                      {timeOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  rules={{ 
+                    required: 'Time is required',
+                    validate: (value) => {
+                      // Validate that the input is a valid time
+                      if (!value) return 'Time is required';
+                      
+                      // The value should already be in 24-hour format from our handler
+                      const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+                      return timeRegex.test(value) || 'Please enter a valid time';
+                    }
+                  }}
+                  render={({ field: { onChange, value, ...fieldProps } }) => {
+                    // Parse the 24-hour format time to display in 12-hour format
+                    let displayTime = '';
+                    let displayAmPm = timeAmPm;
+                    
+                    if (value) {
+                      const [hours, minutes] = value.split(':');
+                      const hoursInt = parseInt(hours, 10);
+                      
+                      // Determine AM/PM
+                      if (hoursInt >= 12) {
+                        displayAmPm = 'PM';
+                        const displayHours = hoursInt === 12 ? 12 : hoursInt - 12;
+                        displayTime = `${displayHours}:${minutes}`;
+                      } else {
+                        displayAmPm = 'AM';
+                        const displayHours = hoursInt === 0 ? 12 : hoursInt;
+                        displayTime = `${displayHours}:${minutes}`;
+                      }
+                      
+                      // Update the AM/PM state
+                      if (displayAmPm !== timeAmPm) {
+                        setTimeAmPm(displayAmPm);
+                      }
+                    }
+                                        // Extract hours and minutes for display
+                     let selectedHours = '';
+                     let selectedMinutes = '';
+                     
+                     if (displayTime) {
+                       const [hours, minutes] = displayTime.split(':');
+                       selectedHours = parseInt(hours, 10);
+                       selectedMinutes = minutes;
+                     }
+                     
+                     // Generate hours and minutes for selection
+                     const hoursOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+                     const minutesOptions = ['00', '15', '30', '45'];
+                     
+                     return (
+                      <div className="flex flex-wrap gap-2">
+                        <div className="flex rounded-md">
+                          {/* Hours Selector */}
+                          <div className="relative">
+                            <label htmlFor="timeHours" className="sr-only">Hours</label>
+                            <select
+                              id="timeHours"
+                              className={`rounded-l-md pl-3 pr-8 py-2 border border-black text-sm ${errors.time 
+                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                : 'focus:ring-indigo-500 focus:border-indigo-500'}`}
+                              value={selectedHours}
+                              onChange={(e) => {
+                                const hours = e.target.value;
+                                const minutes = selectedMinutes || '00';
+                                const time24 = formatTimeFor24Hour(`${hours}:${minutes}`, timeAmPm);
+                                onChange(time24);
+                              }}
+                            >
+                              <option value="">Hour</option>
+                              {hoursOptions.map(hour => (
+                                <option key={hour} value={hour}>{hour}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          {/* Minutes Selector */}
+                          <div className="relative -ml-px">
+                            <label htmlFor="timeMinutes" className="sr-only">Minutes</label>
+                            <select
+                              id="timeMinutes"
+                              className={`pl-3 pr-8 py-2 border border-black text-sm ${errors.time 
+                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                : 'focus:ring-indigo-500 focus:border-indigo-500'}`}
+                              value={selectedMinutes}
+                              onChange={(e) => {
+                                const hours = selectedHours || '12';
+                                const minutes = e.target.value;
+                                const time24 = formatTimeFor24Hour(`${hours}:${minutes}`, timeAmPm);
+                                onChange(time24);
+                              }}
+                            >
+                              <option value="">Min</option>
+                              {minutesOptions.map(minute => (
+                                <option key={minute} value={minute}>{minute}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          {/* AM/PM Selector */}
+                          <div className="-ml-px">
+                            <select
+                              id="timeAmPm"
+                              className={`pl-2 pr-3 py-2 border border-black text-sm rounded-r-md ${errors.time 
+                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                : 'focus:ring-indigo-500 focus:border-indigo-500'}`}
+                              value={timeAmPm}
+                              onChange={(e) => {
+                                const newAmPm = e.target.value;
+                                setTimeAmPm(newAmPm);
+                                if (selectedHours && selectedMinutes) {
+                                  const time24 = formatTimeFor24Hour(`${selectedHours}:${selectedMinutes}`, newAmPm);
+                                  onChange(time24);
+                                }
+                              }}
+                            >
+                              <option value="AM">AM</option>
+                              <option value="PM">PM</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }}
                 />
                 {errors.time && (
                   <p className="mt-1 text-sm text-red-600">{errors.time.message}</p>
@@ -353,7 +572,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                       min="15"
                       step="15"
                       placeholder="e.g., 60"
-                      className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="block w-full rounded-md border border-black shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       {...field}
                     />
                   )}
@@ -369,21 +588,25 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
               <label htmlFor="maxAttendees" className="block text-base font-medium text-gray-700">
                 <span className="inline-flex items-center">
                   <FaUsers className="mr-2 text-gray-400" />
-                  Max Attendees
+                  Max Attendees (upto 10)
                 </span>
               </label>
               <div className="mt-1">
                 <Controller
                   name="maxAttendees"
                   control={control}
-                  rules={{ min: { value: 1, message: 'At least 1 attendee is required' } }}
+                  rules={{ 
+                    min: { value: 1, message: 'At least 1 attendee is required' },
+                    max: { value: 10, message: 'Maximum 10 attendees allowed' }
+                  }}
                   render={({ field }) => (
                     <input
                       type="number"
                       id="maxAttendees"
                       min="1"
-                      placeholder="e.g., 10"
-                      className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      max="10"
+                      placeholder="Maximum 10"
+                      className="block w-full rounded-md border border-black shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       {...field}
                     />
                   )}
@@ -403,25 +626,41 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 City*
               </span>
             </label>
-            <div className="mt-1">
+            <div className="mt-2">
               <Controller
                 name="city"
                 control={control}
                 rules={{ required: 'City is required' }}
                 render={({ field }) => (
-                  <select
-                    id="city"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
-                      errors.city
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                    }`}
-                    {...field}
-                  >
-                    <option value="">Select a city</option>
-                    <option value="Agra">Agra</option>
-                    <option value="Gurugram">Gurugram</option>
-                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Agra Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Agra')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Agra'
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">🏙️</span>
+                      <span className="font-medium text-xs">Agra</span>
+                    </button>
+                    
+                    {/* Gurugram Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Gurugram')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Gurugram'
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">🌆</span>
+                      <span className="font-medium text-xs">Gurugram</span>
+                    </button>
+                  </div>
                 )}
               />
               {errors.city && (
@@ -471,39 +710,74 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             )}
           </div>
 
-          {/* Category Field */}
+          {/* Category Field - Tag Style */}
           <div>
-            <label htmlFor="category" className="block text-base font-medium text-gray-700">
+            <label className="block text-base font-medium text-gray-700">
               Category*
             </label>
-            <div className="mt-1">
+            <div className="mt-2">
               <Controller
                 name="category"
                 control={control}
                 rules={{ required: 'Category is required' }}
                 render={({ field }) => (
-                  <select
-                    id="category"
-                    className={`block w-full rounded-md shadow-sm sm:text-sm border-2 ${
-                      errors.category
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                    }`}
-                    {...field}
-                  >
-                    <option value="">Select a category</option>
-                    <option value="Food">Food</option>
-                    <option value="Play">Play</option>
-                    <option value="Create">Create</option>
-                    <option value="Learn">Learn</option>
-                    <option value="Serve">Serve</option>
-                    <option value="Socialize">Socialize</option>
-                    <option value="Networking">Networking</option>
-                    <option value="Games">Games</option>
-                    <option value="Adventure">Adventure</option>
-                    <option value="Culture">Culture</option>
-                    <option value="Wellness">Wellness</option>
-                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Food Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Food')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Food'
+                          ? 'bg-rose-600 text-white border-rose-600'
+                          : 'bg-white text-rose-600 border-rose-200 hover:border-rose-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">🍽️</span>
+                      <span className="font-medium text-xs">Food</span>
+                    </button>
+                    
+                    {/* Play Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Play')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Play'
+                          ? 'bg-violet-600 text-white border-violet-600'
+                          : 'bg-white text-violet-600 border-violet-200 hover:border-violet-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">👟</span>
+                      <span className="font-medium text-xs">Play</span>
+                    </button>
+                    
+                    {/* Socialize Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Socialize')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Socialize'
+                          ? 'bg-fuchsia-600 text-white border-fuchsia-600'
+                          : 'bg-white text-fuchsia-600 border-fuchsia-200 hover:border-fuchsia-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">🎉</span>
+                      <span className="font-medium text-xs">Socialize</span>
+                    </button>
+                    
+                    {/* Travel Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Travel')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Travel'
+                          ? 'bg-cyan-600 text-white border-cyan-600'
+                          : 'bg-white text-cyan-600 border-cyan-200 hover:border-cyan-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">✈️</span>
+                      <span className="font-medium text-xs">Travel</span>
+                    </button>
+                  </div>
                 )}
               />
               {errors.category && (
@@ -572,7 +846,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
             <label htmlFor="tags" className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaTags className="mr-2 text-gray-400" />
-                Tags (comma separated)
+                Tags
               </span>
             </label>
             <div className="mt-1">
@@ -580,14 +854,48 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 name="tags"
                 control={control}
                 render={({ field: { onChange, value } }) => (
-                  <input
-                    type="text"
-                    id="tags"
-                    value={value}
-                    onChange={(e) => handleTagsChange(e, onChange)}
-                    placeholder="e.g., coffee, networking, casual"
-                    className="block w-full rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  <div>
+                    {/* Tag input with plus button */}
+                    <div className="flex mb-2">
+                      <input
+                        type="text"
+                        id="tagInput"
+                        value={tagInput}
+                        onChange={handleTagInputChange}
+                        placeholder="Enter a tag (e.g., coffee)"
+                        className="block w-full rounded-l-md border border-r-0 border-black shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag(onChange, value);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddTag(onChange, value)}
+                        className="inline-flex items-center px-3 py-2 border border-l-0 border-black text-sm leading-4 font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        +
+                      </button>
+                    </div>
+                    
+                    {/* Display added tags */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(typeof value === 'string' ? value.split(',').map(tag => tag.trim()).filter(tag => tag) : value || []).map((tag, index) => (
+                        <div key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag, onChange, value)}
+                            className="ml-1 text-indigo-500 hover:text-indigo-800 focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               />
             </div>

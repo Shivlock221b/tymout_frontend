@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
@@ -35,6 +35,7 @@ const ExplorePage = () => {
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
+  const location = useLocation();
   
   // Fetch user interests when component mounts
   useEffect(() => {
@@ -74,6 +75,26 @@ const ExplorePage = () => {
     view: activeSpecialTag, // Include the view parameter for special tags
     userInterests: activeSpecialTag === 'Only For You' ? userInterests : [] // Include user interests if 'Only For You' is selected
   });
+  
+  // Handle city selection coming back from CitySelectPage
+  useEffect(() => {
+    if (location.state && location.state.selectedCity) {
+      // Update the selected city when returning from city select page
+      const newCity = location.state.selectedCity;
+      setSelectedCity(newCity);
+      
+      // Update URL parameters
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('city', newCity);
+      setSearchParams(newParams);
+      
+      // Update filters with new city
+      updateFilters({ city: newCity });
+      
+      // Clear the location state to prevent reapplying on future rerenders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, searchParams, setSearchParams, updateFilters]);
 
   // Update URL parameters and trigger data fetch when search changes
   const handleSearch = (query) => {
@@ -272,20 +293,9 @@ const ExplorePage = () => {
         }
       `}</style>
       <div className="explore-container container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-
-      {/* Spotlight section - horizontally scrollable 2x3 grid */}
-      {!isLoading && results && results.length > 0 && (
-        <div className="mt-4">
-          <SpotlightEvents 
-            events={results.filter(event => 
-              event.set_trending === 'in the spotlight'
-            )} 
-          />
-        </div>
-      )}
       
-      {/* City Selector - now positioned above the search bar with higher z-index */}
-      <div className="mt-5 px-4 mb-8" style={{ position: 'relative', zIndex: 50 }}>
+      {/* City Selector - positioned with lower z-index than the header (which is 40) */}
+      <div className="mt-5 px-4 mb-8" style={{ position: 'relative', zIndex: 30 }}>
         <div className="max-w-xl mx-auto flex justify-start">
           <div className="city-selector-container bg-white shadow-sm border border-gray-200 rounded-lg">
             <CitySelector 
@@ -318,11 +328,26 @@ const ExplorePage = () => {
           />
         </div>
       </div>
+      
+      {/* Spotlight section - repositioned between tag filters and content */}
+      {!isLoading && results && results.length > 0 && (
+        <div className="mt-4 mb-5">
+          <SpotlightEvents 
+            events={results.filter(event => 
+              event.set_trending === 'in the spotlight'
+            )} 
+          />
+        </div>
+      )}
         
       {/* Content section with heading */}
       <div className="mt-5">
         <div className="flex items-center mb-4 px-4">
-          <h2 className="text-xl font-bold text-gray-800">Find Your Table</h2>
+          <h2 className="text-xl font-bold text-indigo-600 relative">
+            <span className="relative inline-block">Find Your Table
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 transform translate-y-1"></span>
+            </span>
+          </h2>
         </div>
         <ExploreResults 
           results={results} 

@@ -218,23 +218,15 @@ const EventCard = ({
           
           {/* Right: Content Section (like a chat bubble) */}
           <div className="ml-4 flex-1 flex flex-col">
-            {/* Title and Date Row */}
+            {/* Title Row */}
             <div className="flex justify-between items-start mb-1">
               {/* Title (like contact name) */}
               <h3 className="text-base font-bold line-clamp-1">{title}</h3>
-              
-              {/* Date right-aligned */}
-              {date && (
-                <div className="flex items-center text-xs text-gray-500 ml-auto">
-                  <FaCalendarAlt className="h-3 w-3 mr-1" />
-                  <span>{date}</span>
-                </div>
-              )}
             </div>
             
             {/* Description (like message preview) */}
             {description && showDescription && (
-              <p className="text-sm text-gray-600 line-clamp-2 mb-1">{getShortDescription(description)}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 mb-3">{getShortDescription(description)}</p>
             )}
             
             {/* Hosted By section removed from here and moved to location line */}
@@ -260,17 +252,13 @@ const EventCard = ({
                 </div>
               )}
               
-              {/* Location and Host Info */}
-              <div className="flex w-full justify-between">
-                {(location || place?.name) && (
+              {/* Host and Date Info */}
+              <div className="flex w-full justify-between items-center">
+                {/* Date left-aligned */}
+                {date && (
                   <div className="flex items-center text-xs text-gray-500">
-                    <FaMapMarkerAlt className="h-3 w-3 text-gray-500 mr-1" />
-                    <span>
-                      {place?.name ? place.name : location}
-                      {distance && (
-                        <span className="ml-1">• {distance} km</span>
-                      )}
-                    </span>
+                    <FaCalendarAlt className="h-3 w-3 mr-1" />
+                    <span>{date}</span>
                   </div>
                 )}
                 
@@ -303,10 +291,11 @@ const EventCard = ({
               )}
             </div>
             
-            {/* Tags as chat labels */}
-            {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {tags.slice(0, 2).map((tag, index) => {
+            {/* Tags and Location - tags on left, location on right */}
+            <div className="flex justify-between items-center mt-2">
+              {/* Tags as chat labels */}
+              <div className="flex flex-wrap gap-1 items-center">
+                {tags && tags.length > 0 && tags.slice(0, 2).map((tag, index) => {
                   // More subtle colors for WhatsApp style
                   const tagColors = [
                     { bg: 'bg-blue-50', text: 'text-blue-600' },
@@ -329,11 +318,28 @@ const EventCard = ({
                     </span>
                   );
                 })}
-                {tags.length > 2 && (
-                  <span className="text-gray-400 text-xs">+{tags.length - 2}</span>
+                
+                {/* Inline +X indicator */}
+                {tags && tags.length > 2 && (
+                  <span className="text-gray-400 text-xs ml-1">+{tags.length - 2}</span>
                 )}
               </div>
-            )}
+              
+              {/* Location info - right aligned */}
+              {(location || place?.name) && (
+                <div className="flex items-center text-xs text-gray-500 ml-auto">
+                  <FaMapMarkerAlt className="h-3 w-3 text-gray-500 mr-1" />
+                  <span>
+                    {place?.name ? place.name : location}
+                    {distance && (
+                      <span className="ml-1">• {distance} km</span>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* +X more tags indicator is now inline with the tags */}
           </div>
         </div>
       </div>

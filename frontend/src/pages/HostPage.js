@@ -28,6 +28,7 @@ const HostPage = () => {
               <FaCalendarPlus className="h-5 w-5 mr-2" />
               <span className="font-medium">Create a Table</span>
             </button>
+            {/* Host a Business button hidden - will be implemented in the future
             <button
               onClick={() => navigate('/host/business')}
               className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center justify-center"
@@ -35,6 +36,7 @@ const HostPage = () => {
               <FaCalendarPlus className="h-5 w-5 mr-2" />
               <span className="font-medium">Host a Business</span>
             </button>
+            */}
           </div>
         </div>
         
