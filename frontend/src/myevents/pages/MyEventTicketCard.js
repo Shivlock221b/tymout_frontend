@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShare, FaCheck, FaStar, FaRegStar, FaComment } from 'react-icons/fa';
 import { isPast } from 'date-fns';
@@ -26,6 +26,18 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
     const date = new Date(ts);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Truncate message to prevent layout issues
+  const truncateMessage = (message, maxLength = 50) => {
+    if (!message) return 'No messages yet';
+    const messageText = typeof message === 'string' ? message : message?.text || 'No messages yet';
+    return messageText.length > maxLength ? `${messageText.substring(0, maxLength)}...` : messageText;
+  };
+  
+  // Process last message for display
+  const displayMessage = useMemo(() => {
+    return truncateMessage(lastMessage);
+  }, [lastMessage]);
     
   // Check if event is in the past
   const isPastEvent = event.date && event.date.start 
@@ -174,9 +186,9 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
               <span className="text-xs text-gray-400">{formatTime(lastMessageTime)}</span>
             )}
           </div>
-          {/* Last message preview */}
-          <div className="text-xs text-gray-600 truncate pr-2">
-            {typeof lastMessage === 'string' ? lastMessage : lastMessage?.text || 'No messages yet'}
+          {/* Last message preview - with explicit truncation */}
+          <div className="text-xs text-gray-600 truncate pr-2 max-w-[240px]">
+            {displayMessage}
           </div>
           <div className="flex justify-between items-center mt-1">
             <div className="text-xs text-theme-accent"><span className="font-mono">{event.ticketCode}</span></div>

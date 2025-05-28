@@ -52,7 +52,7 @@ const exploreService = {
       const events = response.data.data || [];
       
       // Filter out private events and past events - they shouldn't appear in explore
-      const publicEvents = events.filter(event => {
+      let filteredEvents = events.filter(event => {
         // Check if the event is public
         const isPublic = event.access === 'public';
         
@@ -63,8 +63,45 @@ const exploreService = {
         return isPublic && !isPastEvent;
       });
       
+      // Apply time-based filtering if specified
+      if (params.timeFilter && params.timeFilter !== 'all') {
+        console.log(`Applying time filter: ${params.timeFilter}`);
+        
+        filteredEvents = filteredEvents.filter(event => {
+          // Skip events without date information
+          if (!event.date || !event.date.start) return false;
+          
+          const eventDate = new Date(event.date.start);
+          const today = new Date();
+          
+          if (params.timeFilter === 'today') {
+            // Check if event is today
+            return eventDate.getDate() === today.getDate() &&
+              eventDate.getMonth() === today.getMonth() &&
+              eventDate.getFullYear() === today.getFullYear();
+          } 
+          else if (params.timeFilter === 'thisWeek') {
+            // Check if event is within the current week (Sunday to Saturday)
+            const dayOfWeek = today.getDay();
+            
+            // Calculate the start and end of the current week
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - dayOfWeek);
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            return eventDate >= startOfWeek && eventDate <= endOfWeek;
+          }
+          
+          return true;
+        });
+      }
+      
       // Transform MongoDB data format to match what the frontend components expect
-      return publicEvents.map(event => {
+      return filteredEvents.map(event => {
         // Format date from MongoDB date object to string
         const startDate = event.date?.start ? new Date(event.date.start) : new Date();
         const formattedDate = startDate.toLocaleDateString('en-US', { 

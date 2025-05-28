@@ -32,6 +32,7 @@ const ExplorePage = () => {
   const searchQuery = searchParams.get('q') || '';
   const selectedTags = searchParams.getAll('tag');
   const activeSpecialTag = searchParams.get('view') || 'Explore';
+  const timeFilter = searchParams.get('timeFilter') || 'all';
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
@@ -73,7 +74,8 @@ const ExplorePage = () => {
     sortBy,
     city: selectedCity, // Include the city parameter in the initial filters
     view: activeSpecialTag, // Include the view parameter for special tags
-    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [] // Include user interests if 'Only For You' is selected
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [], // Include user interests if 'Only For You' is selected
+    timeFilter: timeFilter // Include the time filter parameter
   });
   
   // Handle city selection coming back from CitySelectPage
@@ -145,6 +147,18 @@ const ExplorePage = () => {
     updateFilters({ tags, city: selectedCity }); // Include city in filter update
   };
   
+  // Apply time filter (All, Today, This Week)
+  const handleTimeFilterChange = (filter) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('timeFilter', filter);
+    setSearchParams(newParams);
+    
+    // Update filters with new time filter
+    updateFilters({ timeFilter: filter });
+  };
+
+  // Note: Time-based filtering is now handled directly in the exploreService
+
   // Handle special tag selection (Only For You and All)
   const handleSpecialTagSelect = (tag) => {
     if (tag === 'Only For You' || tag === 'All') {
@@ -342,12 +356,40 @@ const ExplorePage = () => {
         
       {/* Content section with heading */}
       <div className="mt-5">
-        <div className="flex items-center mb-4 px-4">
-          <h2 className="text-xl font-bold text-indigo-600 relative">
+        <div className="flex flex-col mb-4 px-4">
+          <h2 className="text-lg font-bold text-indigo-600 relative mb-3">
             <span className="relative inline-block">Find Your Table
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 transform translate-y-1"></span>
             </span>
           </h2>
+          
+          {/* Time filter buttons */}
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={() => handleTimeFilterChange('all')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'all' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => handleTimeFilterChange('today')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'today' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleTimeFilterChange('thisWeek')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'thisWeek' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              This Week
+            </button>
+          </div>
         </div>
         <ExploreResults 
           results={results} 
