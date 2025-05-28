@@ -388,8 +388,8 @@ const App = () => {
         // Hide Footer on basic system pages
         if (isEventChatPage || isMyEventsPage) return null;
         
-        // Hide Footer on ExplorePage - enhanced condition to ensure it's always hidden
-        if (location.pathname === '/explore' || location.pathname.startsWith('/explore') || location.pathname === '/city-select') return null;
+        // Hide Footer on ExplorePage
+        if (location.pathname === '/explore' || location.pathname === '/city-select') return null;
         
         // Hide Footer on event detail pages
         if (/^\/(events|tables|circles)\/[^/]+$/.test(location.pathname)) return null;
