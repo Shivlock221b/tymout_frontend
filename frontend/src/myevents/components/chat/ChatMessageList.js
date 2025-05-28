@@ -314,11 +314,11 @@ const ChatMessageList = ({ messages: propMessages, currentUserId, eventId, onRep
                   ref={el => (messageRefs.current[msg._id] = el)}
                   className="w-full"
                 >
-                  {/* Unread messages divider - minimalist design */}
+                  {/* Unread messages divider */}
                   {showUnreadDivider && firstUnreadMessageId === msg._id && (
-                    <div className="flex items-center my-2">
-                      <div className="border-l-2 border-indigo-500 pl-2 text-xs text-gray-500 font-medium">
-                        Unread
+                    <div className="flex items-center justify-center my-2">
+                      <div className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full font-medium shadow-sm animate-pulse">
+                        Unread Messages ({unreadCount})
                       </div>
                     </div>
                   )}
