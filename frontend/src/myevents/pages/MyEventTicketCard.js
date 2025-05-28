@@ -174,9 +174,13 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
               <span className="text-xs text-gray-400">{formatTime(lastMessageTime)}</span>
             )}
           </div>
-          {/* Last message preview */}
+          {/* Last message preview - limited to 30 characters */}
           <div className="text-xs text-gray-600 truncate pr-2">
-            {typeof lastMessage === 'string' ? lastMessage : lastMessage?.text || 'No messages yet'}
+            {(typeof lastMessage === 'string' 
+              ? lastMessage 
+              : lastMessage?.text || 'No messages yet').length > 30 
+                ? `${(typeof lastMessage === 'string' ? lastMessage : lastMessage?.text || 'No messages yet').substring(0, 30)}...` 
+                : (typeof lastMessage === 'string' ? lastMessage : lastMessage?.text || 'No messages yet')}
           </div>
           <div className="flex justify-between items-center mt-1">
             <div className="text-xs text-theme-accent"><span className="font-mono">{event.ticketCode}</span></div>

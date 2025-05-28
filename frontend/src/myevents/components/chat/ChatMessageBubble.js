@@ -1,8 +1,6 @@
 import React, { useState, useRef, forwardRef, useMemo } from 'react';
 import './ChatMessageBubble.css'; // Import the CSS file for animations
 import { getColorForName } from './name-colors';
-
-const LONG_PRESS_DURATION = 600; // ms
 const MAX_PREVIEW_CHARS = 300;
 
 const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onReplyTo, onResend }, ref) => {
@@ -27,21 +25,14 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
   }, [isOwn, message]);
   
   const senderColorClass = useMemo(() => getColorForName(senderIdentifier), [senderIdentifier]);
-  const [pressTimer, setPressTimer] = useState(null);
   const touchRef = useRef();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  // Long press for mobile
-  const handleTouchStart = () => {
+  // Double click for deletion (replacing long press)
+  const handleDoubleClick = () => {
     if (!isOwn || message.isDeleted || message.deleted) return;
-    setPressTimer(setTimeout(() => {
-      setShowDeleteConfirm(true);
-    }, LONG_PRESS_DURATION));
-  };
-  const handleTouchEnd = () => {
-    clearTimeout(pressTimer);
-    setPressTimer(null);
+    setShowDeleteConfirm(true);
   };
 
   // Right click for desktop
@@ -189,8 +180,7 @@ const ChatMessageBubble = forwardRef(({ message, isOwn, userPhoto, onDelete, onR
             className="rounded-lg px-3 py-2 shadow-sm max-w-[85vw] break-words whitespace-pre-line relative text-[13px] leading-snug bg-gray-100 text-gray-900"
             aria-label={isOwn ? 'Your message' : 'Member message'}
             onContextMenu={handleContextMenu}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
+            onDoubleClick={handleDoubleClick}
             ref={(el) => {
               // Merge refs
               touchRef.current = el;
