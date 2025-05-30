@@ -22,9 +22,9 @@ applications:
             - echo "REACT_APP_ENV=production" >> .env
         build:
           commands:
-            - echo "Building with CRACO for optimized performance"
-            - chmod +x ./amplify-build.sh
-            - ./amplify-build.sh
+            - echo "Building with basic React Scripts for reliable rendering"
+            - chmod +x ./basic-build.sh
+            - ./basic-build.sh
       artifacts:
         baseDirectory: build
         files:
