@@ -7,15 +7,18 @@
   contain: layout size;
 }
 
-/* Add content-visibility for off-screen content */
+/* Container for explore results - removed content-visibility as it was causing rendering issues */
 .explore-results-container {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 500px;
+  /* content-visibility: auto; - removed due to rendering issues */
+  /* contain-intrinsic-size: 0 500px; - removed due to rendering issues */
+  min-height: 300px;
 }
 
 /* Prevent layout shifts for images */
 img {
-  aspect-ratio: attr(width) / attr(height);
+  /* aspect-ratio: attr(width) / attr(height); - removed as it was causing issues */
+  max-width: 100%;
+  height: auto;
 }
 
 /* Prevent layout shifts for "No results found" message */
@@ -54,6 +57,7 @@ img {
 @font-face {
   font-family: 'Inter';
   font-display: swap;
+  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 }
 
 /* Optimize rendering for fixed elements */

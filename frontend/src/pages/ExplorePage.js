@@ -4,14 +4,12 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
 
-// Import critical components directly
+// Import all components directly to avoid lazy loading issues in production
 import ExploreSearch from '../components/explore/ExploreSearch';
-
-// Lazy load non-critical components
-const ExploreResults = lazy(() => import('../components/explore/ExploreResults'));
-const TagFilter = lazy(() => import('../components/explore/TagFilter'));
-const CitySelector = lazy(() => import('../components/explore/CitySelector'));
-const SpotlightEvents = lazy(() => import('../components/explore/SpotlightEvents'));
+import ExploreResults from '../components/explore/ExploreResults';
+import TagFilter from '../components/explore/TagFilter';
+import CitySelector from '../components/explore/CitySelector';
+import SpotlightEvents from '../components/explore/SpotlightEvents';
 
 /**
  * ExplorePage Component
@@ -314,12 +312,10 @@ const ExplorePage = () => {
       <div className="mt-5 px-4 mb-8" style={{ position: 'relative', zIndex: 30 }}>
         <div className="max-w-xl mx-auto flex justify-start">
           <div className="city-selector-container bg-white shadow-sm border border-gray-200 rounded-lg">
-            <Suspense fallback={<div className="h-10 w-32 bg-gray-100 animate-pulse rounded-md"></div>}>
-              <CitySelector 
-                currentCity={selectedCity}
-                onCityChange={handleCityChange}
-              />
-            </Suspense>
+            <CitySelector 
+              currentCity={selectedCity}
+              onCityChange={handleCityChange}
+            />
           </div>
         </div>
       </div>
@@ -337,14 +333,12 @@ const ExplorePage = () => {
       {/* Tag filter - horizontal scrolling */}
       <div className="px-4 mb-4 mt-4">
         <div className="tag-scroll-container">
-          <Suspense fallback={<div className="h-10 w-full bg-gray-100 animate-pulse rounded-md"></div>}>
-            <TagFilter
-              onTagSelect={handleTagSelect}
-              selectedTags={selectedTags}
-              onSpecialTagSelect={handleSpecialTagSelect}
-              activeSpecialTag={activeSpecialTag}
-            />
-          </Suspense>
+          <TagFilter
+            onTagSelect={handleTagSelect}
+            selectedTags={selectedTags}
+            onSpecialTagSelect={handleSpecialTagSelect}
+            activeSpecialTag={activeSpecialTag}
+          />
         </div>
       </div>
       
@@ -377,20 +371,20 @@ const ExplorePage = () => {
       </div>
       
       {/* Results section */}
-      <div className="mt-4 px-4">
-        <Suspense fallback={
+      <div className="mt-4 px-4 explore-results-container">
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-md"></div>
             ))}
           </div>
-        }>
+        ) : (
           <ExploreResults 
             results={results} 
             isLoading={isLoading}
             emptyMessage="No results found. Try adjusting your search or filters."
           />
-        </Suspense>
+        )}
       </div>
     </div>
     </>
