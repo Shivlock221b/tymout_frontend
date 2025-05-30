@@ -9,6 +9,25 @@ function setupSocket(io) {
     socket.on('joinEvent', (eventId) => {
       socket.join(eventId);
     });
+    
+    // Handle attendee status changes
+    socket.on('attendeeStatusChanged', (data) => {
+      console.log(`[Socket] Received attendeeStatusChanged event:`, JSON.stringify(data));
+      // Broadcast to all connected clients
+      io.emit('attendeeStatusUpdated', data);
+      console.log(`[Socket] Broadcast attendeeStatusUpdated event to ${io.engine.clientsCount} clients`);
+    });
+    
+    // Log connection information
+    console.log(`[Socket] New client connected, socket ID: ${socket.id}`);
+    console.log(`[Socket] Total connected clients: ${io.engine.clientsCount}`);
+    
+    // Direct method to test attendee status updates
+    socket.on('testAttendeeUpdate', (data) => {
+      console.log(`[Socket] Received test attendee update:`, data);
+      io.emit('attendeeStatusUpdated', data || { test: true, timestamp: new Date().toISOString() });
+      console.log(`[Socket] Emitted test attendeeStatusUpdated event`);
+    });
 
     // Handle sending a message
     socket.on('sendMessage', async (data) => {

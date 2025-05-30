@@ -14,4 +14,7 @@ router.post('/', messageController.createMessage);
 // PATCH /api/messages/:eventId/:messageId/delete
 router.patch('/:eventId/:messageId/delete', messageController.deleteMessage);
 
+// POST /api/messages/:eventId/read - Mark all messages in an event as read by a user
+router.post('/:eventId/read', messageController.markMessagesAsRead);
+
 module.exports = router;

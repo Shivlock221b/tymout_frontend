@@ -174,3 +174,67 @@ exports.deleteMessage = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete message' });
   }
 };
+
+// Mark all messages in an event as read by a user
+exports.markMessagesAsRead = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userId } = req.body;
+    
+    if (!eventId || !userId) {
+      return res.status(400).json({ error: 'Event ID and User ID are required' });
+    }
+    
+    console.log(`Marking messages as read for event ${eventId} by user ${userId}`);
+    
+    // Find the chat document for this event
+    const chat = await Message.findOne({ eventId });
+    if (!chat) {
+      return res.status(404).json({ error: 'Chat not found' });
+    }
+    
+    // Get current timestamp for read receipts
+    const readAt = new Date();
+    
+    // Mark all messages as read by this user
+    let updatedCount = 0;
+    chat.messages.forEach(msg => {
+      // Skip messages sent by this user
+      if (String(msg.senderId) === String(userId)) return;
+      
+      // Skip messages that are already marked as read by this user
+      const alreadyRead = msg.readBy && msg.readBy.some(read => String(read.userId) === String(userId));
+      if (alreadyRead) return;
+      
+      // Add user to readBy array
+      if (!msg.readBy) msg.readBy = [];
+      msg.readBy.push({ userId, readAt });
+      updatedCount++;
+    });
+    
+    // Update the participant's lastSeen timestamp
+    let participant = chat.participants.find(p => String(p.userId) === String(userId));
+    if (participant) {
+      participant.lastSeen = readAt;
+    } else {
+      chat.participants.push({ userId, lastSeen: readAt });
+    }
+    
+    // Save the changes
+    await chat.save();
+    
+    // Emit socket event to notify clients
+    if (req.app.get('io')) {
+      req.app.get('io').to(eventId).emit('messagesRead', { eventId, userId });
+      req.app.get('io').emit('unreadCountsChanged', { eventId });
+    }
+    
+    res.status(200).json({ 
+      message: 'Messages marked as read successfully',
+      updatedCount
+    });
+  } catch (err) {
+    console.error('Error marking messages as read:', err);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+};
