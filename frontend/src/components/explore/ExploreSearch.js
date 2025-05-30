@@ -18,8 +18,8 @@ const ExploreSearch = ({ query, onSearch }) => {
         <input
           type="text"
           name="search"
-          placeholder="Search tables, events, or circles..."
-          className="w-full px-4 py-2 bg-white border border-indigo-300 text-indigo-700 placeholder-indigo-400 rounded-md focus:ring-indigo-500 focus:border-indigo-600 text-sm shadow-sm"
+          placeholder="Search..."
+          className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm shadow-sm"
           defaultValue={query}
         />
         <button
