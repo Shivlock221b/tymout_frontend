@@ -53,44 +53,24 @@
     
     <!-- Preload critical assets script -->
     <script src="%PUBLIC_URL%/preload.js" async></script>
-    
-    <!-- Script to defer non-critical JavaScript loading -->
-    <script src="%PUBLIC_URL%/defer-js.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     
-    <!-- Preload the logo image (LCP element) with high priority -->
-    <link rel="preload" as="image" href="%PUBLIC_URL%/logo192.png" importance="high" fetchpriority="high">
-    
-    <!-- Prevent layout shifts during load and optimize LCP -->
+    <!-- Prevent layout shifts during load -->
     <style>
-      /* Inline critical CSS to prevent layout shifts and optimize LCP */
+      /* Inline critical CSS to prevent layout shifts */
       .logo-container {
         display: block;
         min-height: 40px;
         min-width: 120px;
-        content-visibility: auto;
-      }
-      .logo-container.animating {
-        will-change: transform;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-        contain: layout style paint;
       }
       footer.bg-gray-800 {
         min-height: 60px;
-        content-visibility: auto;
       }
       .flex.items-center.flex-grow.justify-end {
         min-height: 40px;
-        content-visibility: auto;
-      }
-      /* Optimize main content rendering */
-      #root > * {
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 5000px;
       }
     </style>
     
