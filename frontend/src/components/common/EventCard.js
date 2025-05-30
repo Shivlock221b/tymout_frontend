@@ -224,10 +224,10 @@ const EventCard = ({
               <h3 className="text-base font-bold line-clamp-1">{title}</h3>
             </div>
             
-            {/* Description (like message preview) */}
-            {description && showDescription && (
+            {/* Description (like message preview) - Temporarily commented out for performance testing */}
+            {/* {description && showDescription && (
               <p className="text-sm text-gray-600 line-clamp-2 mb-3">{getShortDescription(description)}</p>
-            )}
+            )} */}
             
             {/* Hosted By section removed from here and moved to location line */}
             
