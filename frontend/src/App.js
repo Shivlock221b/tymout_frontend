@@ -1,6 +1,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import PageTransition from './components/layout/PageTransition';
 
 // Import CSS
 import './styles/App.css';
@@ -105,24 +106,24 @@ const App = () => {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/explore" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/auth/success" element={<AuthSuccess />} />
+            <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+            <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
+            <Route path="/auth/success" element={<PageTransition><AuthSuccess /></PageTransition>} />
             <Route path="/onboarding" element={
               <ProtectedRoute>
-                <OnboardingPage />
+                <PageTransition><OnboardingPage /></PageTransition>
               </ProtectedRoute>
             } />
             
             {/* Information pages - these do not require authentication */}
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/creators" element={<CreatorsPage />} />
-            <Route path="/business" element={<BusinessPage />} />
-            <Route path="/guidelines" element={<GuidelinesPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/policies" element={<PoliciesPage />} />
+            <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+            <Route path="/features" element={<PageTransition><FeaturesPage /></PageTransition>} />
+            <Route path="/creators" element={<PageTransition><CreatorsPage /></PageTransition>} />
+            <Route path="/business" element={<PageTransition><BusinessPage /></PageTransition>} />
+            <Route path="/guidelines" element={<PageTransition><GuidelinesPage /></PageTransition>} />
+            <Route path="/faq" element={<PageTransition><FAQPage /></PageTransition>} />
+            <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+            <Route path="/policies" element={<PageTransition><PoliciesPage /></PageTransition>} />
             
             {/* Main navigation routes */}
             
@@ -131,7 +132,7 @@ const App = () => {
               path="/city-select"
               element={
                 <PublicRoute>
-                  <CitySelectPage />
+                  <PageTransition><CitySelectPage /></PageTransition>
                 </PublicRoute>
               }
             />
@@ -140,7 +141,7 @@ const App = () => {
               path="/explore" 
               element={
                 <PublicRoute>
-                  <ExplorePage />
+                  <PageTransition><ExplorePage /></PageTransition>
                 </PublicRoute>
               } 
             />
@@ -149,7 +150,7 @@ const App = () => {
               path="/myevents" 
               element={
                 <ProtectedRoute>
-                  <MyEventsPage />
+                  <PageTransition><MyEventsPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -160,7 +161,7 @@ const App = () => {
               path="/myevents/:eventId/requests" 
               element={
                 <ProtectedRoute>
-                  <JoinRequestsPage />
+                  <PageTransition><JoinRequestsPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -170,7 +171,7 @@ const App = () => {
               path="/myevents/:eventId/chat" 
               element={
                 <ProtectedRoute>
-                  <EventChatPage />
+                  <PageTransition><EventChatPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -180,7 +181,7 @@ const App = () => {
               path="/myevents/about/:eventId" 
               element={
                 <ProtectedRoute>
-                  <EventAboutPage />
+                  <PageTransition><EventAboutPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -190,7 +191,7 @@ const App = () => {
               path="/myevents/:eventId/group" 
               element={
                 <ProtectedRoute>
-                  <EventGroupPage />
+                  <PageTransition><EventGroupPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -200,7 +201,7 @@ const App = () => {
               path="/myevents/:eventId" 
               element={
                 <ProtectedRoute>
-                  <EventPage />
+                  <PageTransition><EventPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
