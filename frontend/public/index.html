@@ -47,32 +47,10 @@
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     </noscript>
-    
-    <!-- Performance optimizations CSS -->
-    <link rel="stylesheet" href="%PUBLIC_URL%/performance-fixes.css">
-    
-    <!-- Preload critical assets script -->
-    <script src="%PUBLIC_URL%/preload.js" async></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    
-    <!-- Prevent layout shifts during load -->
-    <style>
-      /* Inline critical CSS to prevent layout shifts */
-      .logo-container {
-        display: block;
-        min-height: 40px;
-        min-width: 120px;
-      }
-      footer.bg-gray-800 {
-        min-height: 60px;
-      }
-      .flex.items-center.flex-grow.justify-end {
-        min-height: 40px;
-      }
-    </style>
     
     <!-- Service Worker Registration -->
     <script>
