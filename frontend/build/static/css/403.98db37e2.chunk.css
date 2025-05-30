@@ -1,0 +1,393 @@
+/* InfoPages.css - Shared styles for all information pages */
+
+.info-page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100vw;
+}
+
+.info-content-wrapper {
+  padding-top: 80px; /* Account for fixed header */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 3rem;
+  width: 100%; /* Ensure wrapper takes full width */
+  max-width: 100vw;
+}
+
+.info-content {
+  width: 100%;
+  max-width: 800px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin: 1rem;
+  overflow-wrap: break-word; /* Ensure text wraps */
+  word-wrap: break-word; /* For older browsers */
+}
+
+/* Mobile-friendly specific styles */
+.mobile-friendly {
+  padding: 1rem;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem); /* Account for margins */
+}
+
+.info-title {
+  color: #4f46e5; /* Indigo-600 color */
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-heading {
+  color: #4338ca; /* Indigo-700 color */
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.info-text {
+  color: #4b5563; /* Gray-600 color */
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+/* Benefits section */
+.benefits-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.benefit-item {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.benefit-title {
+  color: #4f46e5; /* Indigo-600 color */
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.benefit-text {
+  color: #4b5563; /* Gray-600 color */
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Steps section */
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.step-number {
+  background-color: #4f46e5;
+  color: white;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+  margin: 0;
+  padding-top: 0.125rem;
+}
+
+.button-container {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Page title */
+.info-content h1 {
+  color: #4f46e5; /* Indigo-600 color */
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Section styles */
+.info-section {
+  margin-bottom: 2.5rem;
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.info-section h2 {
+  color: #4338ca; /* Indigo-700 color */
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.info-section h3 {
+  color: #4f46e5; /* Indigo-600 color */
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-section p {
+  color: #4b5563; /* Gray-600 color */
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.intro-text {
+  font-size: 1.1rem;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  color: #6b7280; /* Gray-500 color */
+}
+
+/* Lists */
+.feature-list, .guideline-list, .steps-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.feature-list li, .guideline-list li {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.feature-list li:before, .guideline-list li:before {
+  content: "•";
+  color: #4f46e5; /* Indigo-600 color */
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.steps-list li {
+  counter-increment: step-counter;
+  margin-bottom: 1.25rem;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.steps-list li:before {
+  content: counter(step-counter);
+  color: white;
+  background-color: #4f46e5; /* Indigo-600 color */
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Team grid */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.team-member {
+  text-align: center;
+}
+
+.team-member-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  background-color: #e5e7eb; /* Gray-200 color */
+}
+
+.team-member h3 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.team-member p {
+  color: #6b7280; /* Gray-500 color */
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* FAQ styles */
+.faq-list {
+  margin-top: 2rem;
+}
+
+.faq-item {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 1.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937; /* Gray-800 color */
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-question:hover {
+  color: #4f46e5; /* Indigo-600 color */
+}
+
+.faq-question.active {
+  color: #4f46e5; /* Indigo-600 color */
+}
+
+.faq-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.faq-answer.expanded {
+  max-height: 1000px;
+  padding-bottom: 1.25rem;
+}
+
+.faq-answer p {
+  margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.primary-button {
+  background-color: #4f46e5; /* Indigo-600 color */
+  color: white;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+  background-color: #4338ca; /* Indigo-700 color */
+}
+
+/* Mobile Responsive Styles */
+@media (min-width: 640px) {
+  .mobile-friendly {
+    padding: 1.5rem;
+  }
+  
+  .info-title {
+    font-size: 2rem;
+  }
+  
+  .info-heading {
+    font-size: 1.5rem;
+  }
+  
+  .info-text, .benefit-text, .step-text {
+    font-size: 1rem;
+  }
+  
+  .benefit-title {
+    font-size: 1.25rem;
+  }
+  
+  .benefits-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .info-content {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  
+  .mobile-friendly {
+    padding: 2rem;
+  }
+  
+  .info-title {
+    font-size: 2.5rem;
+  }
+  
+  .benefits-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .steps-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .benefits-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .steps-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
+/*# sourceMappingURL=403.98db37e2.chunk.css.map*/

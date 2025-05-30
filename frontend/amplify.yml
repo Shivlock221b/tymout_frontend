@@ -1,0 +1,50 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - echo "Building with CRACO for optimized performance"
+        - chmod +x ./amplify-build.sh
+        - ./amplify-build.sh
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+    headers:
+      - pattern: '**/*.js'
+        files: 
+          - '**/*.js'
+        headers:
+          - key: 'Cache-Control'
+            value: 'public, max-age=31536000, immutable'
+          - key: 'Content-Encoding'
+            value: 'gzip'
+      - pattern: '**/*.css'
+        files:
+          - '**/*.css'
+        headers:
+          - key: 'Cache-Control'
+            value: 'public, max-age=31536000, immutable'
+          - key: 'Content-Encoding'
+            value: 'gzip'
+      - pattern: '**/*.html'
+        files:
+          - '**/*.html'
+        headers:
+          - key: 'Cache-Control'
+            value: 'public, max-age=3600'
+          - key: 'Content-Encoding'
+            value: 'gzip'
+      - pattern: '**/service-worker.js'
+        files:
+          - '**/service-worker.js'
+        headers:
+          - key: 'Cache-Control'
+            value: 'no-cache, no-store, must-revalidate'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*

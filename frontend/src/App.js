@@ -1,52 +1,37 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-// MIGRATION: Migration to Zustand and React Query complete
-// AuthProvider -> MIGRATED to useAuthStore (Zustand)
-// ProfileProvider -> MIGRATED to useProfileQueries hooks (React Query)
-// NotificationsProvider -> MIGRATED to useNotificationQueries hooks (React Query)
-// ScrollToElementProvider -> MIGRATED to useUIStore (Zustand)
+import React, { useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-// HomePage import removed as it's not being used
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import AuthSuccess from './pages/AuthSuccess';
-import OnboardingPage from './pages/OnboardingPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
-import HostPage from './pages/HostPage';
+
+// Import CSS
+import './styles/App.css';
+import './styles/performance.css'; // Import performance optimizations
+
+// Import components
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoute from './components/auth/PublicRoute';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import ResponsiveNavBar from './components/layout/ResponsiveNavBar';
+
+// Eagerly load ExplorePage since it's the main landing page
 import ExplorePage from './pages/ExplorePage';
-import EventDetailPage from './pages/EventDetailPage';
-import MessageIndexPage from './message/pages/MessageIndexPage';
-import MessageDetailPage from './message/pages/MessageDetailPage';
-import UserProfilePage from './pages/profile/UserProfilePage';
-import AboutPage from './pages/info/AboutPage';
-import FeaturesPage from './pages/info/FeaturesPage';
-import CreatorsPage from './pages/info/CreatorsPage';
-import BusinessPage from './pages/info/BusinessPage';
-import GuidelinesPage from './pages/info/GuidelinesPage';
-import FAQPage from './pages/info/FAQPage';
-import ContactPage from './pages/info/ContactPage';
-import PoliciesPage from './pages/info/PoliciesPage';
-import CitySelectPage from './pages/CitySelectPage';
+
+// Import hosting pages
 import TableCreationPage from './hosting/pages/TableCreationPage';
 import CircleCreationPage from './hosting/pages/CircleCreationPage';
 import BusinessListingPage from './hosting/pages/BusinessListingPage';
 import BusinessSetupPage from './hosting/pages/BusinessSetupPage';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import PublicRoute from './components/auth/PublicRoute';
-import Header from './components/layout/Header';
-import { useLocation } from 'react-router-dom';
-import Footer from './components/layout/Footer';
-import ResponsiveNavBar from './components/layout/ResponsiveNavBar';
+
+// Import myevents pages
 import MyEventsPage from './myevents/pages/MyEventsPage';
 import EventPage from './myevents/pages/EventPage';
-import ShopRouter from './shop/router/ShopRouter';
 import EventChatPage from './myevents/pages/EventChatPage';
 import EventAboutPage from './myevents/pages/EventAboutPage';
 import JoinRequestsPage from './myevents/pages/JoinRequestsPage';
 import EventGroupPage from './myevents/pages/EventGroupPage';
-// Shop components
-// Shop routes now handled by ShopRouter
+
+// Import shop pages
+import ShopRouter from './shop/router/ShopRouter';
 import ShopEditPage from './shop/pages/ShopEditPage';
 import CatalogueEditPage from './shop/pages/CatalogueEditPage';
 import ProductsPage from './shop/pages/ProductsPage';
@@ -54,7 +39,30 @@ import CategoriesPage from './shop/pages/CategoriesPage';
 import InventoryPage from './shop/pages/InventoryPage';
 import TemplatePage from './shop/pages/TemplatePage';
 import FeedbackPage from './shop/pages/FeedbackPage';
-import './styles/App.css';
+
+// Lazy load main pages
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const AuthSuccess = lazy(() => import('./pages/AuthSuccess'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const HostPage = lazy(() => import('./pages/HostPage'));
+const EventDetailPage = lazy(() => import('./pages/EventDetailPage'));
+const MessageIndexPage = lazy(() => import('./message/pages/MessageIndexPage'));
+const MessageDetailPage = lazy(() => import('./message/pages/MessageDetailPage'));
+const UserProfilePage = lazy(() => import('./pages/profile/UserProfilePage'));
+
+// Lazy load info pages
+const AboutPage = lazy(() => import('./pages/info/AboutPage'));
+const FeaturesPage = lazy(() => import('./pages/info/FeaturesPage'));
+const CreatorsPage = lazy(() => import('./pages/info/CreatorsPage'));
+const BusinessPage = lazy(() => import('./pages/info/BusinessPage'));
+const GuidelinesPage = lazy(() => import('./pages/info/GuidelinesPage'));
+const FAQPage = lazy(() => import('./pages/info/FAQPage'));
+const ContactPage = lazy(() => import('./pages/info/ContactPage'));
+const PoliciesPage = lazy(() => import('./pages/info/PoliciesPage'));
+const CitySelectPage = lazy(() => import('./pages/CitySelectPage'));
 
 // Following Single Responsibility Principle - App component only handles setup
 const App = () => {
@@ -93,6 +101,7 @@ const App = () => {
       <div className={`flex flex-1 ${!isNoHeaderPage ? 'pt-16 md:pt-20' : ''}`}> 
         {/* Main content area: Add left margin if authenticated (for desktop side nav) */}
         <main className={`flex-1 p-2 md:p-4 pb-16 md:pb-0 ${isAuthenticated ? 'md:ml-64' : ''}`}> 
+          <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-pulse text-indigo-600 text-xl">Loading...</div></div>}>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/explore" replace />} />
@@ -380,6 +389,7 @@ const App = () => {
             {/* Default redirect for unmatched routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </main>
       </div>
       {!isEventChatPage && <ResponsiveNavBar />}

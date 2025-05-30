@@ -1,0 +1,71 @@
+/* Performance optimizations to prevent layout shifts */
+
+/* Add explicit dimensions to prevent layout shifts */
+.menu-container {
+  min-height: 48px;
+  height: 48px;
+  contain: layout size;
+}
+
+/* Add content-visibility for off-screen content */
+.explore-results-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Prevent layout shifts for images */
+img {
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* Prevent layout shifts for "No results found" message */
+.no-results-container {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent layout shifts for menu items */
+.menu-item {
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* Prevent layout shifts during loading */
+.loading-placeholder {
+  min-height: 200px;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Add font display swap for better text rendering */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+}
+
+/* Optimize rendering for fixed elements */
+.fixed-element {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize for mobile viewports */
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}

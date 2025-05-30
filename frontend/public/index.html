@@ -2,10 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- Resource hints for faster loading -->
+    <link rel="preconnect" href="%PUBLIC_URL%" crossorigin />
+    <link rel="dns-prefetch" href="%PUBLIC_URL%" />
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="%PUBLIC_URL%/static/js/main.chunk.js" as="script" />
+    <link rel="preload" href="%PUBLIC_URL%/static/js/bundle.js" as="script" />
+    
+    <!-- Favicon links -->
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/icons/favicon-16x16.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#4f46e5" />
     <meta
       name="description"
@@ -28,13 +38,32 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Tymout | Meaningful Connections</title>
-    <!-- Preconnect to Google Fonts -->
+    <!-- Optimized Google Fonts loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    </noscript>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(function(error) {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
