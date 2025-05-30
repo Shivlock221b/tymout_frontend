@@ -8,35 +8,22 @@ module.exports = {
   webpack: {
     configure: (webpackConfig) => {
       // Optimize bundle size
+      // Use default webpack optimization with minimal customization
       webpackConfig.optimization = {
         ...webpackConfig.optimization,
         splitChunks: {
           chunks: 'all',
-          minSize: 10000, // Reduced from 20000
-          maxSize: 120000, // Reduced from 244000
+          minSize: 20000, // Default value
+          maxSize: 0, // No maximum size limit
           minChunks: 1,
           maxAsyncRequests: 30,
           maxInitialRequests: 30,
           automaticNameDelimiter: '~',
-          enforceSizeThreshold: 30000, // Reduced from 50000
           cacheGroups: {
             defaultVendors: {
               test: /[\\/]node_modules[\\/]/,
               priority: -10,
               reuseExistingChunk: true,
-            },
-            // Add specific vendor bundles for large libraries
-            lodash: {
-              test: /[\\/]node_modules[\\/]lodash[\\/]/,
-              name: 'lodash',
-              chunks: 'all',
-              priority: 20,
-            },
-            reactIcons: {
-              test: /[\\/]node_modules[\\/]react-icons[\\/]/,
-              name: 'react-icons',
-              chunks: 'all',
-              priority: 20,
             },
             default: {
               minChunks: 2,
@@ -57,15 +44,15 @@ module.exports = {
                 warnings: false,
                 comparisons: false,
                 inline: 2,
-                drop_console: true,
-                drop_debugger: true,
-                pure_funcs: ['console.log', 'console.info', 'console.debug'],
-                passes: 2, // Multiple compression passes
-                unused: true, // Remove unused variables
+                drop_console: false, // Allow console logs for debugging
+                drop_debugger: false, // Allow debugger statements
+                pure_funcs: [], // Don't remove any functions
+                passes: 1, // Single compression pass
+                unused: false, // Don't remove unused variables
               },
               mangle: {
                 safari10: true,
-                toplevel: true, // Better minification
+                toplevel: false, // Disable top-level mangling
               },
               output: {
                 ecma: 5,
@@ -77,20 +64,20 @@ module.exports = {
             parallel: true,
           }),
         ],
-        usedExports: true, // Enable tree shaking
-        sideEffects: true, // Enable tree shaking
+        usedExports: false, // Disable tree shaking
+        sideEffects: false, // Disable tree shaking
       };
 
-      // Add compression plugin in production
-      whenProd(() => {
-        webpackConfig.plugins.push(
-          new CompressionPlugin({
-            algorithm: 'gzip',
-            test: /\.(js|css|html|svg)$/,
-            threshold: 10240,
-            minRatio: 0.8,
-          })
-        );
+      // Disable compression plugin in production for now to debug UI issues
+      // whenProd(() => {
+      //   webpackConfig.plugins.push(
+      //     new CompressionPlugin({
+      //       algorithm: 'gzip',
+      //       test: /\.(js|css|html|svg)$/,
+      //       threshold: 10240,
+      //       minRatio: 0.8,
+      //     })
+      //   );
         
         // Uncomment for bundle analysis
         // webpackConfig.plugins.push(
@@ -100,7 +87,7 @@ module.exports = {
         //     openAnalyzer: false,
         //   })
         // );
-      });
+      // });
 
       return webpackConfig;
     },
