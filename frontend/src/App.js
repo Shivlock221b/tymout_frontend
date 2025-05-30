@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import PageTransition from './components/layout/PageTransition';
 // MIGRATION: Migration to Zustand and React Query complete
 // AuthProvider -> MIGRATED to useAuthStore (Zustand)
 // ProfileProvider -> MIGRATED to useProfileQueries hooks (React Query)
@@ -35,7 +37,7 @@ import BusinessSetupPage from './hosting/pages/BusinessSetupPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicRoute from './components/auth/PublicRoute';
 import Header from './components/layout/Header';
-import { useLocation } from 'react-router-dom';
+// useLocation is now imported at the top
 import Footer from './components/layout/Footer';
 import ResponsiveNavBar from './components/layout/ResponsiveNavBar';
 import MyEventsPage from './myevents/pages/MyEventsPage';
@@ -92,28 +94,29 @@ const App = () => {
       {!isNoHeaderPage && <Header />}
       <div className={`flex flex-1 ${!isNoHeaderPage ? 'pt-16 md:pt-20' : ''}`}> 
         {/* Main content area: Add left margin if authenticated (for desktop side nav) */}
-        <main className={`flex-1 p-2 md:p-4 pb-16 md:pb-0 ${isAuthenticated ? 'md:ml-64' : ''}`}> 
-          <Routes>
+        <main className={`flex-1 p-2 md:p-4 pb-16 md:pb-0 ${isAuthenticated ? 'md:ml-64' : ''} overflow-hidden`}> 
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/explore" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/auth/success" element={<AuthSuccess />} />
+            <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+            <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
+            <Route path="/auth/success" element={<PageTransition><AuthSuccess /></PageTransition>} />
             <Route path="/onboarding" element={
               <ProtectedRoute>
-                <OnboardingPage />
+                <PageTransition><OnboardingPage /></PageTransition>
               </ProtectedRoute>
             } />
             
             {/* Information pages - these do not require authentication */}
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/creators" element={<CreatorsPage />} />
-            <Route path="/business" element={<BusinessPage />} />
-            <Route path="/guidelines" element={<GuidelinesPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/policies" element={<PoliciesPage />} />
+            <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+            <Route path="/features" element={<PageTransition><FeaturesPage /></PageTransition>} />
+            <Route path="/creators" element={<PageTransition><CreatorsPage /></PageTransition>} />
+            <Route path="/business" element={<PageTransition><BusinessPage /></PageTransition>} />
+            <Route path="/guidelines" element={<PageTransition><GuidelinesPage /></PageTransition>} />
+            <Route path="/faq" element={<PageTransition><FAQPage /></PageTransition>} />
+            <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+            <Route path="/policies" element={<PageTransition><PoliciesPage /></PageTransition>} />
             
             {/* Main navigation routes */}
             
@@ -122,7 +125,7 @@ const App = () => {
               path="/city-select"
               element={
                 <PublicRoute>
-                  <CitySelectPage />
+                  <PageTransition><CitySelectPage /></PageTransition>
                 </PublicRoute>
               }
             />
@@ -131,7 +134,7 @@ const App = () => {
               path="/explore" 
               element={
                 <PublicRoute>
-                  <ExplorePage />
+                  <PageTransition><ExplorePage /></PageTransition>
                 </PublicRoute>
               } 
             />
@@ -140,7 +143,7 @@ const App = () => {
               path="/myevents" 
               element={
                 <ProtectedRoute>
-                  <MyEventsPage />
+                  <PageTransition><MyEventsPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -151,7 +154,7 @@ const App = () => {
               path="/myevents/:eventId/requests" 
               element={
                 <ProtectedRoute>
-                  <JoinRequestsPage />
+                  <PageTransition><JoinRequestsPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -161,7 +164,7 @@ const App = () => {
               path="/myevents/:eventId/chat" 
               element={
                 <ProtectedRoute>
-                  <EventChatPage />
+                  <PageTransition><EventChatPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -171,7 +174,7 @@ const App = () => {
               path="/myevents/about/:eventId" 
               element={
                 <ProtectedRoute>
-                  <EventAboutPage />
+                  <PageTransition><EventAboutPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -181,7 +184,7 @@ const App = () => {
               path="/myevents/:eventId/group" 
               element={
                 <ProtectedRoute>
-                  <EventGroupPage />
+                  <PageTransition><EventGroupPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -191,7 +194,7 @@ const App = () => {
               path="/myevents/:eventId" 
               element={
                 <ProtectedRoute>
-                  <EventPage />
+                  <PageTransition><EventPage /></PageTransition>
                 </ProtectedRoute>
               } 
             />
@@ -379,7 +382,8 @@ const App = () => {
             
             {/* Default redirect for unmatched routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </AnimatePresence>
         </main>
       </div>
       {!isEventChatPage && <ResponsiveNavBar />}
