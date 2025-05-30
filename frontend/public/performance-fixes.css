@@ -1,0 +1,91 @@
+/* Performance fixes for Tymout Frontend - Addressing LCP and Layout Shift issues */
+
+/* Fix for the logo container that's causing LCP issues */
+span.logo-container.animating {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style paint;
+  display: block;
+  min-height: 40px;
+  min-width: 120px;
+}
+
+/* Fix for footer layout shifts */
+footer.bg-gray-800.text-white.py-8.w-full.mt-auto.relative {
+  contain: layout;
+  min-height: 60px;
+  width: 100%;
+}
+
+/* Fix for menu layout shifts */
+div.flex.items-center.flex-grow.justify-end {
+  contain: layout;
+  min-height: 40px;
+}
+
+/* Prevent layout shifts for images */
+img {
+  height: auto;
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* Prevent layout shifts for dynamically loaded content */
+.skeleton-loader {
+  contain: strict;
+  min-height: inherit;
+}
+
+/* Improve rendering performance for all components */
+.logo-container img {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Prevent FOUC (Flash of Unstyled Content) */
+html {
+  font-display: optional;
+}
+
+/* Prevent layout shifts for flex containers */
+.flex {
+  min-height: 0;
+}
+
+/* Prevent layout shifts in the main content area */
+main {
+  min-height: 100vh;
+}
+
+/* Optimize rendering for fixed elements */
+.fixed {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Prevent layout shifts for dynamically loaded content */
+[data-loading] {
+  min-height: 200px;
+}
+
+/* Optimize rendering for large lists */
+.virtualized-list {
+  contain: strict;
+}
+
+/* Ensure text doesn't cause layout shifts while loading fonts */
+body {
+  text-rendering: optimizeSpeed;
+}
+
+/* Fix for the specific layout shift in the footer */
+footer[class*="bg-gray-800"] {
+  contain: layout;
+  min-height: 60px;
+}
+
+/* Fix for the specific layout shift in the menu */
+div[class*="flex items-center flex-grow justify-end"] {
+  contain: layout;
+  min-height: 40px;
+}

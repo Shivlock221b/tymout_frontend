@@ -1,14 +1,22 @@
-// Service Worker for Tymout Frontend
-const CACHE_NAME = 'tymout-cache-v1';
-const urlsToCache = [
+// Service Worker for Tymout Frontend - Optimized for performance
+const CACHE_NAME = 'tymout-cache-v2';
+// Critical assets that should be cached immediately for better LCP
+const CRITICAL_ASSETS = [
   '/',
   '/index.html',
+  '/static/css/main.chunk.css',
+  '/performance-fixes.css',
+  '/preload.js',
+  '/env-config.js',
+  '/logo192.png'
+];
+
+// Secondary assets that can be cached but aren't critical for initial render
+const SECONDARY_ASSETS = [
   '/static/js/main.chunk.js',
   '/static/js/bundle.js',
   '/static/js/vendors~main.chunk.js',
-  '/static/css/main.chunk.css',
   '/favicon.ico',
-  '/logo192.png',
   '/logo512.png',
   '/manifest.json',
   '/icons/favicon-16x16.png',
@@ -16,14 +24,26 @@ const urlsToCache = [
   '/icons/og-image.png'
 ];
 
-// Install event - cache static assets
+// All assets to cache
+const urlsToCache = [...CRITICAL_ASSETS, ...SECONDARY_ASSETS];
+
+// Install event - cache static assets with priority for critical assets
 self.addEventListener('install', event => {
+  // Skip waiting to activate the new service worker immediately
+  self.skipWaiting();
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      
+      // Cache critical assets first for better LCP
+      await cache.addAll(CRITICAL_ASSETS);
+      
+      // Then cache secondary assets
+      await cache.addAll(SECONDARY_ASSETS);
+      
+      console.log('Cache populated with critical and secondary assets');
+    })()
   );
 });
 
@@ -86,18 +106,26 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and claim clients for immediate control
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
+  
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheWhitelist.indexOf(cacheName) === -1) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      
+      // Claim clients so the service worker is in control without reload
+      self.clients.claim()
+    ])
   );
 });
