@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
 
-// Import all components directly to avoid lazy loading issues in production
+// Import our separate components
 import ExploreSearch from '../components/explore/ExploreSearch';
 import ExploreResults from '../components/explore/ExploreResults';
 import TagFilter from '../components/explore/TagFilter';
@@ -324,67 +324,78 @@ const ExplorePage = () => {
       <div className="mt-4 px-4 mb-2" style={{ position: 'relative', zIndex: 20 }}>
         <div className="max-w-xl mx-auto">
           <ExploreSearch 
-            query={searchQuery}
-            onSearch={handleSearch}
+            query={searchQuery} 
+            onSearch={handleSearch} 
           />
         </div>
       </div>
       
-      {/* Tag filter - horizontal scrolling */}
-      <div className="px-4 mb-4 mt-4">
-        <div className="tag-scroll-container">
-          <TagFilter
-            onTagSelect={handleTagSelect}
+      {/* Tag filter now placed above the content section with lowest z-index */}
+      <div className="mt-3 px-2" style={{ position: 'relative', zIndex: 10 }}>
+        <div className="tag-scroll-container w-full" ref={tagScrollRef}>
+          <TagFilter 
             selectedTags={selectedTags}
+            onTagSelect={handleTagSelect}
             onSpecialTagSelect={handleSpecialTagSelect}
             activeSpecialTag={activeSpecialTag}
+            hideRegularTags={false}
           />
         </div>
       </div>
       
-      {/* Time filter buttons */}
-      <div className="flex space-x-2 mt-2 px-4">
-        <button
-          onClick={() => handleTimeFilterChange('all')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'all' 
-            ? 'bg-indigo-600 text-white shadow-sm' 
-            : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => handleTimeFilterChange('today')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'today' 
-            ? 'bg-indigo-600 text-white shadow-sm' 
-            : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-        >
-          Today
-        </button>
-        <button
-          onClick={() => handleTimeFilterChange('thisWeek')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'thisWeek' 
-            ? 'bg-indigo-600 text-white shadow-sm' 
-            : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-        >
-          This Week
-        </button>
-      </div>
-      
-      {/* Results section */}
-      <div className="mt-4 px-4 explore-results-container">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-md"></div>
-            ))}
-          </div>
-        ) : (
-          <ExploreResults 
-            results={results} 
-            isLoading={isLoading}
-            emptyMessage="No results found. Try adjusting your search or filters."
+      {/* Spotlight section - repositioned between tag filters and content */}
+      {!isLoading && results && results.length > 0 && (
+        <div className="mt-4 mb-5">
+          <SpotlightEvents 
+            events={results.filter(event => 
+              event.set_trending === 'in the spotlight'
+            )} 
           />
-        )}
+        </div>
+      )}
+        
+      {/* Content section with heading */}
+      <div className="mt-5">
+        <div className="flex flex-col mb-4 px-4">
+          <h2 className="text-lg font-bold text-indigo-600 relative mb-3">
+            <span className="relative inline-block">Find Your Table
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 transform translate-y-1"></span>
+            </span>
+          </h2>
+          
+          {/* Time filter buttons */}
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={() => handleTimeFilterChange('all')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'all' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => handleTimeFilterChange('today')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'today' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleTimeFilterChange('thisWeek')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'thisWeek' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
+            >
+              This Week
+            </button>
+          </div>
+        </div>
+        <ExploreResults 
+          results={results} 
+          isLoading={isLoading}
+          emptyMessage="No results found. Try adjusting your search or filters."
+        />
       </div>
     </div>
     </>
