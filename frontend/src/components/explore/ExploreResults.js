@@ -33,9 +33,9 @@ const ExploreResults = ({ results, isLoading }) => {
     );
   }
   
-  // Render results - now using grid for desktop and keeping responsive for mobile
+  // Render results - styled as a WhatsApp chat interface with minimal spacing
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+    <div className="flex flex-col">
       {results.map((item, index) => {
         // Skip null or invalid items
         if (!item || !item.id) {
@@ -43,20 +43,20 @@ const ExploreResults = ({ results, isLoading }) => {
           return null;
         }
         
-        // Render unified EventCard with divider, except for the last item
+        // Render unified EventCard in a vertical list like a chat interface
         return (
           <div key={item.id} className="event-card-container">
             <EventCard 
               item={item} 
               type={item.type || 'event'} // Default to 'event' if type is missing
               source="explore"
-              fullWidth={true} // Add fullWidth prop to make cards fill their grid cells
+              fullWidth={true} 
               variant="explore"
             />
             {/* Add divider line after every card except the last one */}
             {index < results.length - 1 && (
-              <div className="mx-auto my-1 px-4">
-                <div className="h-px bg-gray-200 w-full max-w-[85%] mx-auto" style={{ marginLeft: '60px' }}></div>
+              <div className="px-4">
+                <div className="h-px bg-gray-200 w-full ml-14"></div>
               </div>
             )}
           </div>
