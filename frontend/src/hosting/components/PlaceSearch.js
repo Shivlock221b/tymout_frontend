@@ -39,7 +39,7 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
   // Search for places when query changes
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
-      if (query.length >= 2 && city) {
+      if (query.length >= 2 && city && !selectedPlace) {
         setIsLoading(true);
         setIsOpen(true);
         
@@ -54,11 +54,12 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
         }
       } else {
         setResults([]);
+        setIsOpen(false);
       }
     }, 500); // Debounce search requests
 
     return () => clearTimeout(searchTimeout);
-  }, [query, city]);
+  }, [query, city, selectedPlace]);
 
   const handleInputChange = (e) => {
     setQuery(e.target.value);
@@ -70,36 +71,79 @@ const PlaceSearch = ({ city, onPlaceSelect, error }) => {
 
   const handlePlaceSelect = (place) => {
     setSelectedPlace(place);
-    setQuery(place.name);
+    setQuery(place.name); // Keep the place name in the input field
     setIsOpen(false);
     onPlaceSelect(place);
+  };
+  
+  // Function to reset the selection
+  const resetSelection = () => {
+    setSelectedPlace(null);
+    setQuery('');
+    onPlaceSelect(null);
   };
 
   return (
     <div className="relative">
+      {/* Search input */}
       <div className="relative" ref={searchRef}>
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
+          {/* <FaMapMarkerAlt className="h-5 w-5 text-gray-400" /> */}
         </div>
-        <input
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          onFocus={() => query.length >= 2 && setIsOpen(true)}
-          placeholder="Search for a place..."
-          className={`pl-10 block w-full rounded-md shadow-sm sm:text-sm ${
-            error
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-              : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-          }`}
-          disabled={!city}
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={handleInputChange}
+            onFocus={() => query.length >= 2 && setIsOpen(true)}
+            placeholder={selectedPlace ? "Search for a different place..." : "Search for a place..."}
+            className={`pl-10 block w-full rounded-md shadow-sm sm:text-sm ${
+              error
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+            }`}
+            disabled={!city}
+            readOnly={selectedPlace !== null}
+          />
+          {selectedPlace && (
+            <button
+              type="button"
+              onClick={resetSelection}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              aria-label="Clear selection"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+        </div>
         {isLoading && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
             <FaSpinner className="h-5 w-5 text-gray-400 animate-spin" />
           </div>
         )}
       </div>
+      
+      {/* Selected place display */}
+      {/* {selectedPlace && (
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-300 rounded-md flex justify-between items-center">
+          <div>
+            <div className="font-medium">{selectedPlace.name}</div>
+            <div className="text-sm text-gray-500">{selectedPlace.address}</div>
+          </div>
+          <button
+            type="button"
+            onClick={resetSelection}
+            className="ml-2 text-gray-400 hover:text-gray-600"
+            aria-label="Clear selection"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )} */}
       
       {error && (
         <p className="mt-1 text-sm text-red-600">{error}</p>
