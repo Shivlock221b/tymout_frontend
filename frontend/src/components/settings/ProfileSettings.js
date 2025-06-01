@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useUpdateProfileSettings, useUploadProfileImage } from '../../hooks/queries/useSettingsQueries';
+import { useNavigate } from 'react-router-dom';
+import { useUpdateProfileSettings, useUploadProfileImage, useRemoveProfileImage } from '../../hooks/queries/useSettingsQueries';
 
 // List of available cities - same as in onboarding
 const CITIES = ["Agra", "Gurugram"];
 
 // Single Responsibility Principle - this component only handles profile settings
 const ProfileSettings = ({ user }) => {
+  const navigate = useNavigate();
+  const removeProfileImage = useRemoveProfileImage();
   const [formData, setFormData] = useState({
     name: '',
     bio: '',
@@ -25,18 +28,59 @@ const ProfileSettings = ({ user }) => {
   const updateProfile = useUpdateProfileSettings();
   const uploadProfileImage = useUploadProfileImage();
 
+  // Add a timestamp to force image refresh
+  const addCacheBuster = (url) => {
+    if (!url) return '';
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${new Date().getTime()}`;
+  };
+
   useEffect(() => {
-    // In a real application, fetch user data from API
+    // Update form data whenever user data changes
     if (user) {
+      console.log('User data changed, updating form data:', user);
+      // Add cache buster to profile image URL to force refresh
+      const profileImageWithCacheBuster = addCacheBuster(user.profileImage);
+      console.log('Using profile image with cache buster:', profileImageWithCacheBuster);
+      
       setFormData({
         name: user.name || '',
         bio: user.bio || '',
         location: user.location || '',
         interests: user.interests || [],
-        profileImage: user.profileImage || ''
+        profileImage: profileImageWithCacheBuster
       });
     }
-  }, [user]);
+  }, [user]); // This dependency array ensures the effect runs when user changes
+  
+  // Force a refresh of the component when mounted
+  useEffect(() => {
+    // Force a refresh of the auth store data
+    const refreshData = async () => {
+      try {
+        // Force a refresh of the user data
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          if (parsed.state && parsed.state.user && parsed.state.user.profileImage) {
+            // Add cache buster to force browser to reload the image
+            const profileImageWithCacheBuster = addCacheBuster(parsed.state.user.profileImage);
+            console.log('Refreshing profile image with:', profileImageWithCacheBuster);
+            
+            // Update form data with the refreshed image URL
+            setFormData(prevData => ({
+              ...prevData,
+              profileImage: profileImageWithCacheBuster
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Error refreshing data:', e);
+      }
+    };
+    
+    refreshData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -57,6 +101,8 @@ const ProfileSettings = ({ user }) => {
   
   // Handle image upload
   const handleImageUpload = (file) => {
+    console.log('Handling image upload for file:', file.name);
+    
     // Show preview immediately for better UX
     const imageUrl = URL.createObjectURL(file);
     setFormData(prevData => ({
@@ -67,11 +113,39 @@ const ProfileSettings = ({ user }) => {
     // Upload to server
     uploadProfileImage.mutate(file, {
       onSuccess: (data) => {
-        // Update form data with the real URL from the server
-        setFormData(prevData => ({
-          ...prevData,
-          profileImage: data.profileImage
-        }));
+        console.log('Image upload success, received data:', data);
+        
+        // Get the profile image URL from the response
+        const newProfileImageUrl = data.profileImage || data.user?.profileImage;
+        
+        if (newProfileImageUrl) {
+          // Add cache buster to force browser to reload the image
+          const profileImageWithCacheBuster = addCacheBuster(newProfileImageUrl);
+          
+          console.log('Setting new profile image with cache buster:', profileImageWithCacheBuster);
+          
+          // Update form data with the real URL from the server
+          setFormData(prevData => ({
+            ...prevData,
+            profileImage: profileImageWithCacheBuster
+          }));
+          
+          // Force update the image in localStorage as well
+          try {
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage) {
+              const parsed = JSON.parse(authStorage);
+              if (parsed.state && parsed.state.user) {
+                parsed.state.user.profileImage = newProfileImageUrl;
+                localStorage.setItem('auth-storage', JSON.stringify(parsed));
+                console.log('Directly updated profile image in localStorage');
+              }
+            }
+          } catch (e) {
+            console.error('Error updating localStorage:', e);
+          }
+        }
+        
         setSuccessMessage('Profile image uploaded successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       },
@@ -126,6 +200,12 @@ const ProfileSettings = ({ user }) => {
         // Log the successful response
         console.log('Profile update successful, response:', data);
         
+        // Update form data with the returned data to ensure it's in sync
+        setFormData(prevData => ({
+          ...prevData,
+          ...data
+        }));
+        
         // Show success message
         setSuccessMessage('Profile updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -149,29 +229,31 @@ const ProfileSettings = ({ user }) => {
       <div className="space-y-6">
         {/* Profile Image */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Profile Image</h3>
+          {/* <h3 className="text-lg font-medium text-gray-900">Profile Image</h3> */}
           <p className="mt-1 text-sm text-gray-500">Upload a profile picture to personalize your account.</p>
           
           <div className="mt-4 flex items-center space-x-4">
             <div className="relative">
-              {formData.profileImage ? (
-                <div className="relative">
-                  <img 
-                    src={formData.profileImage} 
-                    alt="Profile preview" 
-                    className="h-24 w-24 rounded-full object-cover border-2 border-gray-200"
+              <div className="mt-1 flex items-center">
+                {formData.profileImage ? (
+                  <img
+                    src={formData.profileImage}
+                    alt="Profile"
+                    className="h-24 w-24 rounded-full object-cover"
+                    key={`profile-img-${new Date().getTime()}`} // Force re-render of image
                   />
-                  {uploadProfileImage.isPending && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 text-xl font-bold border-2 border-gray-200">
-                  {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
+                ) : (
+                  <span className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <svg
+                      className="h-12 w-12 text-gray-300"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </span>
+                )}
+              </div>
             </div>
             
             <div className="flex flex-col space-y-2">
@@ -190,15 +272,7 @@ const ProfileSettings = ({ user }) => {
                   className="sr-only"
                 />
               </label>
-              {formData.profileImage && (
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, profileImage: '' }))}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-                >
-                  Remove
-                </button>
-              )}
+
               <p className="text-xs text-gray-500">JPG, PNG or GIF. Max size 2MB.</p>
             </div>
           </div>
@@ -326,6 +400,12 @@ const ProfileSettings = ({ user }) => {
         <div className="flex justify-end">
           <button
             type="button"
+            onClick={() => {
+              // Force navigation to profile page
+              console.log('Cancel button clicked, navigating to /profile');
+              // Use replace instead of push to avoid navigation history issues
+              navigate('/profile', { replace: true });
+            }}
             className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Cancel

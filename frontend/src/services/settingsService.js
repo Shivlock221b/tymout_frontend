@@ -67,18 +67,28 @@ const settingsService = {
       console.log('Profile update API response:', response);
       console.log('Profile update response data:', response.data);
       
-      // Store updated profile data in localStorage for immediate access
-      // This ensures the data persists even if the page is refreshed
+      // Extract the updated user data from the response
+      const updatedUserData = response.data.data || response.data;
+      
+      // Update auth store data in localStorage
       try {
-        const currentUser = JSON.parse(localStorage.getItem('user-data') || '{}');
-        const updatedUser = { ...currentUser, ...profileData };
-        localStorage.setItem('user-data', JSON.stringify(updatedUser));
-        console.log('Updated user data in localStorage');
+        // Update the user data in the auth storage
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          if (parsed.state && parsed.state.user) {
+            // Update the user object with the new profile data
+            const updatedUser = { ...parsed.state.user, ...profileData };
+            parsed.state.user = updatedUser;
+            localStorage.setItem('auth-storage', JSON.stringify(parsed));
+            console.log('Updated user data in auth-storage');
+          }
+        }
       } catch (e) {
         console.error('Error updating localStorage:', e);
       }
       
-      return response.data.data || response.data;
+      return updatedUserData;
     } catch (error) {
       console.error('Error updating profile settings:', error);
       console.error('Error details:', error.response?.data || error.message);
@@ -157,9 +167,11 @@ const settingsService = {
       // Let axios set it automatically with the correct boundary
       const config = {
         headers: {
-          // No Content-Type header here
+          // No Content-Type header here - axios will set multipart/form-data with boundary
         },
-        timeout: 30000 // Longer timeout for file uploads
+        timeout: 30000, // Longer timeout for file uploads
+        // Prevent axios from trying to JSON.stringify the FormData
+        transformRequest: [(data) => data]
       };
       
       // Make API call to upload the image
@@ -169,6 +181,42 @@ const settingsService = {
       return response.data.data;
     } catch (error) {
       console.error('Error uploading profile image:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Remove profile image
+   * @returns {Promise<Object>} Updated user data without profile image
+   */
+  removeProfileImage: async () => {
+    try {
+      console.log('Removing profile image');
+      
+      // Since there's no dedicated endpoint for removing profile image,
+      // we'll update the profile with an empty profileImage field
+      const response = await userServiceClient.put('/user/profile', { profileImage: null });
+      console.log('Remove profile image response:', response.data);
+      
+      // Update auth store data in localStorage
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          if (parsed.state && parsed.state.user) {
+            // Remove the profileImage property
+            parsed.state.user.profileImage = null;
+            localStorage.setItem('auth-storage', JSON.stringify(parsed));
+            console.log('Removed profile image in auth-storage');
+          }
+        }
+      } catch (e) {
+        console.error('Error updating localStorage:', e);
+      }
+      
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Error removing profile image:', error);
       throw error;
     }
   }
