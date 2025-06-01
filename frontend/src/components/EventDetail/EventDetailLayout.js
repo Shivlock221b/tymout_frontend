@@ -42,19 +42,12 @@ const EventDetailLayout = ({
             <div 
               className="flex items-center mb-6 cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors duration-200"
               onClick={() => {
-                const hostData = item.host || item.organizer;
-                if (hostData && hostData.id) {
-                  console.log('Navigating to profile page for host/organizer:', hostData.id);
-                  navigate(`/profile/${hostData.id}`, { 
-                    state: { 
-                      from: 'eventDetail',
-                      returnTo: window.location.pathname,
-                      itemTitle: item.title
-                    }
-                  });
-                } else {
-                  console.warn('Host/organizer ID not available for navigation');
-                }
+                // Use a direct approach without any fancy code
+                const id = item.host?.id || item.organizer?.id;
+                console.log('Going to profile with ID:', id);
+                
+                // Use the correct route pattern for viewing other users' profiles
+                window.location = '/users/' + id;
               }}
             >
               <img

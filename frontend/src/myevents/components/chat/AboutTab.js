@@ -93,6 +93,20 @@ const AboutTab = ({ event }) => {
   const hostName = host?.name || host?.username || host?.email || 'Unknown';
   const hostAvatar = host?.image || host?.avatar || null;
   const hostRole = event.organizer ? 'Organizer' : 'Host';
+  
+  // Get host initials for fallback avatar
+  const getHostInitials = () => {
+    if (!hostName || hostName === 'Unknown') return '?';
+    
+    const nameParts = hostName.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    } else if (nameParts.length === 1 && nameParts[0].length > 0) {
+      return nameParts[0][0].toUpperCase();
+    } else {
+      return '?';
+    }
+  };
 
   // Tags
   const tags = event.tags || event.tagList || [];
@@ -100,8 +114,7 @@ const AboutTab = ({ event }) => {
   // Event status
   const isClosed = event.status === 'closed' || event.isClosed;
 
-  // Price
-  const price = event.price || event.fee || 0;
+  // Price removed as requested
 
   // RSVP deadline
   const rsvp = event.rsvpDeadline || event.rsvp || null;
@@ -109,8 +122,7 @@ const AboutTab = ({ event }) => {
   // Event type
   const type = event.type || event.eventType || 'Event';
 
-  // End date
-  const endDate = event.date?.end || event.endDate || null;
+  // End date removed as requested
 
   // Copy address handler
   const handleCopyAddress = () => {
@@ -132,13 +144,8 @@ const AboutTab = ({ event }) => {
       title: event.title || event.eventName || '',
       description: event.description || '',
       date: event.date?.start || event.date || '',
-      endDate: event.date?.end || event.endDate || '',
       time: event.time || '',
       capacity: event.capacity || '',
-      type: event.type || event.eventType || '',
-      price: event.price || event.fee || 0,
-      rsvp: event.rsvpDeadline || event.rsvp || '',
-      location: event.place?.address || event.location?.city || '',
       tags: (event.tags || event.tagList || []).join(', '),
     });
     setShowEditModal(true);
@@ -160,13 +167,11 @@ const AboutTab = ({ event }) => {
       const payload = {
         title: editData.title,
         description: editData.description,
-        date: { start: editData.date, end: editData.endDate },
+        date: { 
+          start: editData.date // Only include start date as end date validation has been removed
+        },
         time: editData.time,
         capacity: editData.capacity,
-        type: editData.type,
-        price: editData.price,
-        rsvpDeadline: editData.rsvp,
-        location: { city: editData.location },
         tags: editData.tags.split(',').map(t => t.trim()).filter(Boolean),
       };
       await axios.put(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`, payload, {
@@ -188,17 +193,31 @@ const AboutTab = ({ event }) => {
 
   // Save announcement
   const handleAnnouncementSave = async () => {
+    console.log('Saving announcement:', announcementDraft);
     setAnnouncementLoading(true);
     setAnnouncementError('');
     try {
       const eventId = event._id || event.id;
-      await axios.put(`${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`, { announcement: announcementDraft }, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
+      console.log('Making API call to update event:', eventId);
+      
+      const response = await axios.put(
+        `${process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:5000'}/api/events/${eventId}`, 
+        { announcement: announcementDraft }, 
+        { headers: { 'x-auth-token': localStorage.getItem('token') }}
+      );
+      
+      console.log('Announcement update response:', response.data);
       setShowAnnouncementEdit(false);
-      // Optionally, show a success message or trigger a refetch in parent if needed
+      // Force reload the page to show updated announcement
+      window.location.reload();
     } catch (err) {
-      setAnnouncementError(err.response?.data?.error || 'Failed to update announcement.');
+      console.error('Error updating announcement:', err);
+      setAnnouncementError(
+        err.response?.data?.error || 
+        err.response?.data?.message || 
+        err.message || 
+        'Failed to update announcement.'
+      );
     } finally {
       setAnnouncementLoading(false);
     }
@@ -206,7 +225,8 @@ const AboutTab = ({ event }) => {
 
   return (
     <div className="p-2 sm:p-4 text-gray-700 space-y-4 overflow-x-hidden">
-      {/* Announcement Section */}
+      {/* Announcement Section - Commented out */}
+      {/* 
       <div className="bg-gray-100 rounded-xl p-4 mb-2 flex flex-col gap-2">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">📌</span>
@@ -226,7 +246,6 @@ const AboutTab = ({ event }) => {
         {!event.announcement && !showAnnouncementEdit && (
           <div className="italic text-gray-400">No announcement yet.</div>
         )}
-        {/* Edit modal for announcement */}
         {showAnnouncementEdit && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadein">
             <div className="bg-white rounded-lg p-5 max-w-md w-full">
@@ -260,6 +279,7 @@ const AboutTab = ({ event }) => {
           </div>
         )}
       </div>
+      */}
 
       {/* About Card */}
       <div className="bg-gray-100 rounded-xl p-4 mb-2">
@@ -278,7 +298,7 @@ const AboutTab = ({ event }) => {
           <div className="flex items-center gap-2 justify-start text-gray-600 font-medium"> <FaCalendarAlt className="text-indigo-400" /> Date:</div>
           <div className="flex items-center justify-end">{formatDate(event.date?.start || event.date)}</div>
 
-          {endDate && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaCalendarAlt className="text-indigo-400" /> End Date:</div><div className="flex items-center justify-end">{formatDate(endDate)}</div></>}
+          {/* End date display removed as requested */}
 
           {event.time && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaClock className="text-indigo-400" /> Time:</div><div className="flex items-center justify-end">{formatTime(event.time)}</div></>}
 
@@ -290,7 +310,7 @@ const AboutTab = ({ event }) => {
           <div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaTag className="text-indigo-400" /> Type:</div>
           <div className="flex items-center justify-end">{type}</div>
 
-          {price !== undefined && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaRupeeSign className="text-indigo-400" /> Price:</div><div className="flex items-center justify-end"><span className={`inline-block px-2 py-0.5 rounded-full ${price === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'} text-xs font-semibold`}>{price === 0 ? 'Free' : `₹${price}`}</span></div></>}
+          {/* Price display removed as requested */}
 
           {rsvp && <><div className="flex items-center gap-2 justify-start text-gray-600 font-medium"><FaClock className="text-indigo-400" /> RSVP by:</div><div className="flex items-center justify-end">{formatDate(rsvp)}</div></>}
 
@@ -361,10 +381,23 @@ const AboutTab = ({ event }) => {
           onKeyDown={e => { if (e.key === 'Enter' && host?.id) navigate(`/profile/${host.id}`); }}
         >
           {hostAvatar ? (
-            <img src={hostAvatar} alt={hostName} className="w-12 h-12 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 transition-all duration-200" />
+            <img 
+              src={hostAvatar} 
+              alt={hostName} 
+              className="w-12 h-12 rounded-full object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 transition-all duration-200" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+                e.target.parentNode.classList.add('flex', 'items-center', 'justify-center', 'bg-indigo-100');
+                const textElement = document.createElement('div');
+                textElement.className = 'text-indigo-500 font-medium text-lg';
+                textElement.innerText = getHostInitials();
+                e.target.parentNode.appendChild(textElement);
+              }}
+            />
           ) : (
             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-700 text-xl font-bold border border-gray-200 group-hover:brightness-95 transition-all duration-200">
-              {hostName[0]?.toUpperCase() || '?'}
+              {getHostInitials()}
             </div>
           )}
           <div>
@@ -409,14 +442,9 @@ const AboutTab = ({ event }) => {
             <div className="space-y-3">
               <input name="title" value={editData.title} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Title" />
               <textarea name="description" value={editData.description} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Description" rows={3} />
-              <input name="date" value={editData.date} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Start Date" type="date" />
-              <input name="endDate" value={editData.endDate} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="End Date" type="date" />
+              <input name="date" value={editData.date} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Date" type="date" />
               <input name="time" value={editData.time} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Time" type="time" />
               <input name="capacity" value={editData.capacity} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Capacity" type="number" />
-              <input name="type" value={editData.type} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Type" />
-              <input name="price" value={editData.price} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Price" type="number" />
-              <input name="rsvp" value={editData.rsvp} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="RSVP Deadline" type="date" />
-              <input name="location" value={editData.location} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Location" />
               <input name="tags" value={editData.tags} onChange={handleEditChange} className="w-full border rounded px-2 py-1" placeholder="Tags (comma separated)" />
             </div>
             {editError && <p className="text-red-500 text-xs mt-2">{editError}</p>}

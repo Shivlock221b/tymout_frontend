@@ -236,7 +236,8 @@ const eventSchema = new mongoose.Schema({
   announcement: [{
     type: {
       type: String,
-      enum: ['image', 'video']
+      enum: ['image', 'video', 'text'],
+      default: 'text'
     },
     url: String,
     caption: String,

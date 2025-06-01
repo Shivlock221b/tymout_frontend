@@ -71,6 +71,32 @@ class EventService {
         console.log(`[Event Service] After direct assignment, event_image = ${event.event_image}`);
       }
       
+      // Special handling for announcement field
+      if (updateData.announcement !== undefined) {
+        console.log(`[Event Service] Special handling for announcement field`);
+        
+        // If announcement is a string, convert it to the proper format
+        if (typeof updateData.announcement === 'string') {
+          console.log(`[Event Service] Converting string announcement to proper format`);
+          const announcementText = updateData.announcement;
+          // Create a new array with a properly formatted announcement object
+          event.announcement = [{
+            type: 'text',
+            caption: announcementText,
+            url: '',
+            reaction: []
+          }];
+          console.log(`[Event Service] Converted announcement:`, event.announcement);
+          // Remove from updateData since we've handled it
+          delete updateData.announcement;
+        } else if (Array.isArray(updateData.announcement)) {
+          console.log(`[Event Service] Setting announcement array directly`);
+          event.announcement = updateData.announcement;
+          // Remove from updateData since we've handled it
+          delete updateData.announcement;
+        }
+      }
+      
       // Update other fields
       console.log(`[Event Service] Updating all fields in updateData...`);
       Object.keys(updateData).forEach(key => {

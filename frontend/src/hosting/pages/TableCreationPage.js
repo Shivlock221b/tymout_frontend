@@ -67,51 +67,33 @@ const TableCreationPage = () => {
   // Handler for table submission
   const handleCreateTable = async (formData, imageFile) => {
     try {
-      console.log('[TableCreationPage] Creating table with image:', !!imageFile);
-      if (imageFile) {
-        console.log('[TableCreationPage] Image file details:', { 
-          name: imageFile.name, 
-          type: imageFile.type, 
-          size: imageFile.size,
-          lastModified: new Date(imageFile.lastModified).toISOString()
-        });
-      } else {
-        console.log('[TableCreationPage] No image file provided');
-      }
+      console.log('[TableCreationPage] Form submitted:', formData);
+      console.log('[TableCreationPage] Using host profile image instead of uploaded image');
       
       console.log('[TableCreationPage] Form data:', formData);
       
       // Show a loading toast
       const loadingToastId = toast.loading('Creating your event...');
       
-      // Create the event and handle image upload
+      // Create the event using host's profile image
       console.log('[TableCreationPage] Calling createEventMutation.mutateAsync');
       const result = await createEventMutation.mutateAsync({ 
         eventData: {
           ...formData,
           type: 'table' // Specify this is a table event
         },
-        imageFile
+        imageFile: null // No separate image file is uploaded
       });
       
       console.log('[TableCreationPage] Event creation result:', result);
       
       // Update the loading toast
-      if (imageFile) {
-        toast.update(loadingToastId, {
-          render: 'Event created and image uploaded successfully!',
-          type: 'success',
-          isLoading: false,
-          autoClose: 3000
-        });
-      } else {
-        toast.update(loadingToastId, {
-          render: 'Event created successfully!',
-          type: 'success',
-          isLoading: false,
-          autoClose: 3000
-        });
-      }
+      toast.update(loadingToastId, {
+        render: 'Event created successfully!',
+        type: 'success',
+        isLoading: false,
+        autoClose: 3000
+      });
       
       // Store the created event ID and check if it's private
       setCreatedEventId(result._id || result.id);

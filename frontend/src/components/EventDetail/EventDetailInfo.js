@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaMapMarkerAlt, FaUser, FaTag, FaClock, FaCalendarAlt, FaUsers, FaDirections, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUser, FaTag, FaClock, FaCalendarAlt, FaUsers, FaDirections, FaExternalLinkAlt, FaBullhorn } from 'react-icons/fa';
 
 /**
  * EventDetailInfo Component
@@ -137,6 +137,54 @@ const EventDetailInfo = ({ item, type }) => {
                 <FaTag className="mr-1 text-indigo-600 text-xs" />
                 {tag}
               </span>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Announcements */}
+      {item.announcement && item.announcement.length > 0 && (
+        <div className="mb-4">
+          <h3 className="font-medium mb-2 flex items-center">
+            <FaBullhorn className="text-indigo-600 mr-2" />
+            Announcements
+          </h3>
+          <div className="space-y-3">
+            {item.announcement.map((announcement, index) => (
+              <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                {/* Text announcement */}
+                {announcement.type === 'text' && (
+                  <p className="text-gray-700">{announcement.caption}</p>
+                )}
+                
+                {/* Image announcement */}
+                {announcement.type === 'image' && announcement.url && (
+                  <div>
+                    <img 
+                      src={announcement.url} 
+                      alt={announcement.caption || 'Event announcement'} 
+                      className="w-full h-auto rounded-lg mb-2 max-h-64 object-cover"
+                    />
+                    {announcement.caption && (
+                      <p className="text-gray-700 mt-2">{announcement.caption}</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Video announcement */}
+                {announcement.type === 'video' && announcement.url && (
+                  <div>
+                    <video 
+                      src={announcement.url} 
+                      controls 
+                      className="w-full h-auto rounded-lg mb-2"
+                    />
+                    {announcement.caption && (
+                      <p className="text-gray-700 mt-2">{announcement.caption}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

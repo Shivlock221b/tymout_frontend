@@ -381,7 +381,7 @@ router.post(
       body('description', 'Description is required').not().isEmpty(),
       body('location', 'Location is required').not().isEmpty(),
       body('date.start', 'Start date is required').isISO8601(),
-      body('date.end', 'End date is required').isISO8601(),
+      // End date validation removed as it's not needed
       body('capacity', 'Event capacity is required').optional().isNumeric(),
       body('maxAttendees', 'Max attendees is required').optional().isNumeric(),
       body('tags', 'Tags must be an array').isArray()
@@ -482,7 +482,7 @@ router.put(
       body('description', 'Description is required').optional(),
       body('location', 'Location is required').optional(),
       body('date.start', 'Start date is required').optional().isISO8601(),
-      body('date.end', 'End date is required').optional().isISO8601(),
+      // End date validation removed as it's not needed
       body('capacity', 'Event capacity is required').optional().isNumeric(),
       body('tags', 'Tags must be an array').optional().isArray()
     ]

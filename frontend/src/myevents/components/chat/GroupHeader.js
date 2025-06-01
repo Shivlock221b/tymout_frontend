@@ -29,6 +29,24 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
   
   // Get current user from auth store
   const currentUser = useAuthStore(state => state.user);
+  
+  // Get host initials for fallback avatar
+  const getHostInitials = () => {
+    const host = event?.host;
+    if (!host) return eventTitle?.charAt(0)?.toUpperCase() || '?';
+    
+    const hostName = host?.name || host?.username || host?.email || '';
+    if (!hostName) return eventTitle?.charAt(0)?.toUpperCase() || '?';
+    
+    const nameParts = hostName.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    } else if (nameParts.length === 1 && nameParts[0].length > 0) {
+      return nameParts[0][0].toUpperCase();
+    } else {
+      return eventTitle?.charAt(0)?.toUpperCase() || '?';
+    }
+  };
 
   // Debug log
   console.log('[GroupHeader Debug] isAdmin:', isAdmin, 'tags:', tags, 'event:', event);
@@ -154,11 +172,26 @@ const GroupHeader = ({ event, onClick, isAdmin, onTagFilter, selectedTag, onTagC
           type="button"
         >
           <div className="relative flex-shrink-0">
-            <img
-              src={eventImage}
-              alt={eventTitle}
-              className="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm"
-            />
+            {eventImage && eventImage !== "/default-group.png" ? (
+              <img
+                src={eventImage}
+                alt={eventTitle}
+                className="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-gray-50 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                  e.target.parentNode.classList.add('flex', 'items-center', 'justify-center', 'bg-indigo-100', 'w-10', 'h-10', 'rounded-lg');
+                  const textElement = document.createElement('div');
+                  textElement.className = 'text-indigo-500 font-medium text-sm';
+                  textElement.innerText = getHostInitials();
+                  e.target.parentNode.appendChild(textElement);
+                }}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-100 border border-gray-200 group-hover:brightness-95 group-focus:brightness-95 transition-all duration-300 shadow-sm">
+                <span className="text-indigo-500 font-medium text-sm">{getHostInitials()}</span>
+              </div>
+            )}
             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
           <div className="flex flex-col items-start flex-grow min-w-0 text-left">

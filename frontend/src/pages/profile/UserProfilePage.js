@@ -194,11 +194,6 @@ const UserProfilePage = () => {
                     e.target.src = 'https://via.placeholder.com/150?text=User';
                   }}
                 />
-                {userData.verified && (
-                  <div className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full">
-                    <FaUser className="h-4 w-4" />
-                  </div>
-                )}
               </div>
             </div>
             
@@ -219,7 +214,7 @@ const UserProfilePage = () => {
                   )}
                   
                   <div className="text-sm text-gray-500">
-                    Member since {userData.joined}
+                    Member since {userData.joined ? new Date(userData.joined).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
                   </div>
                 </div>
               </div>
@@ -266,7 +261,7 @@ const UserProfilePage = () => {
             )}
             */}
             
-            {currentUserId && currentUserId === id && (
+            {/* {currentUserId && currentUserId === id && (
               <>
                 <button
                   onClick={() => window.location.href = '/settings'}
@@ -287,7 +282,7 @@ const UserProfilePage = () => {
                   Sign Out
                 </button>
               </>
-            )}
+            )} */}
           </div>
         </div>
       </div>

@@ -100,14 +100,14 @@ const MomentsTab = ({ eventId }) => {
         {localPhotos.length === 0 ? (
           <div className="col-span-full text-gray-400 text-center py-4">No photos yet.</div>
         ) : (
-          localPhotos.map((url, idx) => (
+          localPhotos.map((photo, idx) => (
             <div 
               key={idx} 
               className="relative aspect-square overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
             >
               <img
-                src={url}
-                alt={`Event photo ${idx + 1}`}
+                src={photo.url}
+                alt={photo.caption || `Event photo ${idx + 1}`}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />

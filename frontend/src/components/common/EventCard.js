@@ -60,7 +60,23 @@ const EventCard = ({
   } = item;
   
   // Use event_image as fallback if image is not available
+  // After refactoring, the event image should be the host's profile image
   const displayImage = image || event_image;
+  
+  // Get host initials for fallback avatar
+  const getHostInitials = () => {
+    const person = getPerson();
+    if (!person || !person.name) return '?';
+    
+    const nameParts = person.name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    } else if (nameParts.length === 1 && nameParts[0].length > 0) {
+      return nameParts[0][0].toUpperCase();
+    } else {
+      return '?';
+    }
+  };
 
   // Generate a unique element ID for this card
   const cardElementId = `${type}-card-${id}`;
@@ -209,9 +225,9 @@ const EventCard = ({
                 )}
               </div>
             ) : (
-              // If no image is provided, show initials in a circle
+              // If no image is provided, show host initials in a circle
               <div className="bg-indigo-100 w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-200">
-                <span className="text-indigo-500 font-medium text-lg">{title?.charAt(0) || type.charAt(0).toUpperCase()}</span>
+                <span className="text-indigo-500 font-medium text-lg">{getHostInitials()}</span>
               </div>
             )}
           </div>
@@ -378,15 +394,35 @@ const EventCard = ({
       <div className="relative">
         {/* Card Image */}
         <div className={`relative ${classes.image} overflow-hidden`}>
-          <img 
-            src={displayImage} 
-            alt={title} 
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-            }}
-          />
+          {displayImage ? (
+            <img 
+              src={displayImage} 
+              alt={title || type}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                // Show host initials avatar instead of placeholder
+                const container = e.target.parentNode;
+                e.target.style.display = 'none';
+                
+                // Create avatar with host initials
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'w-full h-full flex items-center justify-center bg-indigo-100';
+                
+                const initialsSpan = document.createElement('span');
+                initialsSpan.className = 'text-indigo-500 font-bold text-5xl';
+                initialsSpan.textContent = getHostInitials();
+                
+                avatarDiv.appendChild(initialsSpan);
+                container.appendChild(avatarDiv);
+              }}
+            />
+          ) : (
+            // If no image is available, show host initials avatar
+            <div className="w-full h-full flex items-center justify-center bg-indigo-100">
+              <span className="text-indigo-500 font-bold text-5xl">{getHostInitials()}</span>
+            </div>
+          )}
           {/* Debug info */}
           {process.env.NODE_ENV === 'development' && (
             <div className="absolute top-0 left-0 bg-black/50 text-white text-xs p-1">

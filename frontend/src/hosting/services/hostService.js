@@ -24,13 +24,22 @@ const hostService = {
         type: imageFile.type, 
         size: imageFile.size,
         lastModified: new Date(imageFile.lastModified).toISOString()
-      } : 'No file');
+      } : 'Using host profile image');
       
       // Extract image file if present and remove from event data
       const eventDataCopy = { ...eventData };
       if (eventDataCopy.eventImage) {
         console.log('[Host Service] Found eventImage in eventData, removing it');
         delete eventDataCopy.eventImage;
+      }
+      
+      // If event_image is provided (from host's profile), keep it in the event data
+      if (eventDataCopy.event_image) {
+        console.log('[Host Service] Using host profile image URL as event_image:', eventDataCopy.event_image);
+      } else if (eventDataCopy.imageUrl) {
+        // For backward compatibility, if imageUrl is provided but not event_image, copy it
+        console.log('[Host Service] Converting imageUrl to event_image:', eventDataCopy.imageUrl);
+        eventDataCopy.event_image = eventDataCopy.imageUrl;
       }
       
       // Directly call event-service backend (bypassing API gateway)

@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useForm, Controller } from 'react-hook-form';
-import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUpload, FaBuilding } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUser, FaBuilding } from 'react-icons/fa';
+import { useAuthStore } from '../../stores/authStore';
 
 /**
  * EventCreationFormHookForm Component
@@ -10,15 +11,15 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers, FaTags, FaImage, FaUpl
  * Following Single Responsibility Principle: Handles only the UI and validation logic
  * Follows Interface Segregation Principle: Only accepts props it needs
  */
-import { useAuthStore } from '../../stores/authStore';
+
 import PlaceSearch from './PlaceSearch';
 
 const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmitting, selectedTemplate }) => {
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [uploadError, setUploadError] = useState('');
+  const user = useAuthStore(state => state.user);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const fileInputRef = useRef(null);
+  const [uploadError, setUploadError] = useState('');
+  // Use host's profile image instead of uploading a new one
+  const hostProfileImage = user?.profileImage || null;
   
   // State for AM/PM selection
   const [timeAmPm, setTimeAmPm] = useState('AM');
@@ -29,7 +30,7 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
     
     // If the time is already in 24-hour format, return it
     if (timeInput.includes(':') && timeInput.length === 5) {
-      const [hours, minutes] = timeInput.split(':');
+      const [hours] = timeInput.split(':');
       const hoursInt = parseInt(hours, 10);
       
       // If valid 24-hour format, return it
@@ -152,55 +153,18 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
     setValue('tagsArray', updatedTags);
   };
   
-  const user = useAuthStore(state => state.user);
-
-  // Handle image selection
+  // No longer needed as we're using host's profile image instead
+  // Kept commented for reference
+  /*
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    console.log('[EventCreationForm] Selected file:', file ? { name: file.name, type: file.type, size: file.size } : 'No file');
-    
-    if (!file) {
-      console.log('[EventCreationForm] No file selected');
-      return;
-    }
-    
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    console.log('[EventCreationForm] File type validation:', { fileType: file.type, isValid: validTypes.includes(file.type) });
-    
-    if (!validTypes.includes(file.type)) {
-      console.log('[EventCreationForm] Invalid file type rejected');
-      setUploadError('Please select a valid image file (JPEG, PNG)');
-      return;
-    }
-    
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024;
-    console.log('[EventCreationForm] File size validation:', { fileSize: file.size, maxSize, isValid: file.size <= maxSize });
-    
-    if (file.size > maxSize) {
-      console.log('[EventCreationForm] File too large rejected');
-      setUploadError('Image size should be less than 5MB');
-      return;
-    }
-    
-    console.log('[EventCreationForm] File passed all validations, setting as imageFile');
-    setUploadError('');
-    setImageFile(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      console.log('[EventCreationForm] Image preview created');
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    console.log('[EventCreationForm] Image upload disabled - using host profile image instead');
+    return;
   };
   
-  // Trigger file input click
   const triggerFileInput = () => {
-    fileInputRef.current.click();
+    console.log('[EventCreationForm] Image upload disabled - using host profile image instead');
   };
+  */
 
   const processForm = async (data) => {
     try {
@@ -242,12 +206,18 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
         isPublic: data.isPublic // Explicitly include the isPublic field
       };
       
-      // Include the image file if one was selected
-      if (imageFile) {
-        eventData.eventImage = imageFile;
+      // Use host's profile image URL instead of uploaded image
+      // This is the key change for the refactoring task
+      if (hostProfileImage) {
+        console.log('[EventCreationForm] Using host profile image:', hostProfileImage);
+        // Use event_image field to match the database model schema
+        eventData.event_image = hostProfileImage;
+      } else {
+        console.log('[EventCreationForm] No host profile image available');
       }
       
-      onSubmit(eventData, imageFile);
+      // Pass null as imageFile since we're not uploading a separate image
+      onSubmit(eventData, null);
     } catch (error) {
       console.error('Error processing form:', error);
       setUploadError('Error processing form. Please try again.');
@@ -386,19 +356,39 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 <Controller
                   name="date"
                   control={control}
-                  rules={{ required: 'Date is required' }}
-                  render={({ field }) => (
-                    <input
-                      type="date"
-                      id="date"
-                      className={`block w-full rounded-md shadow-sm sm:text-sm border border-black ${
-                        errors.date
-                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                          : 'focus:ring-indigo-500 focus:border-indigo-500'
-                      }`}
-                      {...field}
-                    />
-                  )}
+                  rules={{ 
+                    required: 'Date is required',
+                    validate: value => {
+                      // Get today's date at midnight for comparison
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      
+                      // Parse the selected date
+                      const selectedDate = new Date(value);
+                      selectedDate.setHours(0, 0, 0, 0);
+                      
+                      // Check if the selected date is before today
+                      return selectedDate >= today || 'Event date cannot be in the past';
+                    }
+                  }}
+                  render={({ field }) => {
+                    // Set min attribute to today's date
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    return (
+                      <input
+                        type="date"
+                        id="date"
+                        min={today}
+                        className={`block w-full rounded-md shadow-sm sm:text-sm border border-black ${
+                          errors.date
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                            : 'focus:ring-indigo-500 focus:border-indigo-500'
+                        }`}
+                        {...field}
+                      />
+                    );
+                  }}
                 />
                 {errors.date && (
                   <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
@@ -788,56 +778,37 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
 
           {/* Capacity field removed - using maxAttendees instead */}
 
-          {/* Event Image Upload */}
+          {/* Host Profile Image Info */}
           <div>
-            <label htmlFor="eventImage" className="block text-base font-medium text-gray-700">
+            <label className="block text-base font-medium text-gray-700">
               <span className="inline-flex items-center">
                 <FaImage className="mr-2 text-gray-400" />
                 Event Image
               </span>
             </label>
             <div className="mt-1 flex items-center space-x-4">
-              <input
-                type="file"
-                id="eventImage"
-                ref={fileInputRef}
-                accept="image/jpeg,image/png,image/jpg"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={triggerFileInput}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <FaUpload className="-ml-1 mr-2 h-4 w-4" />
-                Upload Image
-              </button>
-              {imagePreview && (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Event preview"
-                    className="h-20 w-20 object-cover rounded-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreview(null);
-                      setImageFile(null);
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center">
+                {hostProfileImage ? (
+                  <div className="flex items-center">
+                    <img
+                      src={hostProfileImage}
+                      alt="Host profile"
+                      className="h-12 w-12 object-cover rounded-full mr-3"
+                    />
+                    <span className="text-sm text-gray-600">Your profile image will be used for this event</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                      <FaUser className="text-gray-500" />
+                    </div>
+                    <span className="text-sm text-gray-600">Your profile image will be used for this event</span>
+                  </div>
+                )}
+              </div>
             </div>
-            {uploadError && (
-              <p className="mt-1 text-sm text-red-600">{uploadError}</p>
-            )}
             <p className="mt-1 text-sm text-gray-500">
-              Upload an image for your table (JPEG, PNG, max 5MB)
+              To change the event image, update your profile picture in settings
             </p>
           </div>
           
