@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useUploadEventMoment, useEventMomentsQuery } from '../../hooks/queries/useMomentsQueries';
+import ImageViewer from './ImageViewer';
 
 const MomentsTab = ({ eventId }) => {
   const { data: photos = [], isLoading, isError, refetch } = useEventMomentsQuery(eventId);
@@ -8,6 +9,9 @@ const MomentsTab = ({ eventId }) => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [localPhotos, setLocalPhotos] = useState(photos);
   const fileInputRef = useRef(null);
+  
+  // State for full-screen image viewer
+  const [selectedImage, setSelectedImage] = useState(null);
   
   // Update local photos when query data changes
   React.useEffect(() => {
@@ -104,6 +108,7 @@ const MomentsTab = ({ eventId }) => {
             <div 
               key={idx} 
               className="relative aspect-square overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setSelectedImage(photo)}
             >
               <img
                 src={photo.url}
@@ -158,6 +163,15 @@ const MomentsTab = ({ eventId }) => {
         <div className="fixed bottom-36 right-6 left-6 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded z-50">
           Images uploaded successfully!
         </div>
+      )}
+      
+      {/* Full-screen image viewer */}
+      {selectedImage && (
+        <ImageViewer 
+          imageUrl={selectedImage.url}
+          caption={selectedImage.caption}
+          onClose={() => setSelectedImage(null)}
+        />
       )}
     </div>
   );

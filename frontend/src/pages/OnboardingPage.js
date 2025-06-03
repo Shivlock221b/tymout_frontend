@@ -8,6 +8,7 @@ import OnboardingStepIndicator from '../components/onboarding/OnboardingStepIndi
 import BasicInfoStep from '../components/onboarding/BasicInfoStep';
 import InterestsStep from '../components/onboarding/InterestsStep';
 import ProfileImageStep from '../components/onboarding/ProfileImageStep';
+import SocialMediaStep from '../components/onboarding/SocialMediaStep';
 import SuccessStep from '../components/onboarding/SuccessStep';
 
 const OnboardingPage = () => {
@@ -22,7 +23,12 @@ const OnboardingPage = () => {
     bio: user?.bio || '',
     location: user?.location || '',
     interests: user?.interests || [],
-    profileImage: user?.profileImage || ''
+    profileImage: user?.profileImage || '',
+    social: {
+      instagram: user?.social?.instagram || '',
+      twitter: user?.social?.twitter || '',
+      linkedin: user?.social?.linkedin || ''
+    }
   });
   
   const [isCompleted, setIsCompleted] = useState(false);
@@ -42,11 +48,11 @@ const OnboardingPage = () => {
       updateUser(data);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       
-      if (currentStep === 4) {
+      if (currentStep === 5) {
         setIsCompleted(true);
-        // Redirect to explore page after a short delay
+        // Reload the page and redirect to explore page after a short delay
         setTimeout(() => {
-          navigate('/explore');
+          window.location.href = '/explore';
         }, 2000);
       } else {
         // Move to the next step
@@ -65,7 +71,7 @@ const OnboardingPage = () => {
     setProfileData(updatedProfileData);
     
     // For the final step, we'll let the mutation's onSuccess handle the navigation
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       updateProfile(updatedProfileData);
     } else {
       // For other steps, move to next step immediately and update profile in background
@@ -76,7 +82,7 @@ const OnboardingPage = () => {
   
   // Handle skip
   const handleSkip = () => {
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -113,12 +119,21 @@ const OnboardingPage = () => {
         );
       case 4:
         return (
+          <SocialMediaStep 
+            initialData={profileData.social}
+            onComplete={handleStepComplete}
+            onSkip={handleSkip}
+            isLoading={isUpdating}
+          />
+        );
+      case 5:
+        return (
           <SuccessStep 
             profileData={profileData}
             onComplete={() => {
               updateProfile(profileData);
-              // Immediately navigate to explore page
-              navigate('/explore');
+              // Reload the page and navigate to explore page
+              window.location.href = '/explore';
             }}
             isLoading={isUpdating}
           />
@@ -151,7 +166,7 @@ const OnboardingPage = () => {
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">Complete Your Profile</h1>
           
-          <OnboardingStepIndicator currentStep={currentStep} totalSteps={4} />
+          <OnboardingStepIndicator currentStep={currentStep} totalSteps={5} />
           
           <div className="mt-8">
             {renderStep()}

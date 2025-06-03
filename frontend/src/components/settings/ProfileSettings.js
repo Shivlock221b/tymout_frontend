@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaInstagram, FaTwitter, FaLinkedin } from 'react-icons/fa';
 import { useUpdateProfileSettings, useUploadProfileImage, useRemoveProfileImage } from '../../hooks/queries/useSettingsQueries';
 
 // List of available cities - same as in onboarding
@@ -14,7 +15,12 @@ const ProfileSettings = ({ user }) => {
     bio: '',
     location: '',
     interests: [],
-    profileImage: ''
+    profileImage: '',
+    social: {
+      instagram: '',
+      twitter: '',
+      linkedin: ''
+    }
   });
   const [availableInterests, setAvailableInterests] = useState([
     'hiking', 'photography', 'cooking', 'reading', 'travel', 'music', 
@@ -48,7 +54,12 @@ const ProfileSettings = ({ user }) => {
         bio: user.bio || '',
         location: user.location || '',
         interests: user.interests || [],
-        profileImage: profileImageWithCacheBuster
+        profileImage: profileImageWithCacheBuster,
+        social: {
+          instagram: user.social?.instagram || '',
+          twitter: user.social?.twitter || '',
+          linkedin: user.social?.linkedin || ''
+        }
       });
     }
   }, [user]); // This dependency array ensures the effect runs when user changes
@@ -91,6 +102,16 @@ const ProfileSettings = ({ user }) => {
         // Upload the file to the server
         handleImageUpload(file);
       }
+    } else if (name.startsWith('social.')) {
+      // Handle social media fields
+      const socialField = name.split('.')[1];
+      setFormData(prevData => ({
+        ...prevData,
+        social: {
+          ...prevData.social,
+          [socialField]: value
+        }
+      }));
     } else {
       setFormData(prevData => ({
         ...prevData,
@@ -188,7 +209,12 @@ const ProfileSettings = ({ user }) => {
       name: formData.name,
       bio: formData.bio,
       location: formData.location,
-      interests: formData.interests
+      interests: formData.interests,
+      social: {
+        instagram: formData.social.instagram,
+        twitter: formData.social.twitter,
+        linkedin: formData.social.linkedin
+      }
       // Don't include profileImage as it's handled separately
     };
     
@@ -324,13 +350,13 @@ const ProfileSettings = ({ user }) => {
               </label>
               <div className="mt-1">
                 <select
-                  name="location"
                   id="location"
+                  name="location"
                   value={formData.location}
                   onChange={handleChange}
                   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                 >
-                  <option value="" disabled>Select your city</option>
+                  <option value="">Select a city</option>
                   {CITIES.map(city => (
                     <option key={city} value={city}>{city}</option>
                   ))}
@@ -340,7 +366,78 @@ const ProfileSettings = ({ user }) => {
             </div>
           </div>
         </div>
-
+        
+        {/* Social Media Links */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">Social Media</h3>
+          <p className="mt-1 text-sm text-gray-500">Connect your social media accounts (usernames only, no URLs needed)</p>
+          
+          <div className="mt-4 space-y-4">
+            {/* Instagram */}
+            <div className="flex items-center">
+              <FaInstagram className="text-pink-600 h-5 w-5 mr-2" />
+              <div className="flex-grow">
+                <label htmlFor="social.instagram" className="block text-sm font-medium text-gray-700">
+                  Instagram Username
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="social.instagram"
+                    id="social.instagram"
+                    value={formData.social.instagram}
+                    onChange={handleChange}
+                    placeholder="username (without @)"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Twitter */}
+            <div className="flex items-center">
+              <FaTwitter className="text-blue-400 h-5 w-5 mr-2" />
+              <div className="flex-grow">
+                <label htmlFor="social.twitter" className="block text-sm font-medium text-gray-700">
+                  Twitter Username
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="social.twitter"
+                    id="social.twitter"
+                    value={formData.social.twitter}
+                    onChange={handleChange}
+                    placeholder="username (without @)"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* LinkedIn */}
+            <div className="flex items-center">
+              <FaLinkedin className="text-blue-700 h-5 w-5 mr-2" />
+              <div className="flex-grow">
+                <label htmlFor="social.linkedin" className="block text-sm font-medium text-gray-700">
+                  LinkedIn Username
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="social.linkedin"
+                    id="social.linkedin"
+                    value={formData.social.linkedin}
+                    onChange={handleChange}
+                    placeholder="username"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Interests */}
         <div>
           <h3 className="text-lg font-medium text-gray-900">Interests</h3>

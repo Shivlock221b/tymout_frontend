@@ -64,6 +64,21 @@ export const eventTemplates = [
       tags: ['fitness', 'health', 'workout']
     },
     image: '/images/templates/fitness-class.jpg'
+  },
+  {
+    id: '5',
+    name: 'Wellness Workshop',
+    category: 'wellness',
+    description: 'Session focused on mental, emotional, or physical wellness',
+    defaults: {
+      title: 'Wellness & Mindfulness Workshop',
+      description: 'Join us for a rejuvenating wellness session focused on mindfulness, self-care, and holistic health practices. All experience levels welcome!',
+      duration: 75, // minutes
+      maxAttendees: 8,
+      isPublic: true,
+      tags: ['wellness', 'mindfulness', 'self-care', 'health']
+    },
+    image: '/images/templates/wellness-workshop.jpg'
   }
 ];
 

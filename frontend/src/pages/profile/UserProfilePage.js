@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaMapMarkerAlt, FaStar, FaCalendarAlt, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaMapMarkerAlt, FaStar, FaCalendarAlt, FaUser, FaInstagram, FaTwitter, FaLinkedin } from 'react-icons/fa';
 import { useProfileById } from '../../hooks/queries/useProfileQueries';
 import { useUserHostedEvents } from '../../hooks/queries/useUserHostedEvents';
 import UniversalEventCard from '../../components/common/EventCard';
@@ -137,6 +137,9 @@ const UserProfilePage = () => {
     );
   }
   
+  // Debug log to check user data structure
+  console.log('User profile data:', userData);
+  
   // If no userData (not loading, no error), then user not found
   if (!userData) {
     return (
@@ -227,6 +230,46 @@ const UserProfilePage = () => {
               )}
               
               <p className="text-gray-600 mb-4" style={{ whiteSpace: 'pre-wrap' }}>{userData.bio}</p>
+              
+              {/* Social Links */}
+              <div className="flex items-center space-x-4 mb-4">
+                {userData.social?.instagram && (
+                  <a 
+                    href={`https://instagram.com/${userData.social.instagram}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-pink-600 transition-colors flex items-center"
+                    aria-label="Instagram"
+                  >
+                    <FaInstagram className="h-5 w-5 mr-1" />
+                    <span className="text-sm">@{userData.social.instagram}</span>
+                  </a>
+                )}
+                {userData.social?.twitter && (
+                  <a 
+                    href={`https://twitter.com/${userData.social.twitter}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-blue-400 transition-colors flex items-center"
+                    aria-label="Twitter"
+                  >
+                    <FaTwitter className="h-5 w-5 mr-1" />
+                    <span className="text-sm">@{userData.social.twitter}</span>
+                  </a>
+                )}
+                {userData.social?.linkedin && (
+                  <a 
+                    href={`https://linkedin.com/in/${userData.social.linkedin}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-blue-700 transition-colors flex items-center"
+                    aria-label="LinkedIn"
+                  >
+                    <FaLinkedin className="h-5 w-5 mr-1" />
+                    <span className="text-sm">{userData.social.linkedin}</span>
+                  </a>
+                )}
+              </div>
               
               {userData.interests && userData.interests.length > 0 && (
                 <div className="mb-4">
@@ -333,7 +376,6 @@ const UserProfilePage = () => {
                       fullWidth={true}
                       variant="explore"
                       hideHeader={true} // Hide the host header
-                      disableNavigation={true} // Make the card non-clickable
                     />
                   </div>
                 );

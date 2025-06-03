@@ -31,10 +31,10 @@ const EventDetailLayout = ({
       />
       
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <EventDetailHero 
+        {/* <EventDetailHero 
           item={item} 
           type={type} 
-        />
+        /> */}
         
         <div className="p-6">
           {/* Host/Organizer Info */}
@@ -50,15 +50,21 @@ const EventDetailLayout = ({
                 window.location = '/users/' + id;
               }}
             >
-              <img
-                src={(item.host || item.organizer).image}
-                alt={(item.host || item.organizer).name}
-                className="w-12 h-12 rounded-full object-cover mr-4"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/48?text=Host';
-                }}
-              />
+              {item.host?.profileImage || item.organizer?.profileImage ? (
+                <img
+                  src={item.host?.profileImage || item.organizer?.profileImage}
+                  alt={(item.host || item.organizer).name}
+                  className="w-24 h-24 rounded-lg object-cover mr-4 shadow-md"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://via.placeholder.com/96?text=Event';
+                  }}
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-lg mr-4 shadow-md flex items-center justify-center bg-indigo-100 text-indigo-700 font-bold text-xl">
+                  {((item.host || item.organizer).name || '').split(' ').map(n => n[0]).join('').toUpperCase()}
+                </div>
+              )}
               <div>
                 <p className="font-medium">{(item.host || item.organizer).name}</p>
                 <p className="text-gray-500 text-sm">
@@ -67,6 +73,7 @@ const EventDetailLayout = ({
                     <span className="ml-1 text-indigo-600">✓</span>
                   )}
                 </p>
+
               </div>
             </div>
           )}

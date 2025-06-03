@@ -74,6 +74,7 @@ const ProfilePage = () => {
                 email={profile.email} 
                 bio={profile.bio}
                 location={profile.location}
+                social={profile.social}
               />
               
               <VerificationBadges verified={profile.verified} />

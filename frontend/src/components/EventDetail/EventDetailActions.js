@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { FaShare, FaCheck, FaCopy } from 'react-icons/fa';
 
@@ -86,6 +86,17 @@ const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = tr
     }
   }, [item, item.isRequested, hasRequestedLocally]);
   
+  // Determine if the event is full (attendees count equals or exceeds maxAttendees)
+  const isEventFull = useMemo(() => {
+    if (!item || !item.maxAttendees) return false;
+    
+    // Count the number of confirmed attendees
+    const attendeeCount = item.attendees?.length || 0;
+    
+    // Check if the event is full
+    return attendeeCount >= item.maxAttendees;
+  }, [item]);
+
   // Determine the appropriate content label based on type
   const getTypeLabel = () => {
     switch (type) {
@@ -173,7 +184,7 @@ const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = tr
             : isActionLoading
               ? 'Processing...'
               : isAuthenticated 
-                ? 'Request to Join' 
+                ? isEventFull ? 'Join Waitlist' : 'Request to Join' 
                 : 'Login to Join'}
       </button>
       

@@ -1,7 +1,8 @@
 import React from 'react';
+import SocialMediaLinks from './SocialMediaLinks';
 
 // Single Responsibility Principle - this component only handles displaying user details
-const UserDetails = ({ bio, location }) => {
+const UserDetails = ({ bio, location, social }) => {
   return (
     <dl className="divide-y divide-gray-200">
       <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -12,6 +13,7 @@ const UserDetails = ({ bio, location }) => {
         <dt className="text-sm font-medium text-gray-500">Bio</dt>
         <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" style={{ whiteSpace: 'pre-wrap' }}>{bio || 'No bio added yet'}</dd>
       </div>
+      <SocialMediaLinks social={social} />
     </dl>
   );
 };

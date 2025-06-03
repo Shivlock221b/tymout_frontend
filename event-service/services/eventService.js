@@ -261,12 +261,28 @@ class EventService {
       
       console.log(`[Event Service] Final search filter:`, filter);
       
-      // If no filters are specified, return all events
-      const events = Object.keys(filter).length > 0 
-        ? await Event.find(filter)
-        : await Event.find();
+      // Always filter out past events by adding a condition for start date
+      // Only show events with start dates in the future
+      const now = new Date();
+      if (!filter['date.start']) {
+        filter['date.start'] = { $gte: now };
+      }
       
-      console.log(`[Event Service] Found ${events.length} matching events`);
+      // Only show events with status 'accepted'
+      if (!filter.status) {
+        filter.status = 'accepted';
+      }
+      
+      console.log(`[Event Service] Added filter for future events (after ${now})`);
+      console.log(`[Event Service] Added filter for accepted events only`);
+      console.log(`[Event Service] Final search filter with date and status:`, filter);
+      
+      // Find events with the specified filters and sort by start date in ascending order
+      const events = await Event.find(filter)
+        .sort({ 'date.start': 1 }) // 1 for ascending order (soonest first)
+        .exec();
+      
+      console.log(`[Event Service] Found ${events.length} matching events, sorted by start date (soonest first)`);
       return events;
     } catch(error) {
       console.error(`[Event Service] Error searching events:`, error);
@@ -276,7 +292,11 @@ class EventService {
 
   async getEventsByCity(city) {
     try {
-      const events = await Event.find({ 'location.city': city });
+      const events = await Event.find({ 
+        'location.city': city,
+        status: 'accepted',
+        'date.start': { $gte: new Date() } // Only future events
+      });
       return events;
     } catch (error) {
       throw error;
@@ -285,7 +305,11 @@ class EventService {
 
   async getEventsByCategory(category) {
     try {
-      const events = await Event.find({ category });
+      const events = await Event.find({ 
+        category,
+        status: 'accepted',
+        'date.start': { $gte: new Date() } // Only future events
+      });
       return events;
     } catch (error) {
       throw error;

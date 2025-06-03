@@ -191,14 +191,14 @@ const Header = () => {
                     About
                   </button>
                 </li>
-                <li>
+                {/* <li>
                   <button 
                     onClick={() => handleMenuItemClick('/creators')}
                     className="block w-full text-left py-2 text-gray-700 hover:text-indigo-600 border-b border-gray-200"
                   >
                     Creators
                   </button>
-                </li>
+                </li> */}
                 <li>
                   <button 
                     onClick={() => handleMenuItemClick('/login')}

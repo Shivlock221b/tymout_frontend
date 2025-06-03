@@ -111,7 +111,7 @@ const App = () => {
             {/* Information pages - these do not require authentication */}
             <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
             <Route path="/features" element={<PageTransition><FeaturesPage /></PageTransition>} />
-            <Route path="/creators" element={<PageTransition><CreatorsPage /></PageTransition>} />
+            {/* <Route path="/creators" element={<PageTransition><CreatorsPage /></PageTransition>} /> */}
             <Route path="/business" element={<PageTransition><BusinessPage /></PageTransition>} />
             <Route path="/guidelines" element={<PageTransition><GuidelinesPage /></PageTransition>} />
             <Route path="/faq" element={<PageTransition><FAQPage /></PageTransition>} />

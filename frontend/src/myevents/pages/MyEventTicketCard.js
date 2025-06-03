@@ -164,12 +164,24 @@ const MyEventTicketCard = ({ event, isPending = false, unreadCount = 0, showUnre
         onKeyPress={isPending ? undefined : e => { if (e.key === 'Enter') handleClick(); }}
       >
         <div className="relative">
-          <img
-            src={event.event_image}
-            alt={event.title}
-            className="w-14 h-14 rounded object-cover border border-gray-200 bg-gray-50"
-            loading="lazy"
-          />
+          {event.event_image ? (
+            <img
+              src={event.event_image}
+              alt={event.title}
+              className="w-14 h-14 rounded object-cover border border-gray-200 bg-gray-50"
+              loading="lazy"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div 
+            className={`w-14 h-14 rounded flex items-center justify-center bg-indigo-100 text-indigo-700 font-bold text-lg ${event.event_image ? 'hidden' : ''}`}
+          >
+            {(event.host?.name || event.organizer?.name || event.title || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+          </div>
           {showUnreadBadge && (
             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg z-10">
               {unreadCount}

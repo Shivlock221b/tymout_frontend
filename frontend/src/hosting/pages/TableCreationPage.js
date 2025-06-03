@@ -221,7 +221,7 @@ const TableCreationPage = () => {
           <div className="p-6">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Create a Table</h1>
             <p className="text-gray-600 mb-6">
-              Fill out the form below to create a new table experience for your guests
+              Fill out the form below to create a new table experience for you and your guests
             </p>
             
             <EventCreationFormHookForm 

@@ -337,6 +337,15 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                 >
                   Travel template
                 </button>
+
+                {/* Wellness description */}
+                <button
+                  type="button"
+                  onClick={() => setValue('description', 'Join us for a rejuvenating wellness session focused on mindfulness, self-care, and holistic health practices at _______. All experience levels welcome!')}
+                  className="text-xs px-3 py-1.5 bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition-colors"
+                >
+                  Wellness template
+                </button>
               </div>
               <p className="text-xs text-gray-500 mt-2">Tip: Replace the blank spaces (______) with your specific details.</p>
             </div>
@@ -766,6 +775,20 @@ const EventCreationFormHookForm = ({ defaultValues, onSubmit, locations, isSubmi
                     >
                       <span className="mr-1 text-xs">✈️</span>
                       <span className="font-medium text-xs">Travel</span>
+                    </button>
+                    
+                    {/* Wellness Tag */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('Wellness')}
+                      className={`px-2 py-1 rounded-full border flex items-center ${
+                        field.value === 'Wellness'
+                          ? 'bg-green-600 text-white border-green-600'
+                          : 'bg-white text-green-600 border-green-200 hover:border-green-400'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">🧘</span>
+                      <span className="font-medium text-xs">Wellness</span>
                     </button>
                   </div>
                 )}
