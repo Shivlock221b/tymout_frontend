@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import {useAuthStore} from '../../stores/authStore';
 import PropTypes from 'prop-types';
 import { FaShare, FaCheck, FaCopy } from 'react-icons/fa';
 
@@ -9,6 +10,8 @@ import { FaShare, FaCheck, FaCopy } from 'react-icons/fa';
  * This component handles the action buttons and recommendation information
  */
 const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = true, isActionLoading = false }) => {
+  const currentUser = useAuthStore((state) => state.user);
+  const isHost = currentUser && (item.host?.id === currentUser.id || item.organizer?.id === currentUser.id); 
   // State to track if the user has requested to join or is already joined
   const [isJoined, setIsJoined] = useState(false);
   const [isRequested, setIsRequested] = useState(false);
@@ -148,7 +151,7 @@ const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = tr
       {/* Price display removed as requested */}
       
       {/* Action Button */}
-      <button
+      {isHost ? null : <button
         onClick={() => {
           // If not already joined or requested, handle the action
           if (!isJoined && !isRequested) {
@@ -186,7 +189,8 @@ const EventDetailActions = ({ item, type, handleMainAction, isAuthenticated = tr
               : isAuthenticated 
                 ? isEventFull ? 'Join Waitlist' : 'Request to Join' 
                 : 'Login to Join'}
-      </button>
+      </button>}
+
       
       {/* Share Button */}
       <ShareButton item={item} type={type} />
