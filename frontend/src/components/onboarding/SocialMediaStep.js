@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaInstagram, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const SocialMediaStep = ({ initialData = {}, onComplete, onSkip, isLoading }) => {
+const SocialMediaStep = ({ initialData = {}, onComplete, isLoading }) => {
   const [formData, setFormData] = useState({
     instagram: initialData.instagram || '',
     twitter: initialData.twitter || '',
@@ -16,10 +16,14 @@ const SocialMediaStep = ({ initialData = {}, onComplete, onSkip, isLoading }) =>
     }));
   };
   
+  const [error, setError] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Format the data to match the expected structure in the backend
+    if (!formData.instagram && !formData.twitter && !formData.linkedin) {
+      setError("Please provide at least one social media username to continue.");
+      return;
+    }
+    setError("");
     const socialData = {
       social: {
         instagram: formData.instagram,
@@ -27,7 +31,6 @@ const SocialMediaStep = ({ initialData = {}, onComplete, onSkip, isLoading }) =>
         linkedin: formData.linkedin
       }
     };
-    
     onComplete(socialData);
   };
   
@@ -37,6 +40,9 @@ const SocialMediaStep = ({ initialData = {}, onComplete, onSkip, isLoading }) =>
       <p className="text-gray-600 mb-6">Add your social media usernames to connect with others (optional)</p>
       
       <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 text-red-600 text-sm font-medium">{error}</div>
+        )}
         <div className="space-y-4">
           {/* Instagram */}
           <div className="flex items-center">
@@ -103,15 +109,7 @@ const SocialMediaStep = ({ initialData = {}, onComplete, onSkip, isLoading }) =>
         </div>
         
         <div className="flex justify-between mt-8">
-          <button
-            type="button"
-            onClick={onSkip}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
-            disabled={isLoading}
-          >
-            Skip for now
-          </button>
-          
+          <span></span>
           <button
             type="submit"
             className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"

@@ -12,7 +12,7 @@ const CitySelectPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   // Extract current city and return path from location state or use defaults
-  const { currentCity = 'Agra', returnTo = '/explore' } = location.state || {};
+  const { currentCity = 'Gurugram', returnTo = '/explore' } = location.state || {};
   
   // Available cities - limited to current options
   const cities = [

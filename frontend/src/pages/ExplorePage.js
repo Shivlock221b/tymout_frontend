@@ -35,7 +35,7 @@ const ExplorePage = () => {
   const timeFilter = searchParams.get('timeFilter') || 'all';
   const distance = parseInt(searchParams.get('distance') || '10', 10);
   const sortBy = searchParams.get('sort') || 'relevance';
-  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Agra');
+  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'Gurugram');
   const location = useLocation();
   
   // Fetch user interests when component mounts
