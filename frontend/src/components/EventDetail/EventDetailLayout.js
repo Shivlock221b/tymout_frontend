@@ -50,9 +50,9 @@ const EventDetailLayout = ({
                 window.location = '/users/' + id;
               }}
             >
-              {item.host?.profileImage || item.organizer?.profileImage ? (
+              {item.event_image ? (
                 <img
-                  src={item.host?.profileImage || item.organizer?.profileImage}
+                  src={item.event_image}
                   alt={(item.host || item.organizer).name}
                   className="w-24 h-24 rounded-lg object-cover mr-4 shadow-md"
                   onError={(e) => {
