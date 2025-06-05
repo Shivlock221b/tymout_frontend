@@ -26,7 +26,7 @@ const EventDetailInfo = ({ item, type }) => {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">About this {getTypeLabel()}</h2>
-      <p className="text-gray-700 mb-6">{item.description}</p>
+      <p className="text-gray-700 mb-6 whitespace-pre-line">{item.description}</p>
       
       {/* Date and Time */}
       {(item.date || item.time) && (
