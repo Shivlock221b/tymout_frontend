@@ -1,5 +1,4 @@
 const PlaceService = require('../services/placeService');
-const { handleError } = require('../utils/errorHandler');
 
 class PlaceController {
   // Create a new place
@@ -19,7 +18,11 @@ class PlaceController {
         data: place
       });
     } catch (error) {
-      handleError(res, error);
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred while processing your request'
+      });
     }
   }
 
@@ -35,7 +38,11 @@ class PlaceController {
         pagination: result.pagination
       });
     } catch (error) {
-      handleError(res, error);
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred while processing your request'
+      });
     }
   }
 
@@ -57,7 +64,11 @@ class PlaceController {
         data: place
       });
     } catch (error) {
-      handleError(res, error);
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred while processing your request'
+      });
     }
   }
 
@@ -92,7 +103,11 @@ class PlaceController {
         data: updatedPlace
       });
     } catch (error) {
-      handleError(res, error);
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred while processing your request'
+      });
     }
   }
 
@@ -126,7 +141,11 @@ class PlaceController {
         message: 'Place deleted successfully'
       });
     } catch (error) {
-      handleError(res, error);
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred while processing your request'
+      });
     }
   }
 }
