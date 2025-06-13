@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom';
  * 
  * Displays a horizontally scrollable grid of event thumbnails
  * with event names below them.
+ * @param {Array} events - Array of spotlight events to display
+ * @param {string} city - Current selected city (optional)
  */
-const SpotlightEvents = ({ events }) => {
+const SpotlightEvents = ({ events, city }) => {
   const navigate = useNavigate();
 
   // Handle navigation to event details

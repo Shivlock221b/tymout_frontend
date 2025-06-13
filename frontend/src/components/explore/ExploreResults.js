@@ -7,8 +7,11 @@ import EventCard from '../common/EventCard';
  * Following Single Responsibility Principle:
  * - This component only handles displaying the results list
  * - It uses the type property of each item to determine how to display it
+ * 
+ * @param {Array} events - Array of events to display
+ * @param {boolean} isLoading - Whether the data is currently loading
  */
-const ExploreResults = ({ results, isLoading }) => {
+const ExploreResults = ({ events = [], isLoading = false }) => {
   // Render loading skeleton
   const renderSkeleton = () => (
     <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -23,23 +26,23 @@ const ExploreResults = ({ results, isLoading }) => {
     return renderSkeleton();
   }
   
-  // Handle empty results
-  if (!results || !Array.isArray(results) || results.length === 0) {
+  // Handle empty events
+  if (!events || !Array.isArray(events) || events.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl font-medium text-gray-700 mb-2">No results found</h3>
+        <h3 className="text-xl font-medium text-gray-700 mb-2">No events found</h3>
         <p className="text-gray-500">Try adjusting your search or filters</p>
       </div>
     );
   }
   
-  // Render results - styled as a WhatsApp chat interface with minimal spacing
+  // Render events - styled as a WhatsApp chat interface with minimal spacing
   return (
     <div className="flex flex-col">
-      {results.map((item, index) => {
+      {events.map((item, index) => {
         // Skip null or invalid items
         if (!item || !item.id) {
-          console.warn('Invalid item in results', item);
+          console.warn('Invalid item in events', item);
           return null;
         }
         
@@ -54,7 +57,7 @@ const ExploreResults = ({ results, isLoading }) => {
               variant="explore"
             />
             {/* Add divider line after every card except the last one */}
-            {index < results.length - 1 && (
+            {index < events.length - 1 && (
               <div className="px-4">
                 <div className="h-px bg-gray-200 w-full ml-14"></div>
               </div>

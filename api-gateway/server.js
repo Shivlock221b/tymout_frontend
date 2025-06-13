@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const session = require('express-session');
 
+// Import BFF routes
+const bffRoutes = require('./routes/bff');
+
 // Load environment variables with fallbacks
 dotenv.config({ path: '../.env' });
 
@@ -48,6 +51,7 @@ app.use(cors({
 }));
 
 app.use(helmet()); // Security headers
+app.use(express.json()); // Parse JSON request bodies
 app.use(express.json()); // Parse JSON bodies
 app.use(morgan('dev')); // Logging
 
@@ -218,6 +222,9 @@ app.use('/api/circles', createProxyMiddleware({
     }
   },
 }));
+
+// BFF Routes - Optimized endpoints for frontend
+app.use('/api/bff', bffRoutes);
 
 // Discovery Service Routes
 app.use(['/api/discovery', '/api/search', '/api/recommendations'], createProxyMiddleware({ 

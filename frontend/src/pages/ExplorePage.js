@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
+import useExplorePage from '../hooks/queries/useBffQueries';
 import { useUserData } from '../hooks/stores/useAuthStoreHooks';
 
 // Import our separate components
@@ -10,6 +11,7 @@ import ExploreResults from '../components/explore/ExploreResults';
 import TagFilter from '../components/explore/TagFilter';
 import CitySelector from '../components/explore/CitySelector';
 import SpotlightEvents from '../components/explore/SpotlightEvents';
+import ExploreSkeleton from '../components/explore/ExploreSkeleton';
 
 /**
  * ExplorePage Component
@@ -62,7 +64,24 @@ const ExplorePage = () => {
     fetchUserInterests();
   }, [user]);
   
-  // Use React Query hook for data fetching with filters from URL parameters
+  // Use BFF Query hook for optimized data fetching with filters from URL parameters
+  const { 
+    data: bffData = { events: [], categories: [], spotlight: [] }, 
+    isLoading: isBffLoading, 
+    updateFilters: updateBffFilters,
+    isInitialLoading
+  } = useExplorePage({
+    q: searchQuery,
+    tag: selectedTags,
+    distance,
+    sort: sortBy,
+    city: selectedCity,
+    view: activeSpecialTag,
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [],
+    timeFilter: timeFilter
+  });
+  
+  // Fallback to original hook if BFF fails
   const { 
     data: results = [], 
     isLoading, 
@@ -72,11 +91,20 @@ const ExplorePage = () => {
     tags: selectedTags,
     distance,
     sortBy,
-    city: selectedCity, // Include the city parameter in the initial filters
-    view: activeSpecialTag, // Include the view parameter for special tags
-    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [], // Include user interests if 'Only For You' is selected
-    timeFilter: timeFilter // Include the time filter parameter
+    city: selectedCity,
+    view: activeSpecialTag,
+    userInterests: activeSpecialTag === 'Only For You' ? userInterests : [],
+    timeFilter: timeFilter
+  }, {
+    // Always enable the fallback query for now
+    // We'll disable it once BFF is fully tested
+    enabled: true
   });
+  
+  // Use BFF data if available, otherwise use fallback data
+  const eventsData = (bffData && bffData.events) ? bffData.events : (results || []);
+  const spotlightData = (bffData && bffData.spotlight) ? bffData.spotlight : [];
+  const isPageLoading = isBffLoading && isLoading;
   
   // Handle city selection coming back from CitySelectPage
   useEffect(() => {
@@ -90,13 +118,14 @@ const ExplorePage = () => {
       newParams.set('city', newCity);
       setSearchParams(newParams);
       
-      // Update filters with new city
+      // Update filters with new city using both hooks
+      updateBffFilters({ city: newCity });
       updateFilters({ city: newCity });
       
       // Clear the location state to prevent reapplying on future rerenders
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, searchParams, setSearchParams, updateFilters]);
+  }, [location.state, searchParams, setSearchParams, updateFilters, updateBffFilters]);
 
   // Update URL parameters and trigger data fetch when search changes
   const handleSearch = (query) => {
@@ -108,7 +137,8 @@ const ExplorePage = () => {
     }
     setSearchParams(newParams);
     
-    // Pre-fetch data with new query
+    // Pre-fetch data with new query using both hooks
+    updateBffFilters({ q: query });
     updateFilters({ query });
   };
   
@@ -119,7 +149,8 @@ const ExplorePage = () => {
     newParams.set('city', city);
     setSearchParams(newParams);
     
-    // Update filters with new city
+    // Update filters with new city using both hooks
+    updateBffFilters({ city });
     updateFilters({ city });
   };
 
@@ -143,8 +174,9 @@ const ExplorePage = () => {
     
     setSearchParams(newParams);
     
-    // Pre-fetch data with new tags
-    updateFilters({ tags, city: selectedCity }); // Include city in filter update
+    // Pre-fetch data with new tags using both hooks
+    updateBffFilters({ tag: tags, city: selectedCity });
+    updateFilters({ tags, city: selectedCity });
   };
   
   // Apply time filter (All, Today, This Week)
@@ -153,11 +185,10 @@ const ExplorePage = () => {
     newParams.set('timeFilter', filter);
     setSearchParams(newParams);
     
-    // Update filters with new time filter
-    updateFilters({ timeFilter: filter });
+    // Update filters with new time filter using both hooks
+    updateBffFilters({ timeFilter });
+    updateFilters({ timeFilter });
   };
-
-  // Note: Time-based filtering is now handled directly in the exploreService
 
   // Handle special tag selection (Only For You and All)
   const handleSpecialTagSelect = (tag) => {
@@ -237,168 +268,129 @@ const ExplorePage = () => {
   }, [hasAutoScrolled]);
 
   return (
-    <>
-      <style jsx>{`        
-        /* City selector style */
-        .city-selector-container {
-          background-color: #ffffff;
-          border-radius: 12px;
-          padding: 8px 16px;
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border: 1px solid rgba(100, 116, 139, 0.2);
-          box-shadow: 0 2px 10px rgba(100, 116, 139, 0.1);
-        }
-        
-        .city-selector-container:hover {
-          box-shadow: 0 4px 12px rgba(100, 116, 139, 0.15);
-          border: 1px solid rgba(100, 116, 139, 0.3);
-        }
-
-        /* Horizontal scrolling for tag filter */
-        .tag-scroll-container {
-          display: flex;
-          overflow-x: auto;
-          overflow-y: hidden;
-          white-space: nowrap;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none; /* Firefox */
-          padding: 0 !important;
-          margin: 0 !important;
-          max-width: 100%;
-        }
-        
-        .tag-scroll-container::-webkit-scrollbar {
-          display: none; /* Chrome, Safari */
-        }
-        
-        .tag-item {
-          display: inline-block;
-          flex-shrink: 0;
-        }
-
-        /* Ensure the page does not horizontally scroll at all */
-        body, html { 
-          overflow-x: hidden !important;
-          width: 100%;
-          max-width: 100vw;
-          position: relative;
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        
-        /* Force all content to stay within viewport */
-        .explore-container {
-          width: 100%;
-          max-width: 100vw;
-          overflow-x: hidden !important;
-          position: relative;
-          box-sizing: border-box;
-        }
-        
-        /* Prevent any children from causing overflow */
-        .explore-container > * {
-          max-width: 100vw;
-          overflow-x: hidden !important;
-          box-sizing: border-box;
-        }
-      `}</style>
-      <div className="explore-container container w-full pt-0 pb-8 overflow-x-hidden max-w-full" ref={pageRef} style={{ margin: 0, padding: 0, backgroundColor: '#FFFFFF', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-      
-      {/* City Selector - positioned with lower z-index than the header (which is 40) */}
-      <div className="mt-5 px-4 mb-8" style={{ position: 'relative', zIndex: 30 }}>
-        <div className="max-w-xl mx-auto flex justify-start">
-          <div className="city-selector-container bg-white shadow-sm border border-gray-200 rounded-lg">
+    <div ref={pageRef} className="container mx-auto px-4 py-6 max-w-7xl">
+      {/* Show skeleton UI during initial load */}
+      {isInitialLoading ? (
+        <ExploreSkeleton />
+      ) : (
+        <>
+          {/* Search and filter components */}
+          <div className="mb-6">
+            <ExploreSearch 
+              initialQuery={searchQuery} 
+              onSearch={handleSearch} 
+            />
+            <div className="mt-4 flex flex-wrap gap-2">
+              <TagFilter 
+                selectedTags={selectedTags} 
+                onTagSelect={handleTagSelect} 
+                onSpecialTagSelect={handleSpecialTagSelect}
+                activeSpecialTag={activeSpecialTag}
+              />
+            </div>
+          </div>
+          
+          {/* City selector component */}
+          <div className="mb-6">
             <CitySelector 
-              currentCity={selectedCity}
-              onCityChange={handleCityChange}
+              selectedCity={selectedCity} 
+              onCityChange={handleCityChange} 
             />
           </div>
-        </div>
-      </div>
-      
-      {/* Search bar placed above the tag filter with lower z-index */}
-      <div className="mt-4 px-4 mb-2" style={{ position: 'relative', zIndex: 20 }}>
-        <div className="max-w-xl mx-auto">
-          <ExploreSearch 
-            query={searchQuery} 
-            onSearch={handleSearch} 
-          />
-        </div>
-      </div>
-      
-      {/* Tag filter now placed above the content section with lowest z-index */}
-      <div className="mt-3 px-2" style={{ position: 'relative', zIndex: 10 }}>
-        <div className="tag-scroll-container w-full" ref={tagScrollRef}>
-          <TagFilter 
-            selectedTags={selectedTags}
-            onTagSelect={handleTagSelect}
-            onSpecialTagSelect={handleSpecialTagSelect}
-            activeSpecialTag={activeSpecialTag}
-            hideRegularTags={false}
-          />
-        </div>
-      </div>
-      
-      {/* Spotlight section - repositioned between tag filters and content */}
-      {!isLoading && results && results.length > 0 && (
-        <div className="mt-4 mb-5">
-          <SpotlightEvents 
-            events={results.filter(event => 
-              event.set_trending === 'in the spotlight'
-            )} 
-          />
-        </div>
-      )}
-        
-      {/* Content section with heading */}
-      <div className="mt-5">
-        <div className="flex flex-col mb-4 px-4">
-          <h2 className="text-lg font-bold text-indigo-600 relative mb-3">
-            <span className="relative inline-block">Find Your Table
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 transform translate-y-1"></span>
-            </span>
-          </h2>
-          
-          {/* Time filter buttons */}
-          <div className="flex space-x-2 mt-2">
-            <button
-              onClick={() => handleTimeFilterChange('all')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'all' 
-                ? 'bg-indigo-600 text-white shadow-sm' 
-                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => handleTimeFilterChange('today')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'today' 
-                ? 'bg-indigo-600 text-white shadow-sm' 
-                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => handleTimeFilterChange('thisWeek')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-full transition ${timeFilter === 'thisWeek' 
-                ? 'bg-indigo-600 text-white shadow-sm' 
-                : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'}`}
-            >
-              This Week
-            </button>
+
+          {/* Spotlight events section */}
+          <div className="mb-8">
+            <SpotlightEvents events={spotlightData} city={selectedCity} />
           </div>
-        </div>
-        <ExploreResults 
-          results={results} 
-          isLoading={isLoading}
-          emptyMessage="No results found. Try adjusting your search or filters."
-        />
-      </div>
+          
+          {/* Time filter, sort, and distance controls */}
+          <div className="mb-6 flex flex-wrap justify-between items-center">
+            <div className="flex space-x-2 mb-2 sm:mb-0">
+              <button 
+                onClick={() => handleTimeFilterChange('all')} 
+                className={`px-3 py-1 rounded-full text-sm ${timeFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => handleTimeFilterChange('today')} 
+                className={`px-3 py-1 rounded-full text-sm ${timeFilter === 'today' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+              >
+                Today
+              </button>
+              <button 
+                onClick={() => handleTimeFilterChange('this-week')} 
+                className={`px-3 py-1 rounded-full text-sm ${timeFilter === 'this-week' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+              >
+                This Week
+              </button>
+            </div>
+            
+            <div className="flex space-x-2">
+              <select 
+                value={sortBy} 
+                onChange={(e) => {
+                  const sort = e.target.value;
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.set('sort', sort);
+                  setSearchParams(newParams);
+                  
+                  // Update filters with new sort option using both hooks
+                  updateBffFilters({ sort });
+                  updateFilters({ sortBy: sort });
+                }}
+                className="px-3 py-1 rounded-lg text-sm border border-gray-300"
+              >
+                <option value="relevance">Most Relevant</option>
+                <option value="date-asc">Date (Earliest)</option>
+                <option value="date-desc">Date (Latest)</option>
+                <option value="popular">Most Popular</option>
+              </select>
+              
+              <select 
+                value={distance} 
+                onChange={(e) => {
+                  const newDistance = parseInt(e.target.value, 10);
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.set('distance', newDistance.toString());
+                  setSearchParams(newParams);
+                  
+                  // Update filters with new distance
+                  updateBffFilters({ distance: newDistance });
+                  updateFilters({ distance: newDistance });
+                }}
+                className="px-3 py-1 rounded-lg text-sm border border-gray-300"
+              >
+                <option value="5">5 km</option>
+                <option value="10">10 km</option>
+                <option value="25">25 km</option>
+                <option value="50">50 km</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Results section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">
+              {activeSpecialTag === 'Explore' ? 'Events Near You' : activeSpecialTag}
+            </h2>
+            
+            {isPageLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : !eventsData || eventsData.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-600">No events found matching your criteria.</p>
+                <p className="text-gray-500 mt-2">Try adjusting your filters or search terms.</p>
+              </div>
+            ) : (
+              <ExploreResults events={eventsData} />
+            )}
+          </div>
+        </>
+      )}
     </div>
-    </>
   );
 };
 

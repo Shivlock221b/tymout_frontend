@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import exploreService from '../../services/exploreService';
+import bffService from '../../services/bffService';
 
 // Cache helpers
-const CACHE_KEY = 'tymout_explore_cache';
+const CACHE_KEY = 'tymout_bff_explore_cache';
 
 /**
- * Save explore data to localStorage
+ * Save explore page data to localStorage
  * @param {string} key - Cache key
  * @param {Object} data - Data to cache
  */
@@ -22,7 +22,7 @@ const saveToCache = (key, data) => {
 };
 
 /**
- * Get cached explore data from localStorage
+ * Get cached explore page data from localStorage
  * @param {string} key - Cache key
  * @param {number} maxAge - Maximum age in milliseconds
  * @returns {Object|null} - Cached data or null if expired/not found
@@ -43,21 +43,22 @@ const getFromCache = (key, maxAge = 5 * 60 * 1000) => { // Default 5 minutes
 };
 
 /**
- * Custom hook for fetching explore items with optional filters
- * Following Single Responsibility Principle and Interface Segregation Principle
+ * Custom hook for fetching all explore page data in a single request
  * 
- * @param {Object} filters - Filtering parameters (query, tags, distance, sortBy)
- * @param {Object} options - React Query options
- * @returns {Object} - React Query result object
+ * @param {Object} initialFilters - Initial filter state
+ * @returns {Object} - Query state and handlers
  */
-export const useExploreItems = (filters = {}, options = {}) => {
-  // Create a stable cache key based on filters
-  const cacheKey = `${CACHE_KEY}_${JSON.stringify(filters)}`;
+export const useExplorePage = (initialFilters = {}) => {
+  const queryClient = useQueryClient();
   
-  return useQuery({
-    queryKey: ['explore', filters],
+  // Create a stable cache key based on filters
+  const cacheKey = `${CACHE_KEY}_${JSON.stringify(initialFilters)}`;
+  
+  // Fetch all explore page data with current filters
+  const query = useQuery({
+    queryKey: ['explorePage', initialFilters],
     queryFn: async () => {
-      const data = await exploreService.getExploreItems(filters);
+      const data = await bffService.getExplorePageData(initialFilters);
       // Save successful response to cache
       saveToCache(cacheKey, data);
       return data;
@@ -70,43 +71,9 @@ export const useExploreItems = (filters = {}, options = {}) => {
       // Update cache on successful fetch
       saveToCache(cacheKey, data);
     },
-    ...options
-  });
-};
-
-/**
- * Custom hook for fetching a specific explore item's details
- * 
- * @param {string} id - Item ID
- * @param {string} type - Item type (event, table, circle)
- * @param {Object} options - React Query options
- * @returns {Object} - React Query result object
- */
-export const useExploreItemDetails = (id, type, options = {}) => {
-  return useQuery({
-    queryKey: ['explore', type, id],
-    queryFn: () => exploreService.getItemDetails(id, type),
-    enabled: !!id && !!type,
-    ...options
-  });
-};
-
-/**
- * Custom hook for managing explore search state with React Query
- * This separates the concern of pagination from data fetching
- * 
- * @param {Object} initialFilters - Initial filter state
- * @returns {Object} - Query state and handlers
- */
-export const useExploreSearch = (initialFilters = {}) => {
-  const queryClient = useQueryClient();
-  
-  // Fetch explore items with current filters
-  const query = useExploreItems(initialFilters, {
-    keepPreviousData: true,
   });
   
-  // Optimized handler for updating filters that prevents unnecessary re-renders
+  // Optimized handler for updating filters
   const updateFilters = (newFilters) => {
     const mergedFilters = { ...initialFilters, ...newFilters };
     // Create a stable cache key for prefetching
@@ -114,9 +81,9 @@ export const useExploreSearch = (initialFilters = {}) => {
     
     // Prefetch the data with new filters
     queryClient.prefetchQuery({
-      queryKey: ['explore', mergedFilters],
+      queryKey: ['explorePage', mergedFilters],
       queryFn: async () => {
-        const data = await exploreService.getExploreItems(mergedFilters);
+        const data = await bffService.getExplorePageData(mergedFilters);
         // Save prefetched data to cache
         saveToCache(cacheKey, data);
         return data;
@@ -129,3 +96,5 @@ export const useExploreSearch = (initialFilters = {}) => {
     updateFilters,
   };
 };
+
+export default useExplorePage;
