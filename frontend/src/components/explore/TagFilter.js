@@ -118,23 +118,23 @@ const TagFilter = ({ onTagSelect, selectedTags = [], onSpecialTagSelect, activeS
       `}</style>
       {/* Only show regular tag filter section if not hiding regular tags */}
       {!hideRegularTags && (
-        <div className="tag-scroll-container">
+        <div className="categories-row no-scrollbar overflow-x-auto whitespace-nowrap flex pb-2">
           
           {/* Only display visible tags (excludes 'Only For You') */}
           {visibleTags.map(tag => (
-            <div key={tag} className="relative">
+            <div key={tag} className="relative flex-shrink-0 mr-1">
               <button
                 onClick={() => handleTagClick(tag)}
                 className={`
-                  tag-item px-5 py-3 text-lg transition-all duration-200 flex items-center justify-center
+                  tag-item px-3 py-2 md:px-5 md:py-3 text-sm md:text-lg transition-all duration-200 flex items-center justify-center
                   ${selectedTags.includes(tag)
                     ? `${tagColors[tag].bg} ${tagColors[tag].text} border-b-2 ${tagColors[tag].border} rounded-t-lg` 
                     : 'bg-white text-gray-700 hover:bg-gray-50 hover:rounded-t-lg'}
                 `}
               >
                 <div className="flex items-center justify-center h-full">
-                  <span className="text-xl mr-1">{tagEmojis[tag]}</span>
-                  <span className="font-bold text-gray-800">{tag}</span>
+                  <span className="text-base md:text-xl mr-1">{tagEmojis[tag]}</span>
+                  <span className="font-bold text-gray-800 text-xs md:text-base">{tag}</span>
                 </div>
               </button>
             </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
 
 import { useExploreSearch } from '../hooks/queries/useExploreQueries';
 import useExplorePage from '../hooks/queries/useBffQueries';
@@ -101,10 +101,34 @@ const ExplorePage = () => {
     enabled: true
   });
   
-  // Use BFF data if available, otherwise use fallback data
-  const eventsData = (bffData && bffData.events) ? bffData.events : (results || []);
-  const spotlightData = (bffData && bffData.spotlight) ? bffData.spotlight : [];
-  const isPageLoading = isBffLoading && isLoading;
+  // Detect if we're on a mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // For mobile devices, prioritize direct API calls over BFF
+  // For desktop, use BFF data if available
+  const eventsData = isMobile ? 
+    (results && results.length > 0 ? results : []) : 
+    (bffData && bffData.events && bffData.events.length > 0) ? 
+      bffData.events : 
+      (results && results.length > 0) ? results : [];
+    
+  const spotlightData = isMobile ? 
+    [] : // Skip spotlight on mobile for performance
+    (bffData && bffData.spotlight) ? bffData.spotlight : [];
+  
+  // Only show loading state if appropriate query is loading
+  const isPageLoading = isMobile ? isLoading : (isBffLoading && isLoading);
+  
+  // Function to force refresh data on mobile
+  const forceRefreshMobile = () => {
+    if (isMobile) {
+      console.log('Force refreshing data on mobile');
+      // Update filters with refresh timestamp and bypass BFF flag
+      updateFilters({ refresh: Date.now(), bypassBff: true });
+      // Also update BFF filters for consistency
+      updateBffFilters({ refresh: Date.now(), bypassBff: true });
+    }
+  };
   
   // Handle city selection coming back from CitySelectPage
   useEffect(() => {
@@ -274,29 +298,57 @@ const ExplorePage = () => {
         <ExploreSkeleton />
       ) : (
         <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Explore</h1>
+            <div className="flex items-center">
+              {isMobile && (
+                <button 
+                  onClick={forceRefreshMobile}
+                  className="mr-2 p-2 bg-gray-100 rounded-full"
+                  aria-label="Refresh"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+              <CitySelector 
+                currentCity={selectedCity} 
+                onCityChange={(city) => {
+                  setSelectedCity(city);
+                  const newParams = new URLSearchParams(searchParams.toString());
+                  newParams.set('city', city);
+                  setSearchParams(newParams);
+                }}
+              />
+            </div>
+          </div>
           {/* Search and filter components */}
           <div className="mb-6">
             <ExploreSearch 
               initialQuery={searchQuery} 
               onSearch={handleSearch} 
             />
-            <div className="mt-4 flex flex-wrap gap-2">
-              <TagFilter 
-                selectedTags={selectedTags} 
-                onTagSelect={handleTagSelect} 
-                onSpecialTagSelect={handleSpecialTagSelect}
-                activeSpecialTag={activeSpecialTag}
-              />
+            <div className="mt-4 overflow-hidden">
+              <div className="category-scroll-container no-scrollbar">
+                <TagFilter 
+                  selectedTags={selectedTags} 
+                  onTagSelect={handleTagSelect} 
+                  onSpecialTagSelect={handleSpecialTagSelect}
+                  activeSpecialTag={activeSpecialTag}
+                  categories={bffData.categories || []}
+                />  
+              </div>
             </div>
           </div>
           
           {/* City selector component */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <CitySelector 
               selectedCity={selectedCity} 
               onCityChange={handleCityChange} 
             />
-          </div>
+          </div> */}
 
           {/* Spotlight events section */}
           <div className="mb-8">
@@ -326,7 +378,7 @@ const ExplorePage = () => {
               </button>
             </div>
             
-            <div className="flex space-x-2">
+            {/* <div className="flex space-x-2">
               <select 
                 value={sortBy} 
                 onChange={(e) => {
@@ -366,7 +418,7 @@ const ExplorePage = () => {
                 <option value="25">25 km</option>
                 <option value="50">50 km</option>
               </select>
-            </div>
+            </div> */}
           </div>
           
           {/* Results section */}
@@ -383,9 +435,21 @@ const ExplorePage = () => {
               <div className="text-center py-12">
                 <p className="text-lg text-gray-600">No events found matching your criteria.</p>
                 <p className="text-gray-500 mt-2">Try adjusting your filters or search terms.</p>
+                {isMobile && (
+                  <button 
+                    onClick={forceRefreshMobile}
+                    className="mt-4 px-4 py-2 bg-primary text-white rounded-lg shadow-sm"
+                  >
+                    Refresh Events
+                  </button>
+                )}
               </div>
             ) : (
-              <ExploreResults events={eventsData} />
+              <>
+                {/* Show event count for debugging */}
+                <p className="text-sm text-gray-500 mb-2">Showing {eventsData.length} events</p>
+                <ExploreResults events={eventsData} />
+              </>
             )}
           </div>
         </>

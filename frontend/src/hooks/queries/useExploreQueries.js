@@ -101,22 +101,39 @@ export const useExploreItemDetails = (id, type, options = {}) => {
 export const useExploreSearch = (initialFilters = {}) => {
   const queryClient = useQueryClient();
   
+  // Detect if we're on a mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
   // Fetch explore items with current filters
   const query = useExploreItems(initialFilters, {
     keepPreviousData: true,
+    // For mobile devices, reduce stale time and increase retry attempts
+    staleTime: isMobile ? 1 * 60 * 1000 : 5 * 60 * 1000, // 1 minute on mobile
+    retry: isMobile ? 2 : 1,
+    retryDelay: 1000,
   });
   
   // Optimized handler for updating filters that prevents unnecessary re-renders
   const updateFilters = (newFilters) => {
+    console.log('Updating filters:', newFilters, 'Device:', isMobile ? 'Mobile' : 'Desktop');
     const mergedFilters = { ...initialFilters, ...newFilters };
     // Create a stable cache key for prefetching
     const cacheKey = `${CACHE_KEY}_${JSON.stringify(mergedFilters)}`;
+    
+    // For mobile, force refetch instead of just prefetching
+    if (isMobile && newFilters.refresh) {
+      console.log('Force refreshing data on mobile');
+      queryClient.invalidateQueries(['explore', initialFilters]);
+      return;
+    }
     
     // Prefetch the data with new filters
     queryClient.prefetchQuery({
       queryKey: ['explore', mergedFilters],
       queryFn: async () => {
+        console.log('Prefetching data with filters:', mergedFilters);
         const data = await exploreService.getExploreItems(mergedFilters);
+        console.log('Prefetched data:', data ? data.length : 0, 'items');
         // Save prefetched data to cache
         saveToCache(cacheKey, data);
         return data;
