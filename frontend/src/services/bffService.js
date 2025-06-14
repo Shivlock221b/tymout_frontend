@@ -75,7 +75,9 @@ const bffService = {
       };
     } catch (error) {
       console.error('Error fetching BFF data:', error.message);
-      return { events: [], categories: [], spotlight: [] };
+      // Instead of returning empty arrays, throw the error to trigger a retry
+      // This will allow the query to retry and potentially succeed on subsequent attempts
+      throw error;
     }
   }
 };

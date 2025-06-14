@@ -127,6 +127,15 @@ const ExplorePage = () => {
     updateBffFilters({ refresh: Date.now() });
   };
   
+  // Auto-refresh when no events are found
+  useEffect(() => {
+    // Only run this effect after initial loading is complete
+    if (!isPageLoading && eventsData.length === 0) {
+      console.log('No events found after loading, triggering auto-refresh');
+      refreshData();
+    }
+  }, [isPageLoading]);
+  
   // Handle city selection coming back from CitySelectPage
   useEffect(() => {
     if (location.state && location.state.selectedCity) {
