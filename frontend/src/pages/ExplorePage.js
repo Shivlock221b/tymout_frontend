@@ -78,7 +78,8 @@ const ExplorePage = () => {
     city: selectedCity,
     view: activeSpecialTag,
     userInterests: activeSpecialTag === 'Only For You' ? userInterests : [],
-    timeFilter: timeFilter
+    timeFilter: timeFilter,
+    refresh: Date.now() // Force initial data fetch
   });
   
   // Fallback to original hook if BFF fails
@@ -119,15 +120,11 @@ const ExplorePage = () => {
   // Only show loading state if appropriate query is loading
   const isPageLoading = isMobile ? isLoading : (isBffLoading && isLoading);
   
-  // Function to force refresh data on mobile
-  const forceRefreshMobile = () => {
-    if (isMobile) {
-      console.log('Force refreshing data on mobile');
-      // Update filters with refresh timestamp and bypass BFF flag
-      updateFilters({ refresh: Date.now(), bypassBff: true });
-      // Also update BFF filters for consistency
-      updateBffFilters({ refresh: Date.now(), bypassBff: true });
-    }
+  // Universal function to refresh data
+  const refreshData = () => {
+    console.log('Refreshing data');
+    updateFilters({ refresh: Date.now() });
+    updateBffFilters({ refresh: Date.now() });
   };
   
   // Handle city selection coming back from CitySelectPage
@@ -301,17 +298,15 @@ const ExplorePage = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Explore</h1>
             <div className="flex items-center">
-              {isMobile && (
-                <button 
-                  onClick={forceRefreshMobile}
-                  className="mr-2 p-2 bg-gray-100 rounded-full"
-                  aria-label="Refresh"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              )}
+              <button 
+                onClick={refreshData}
+                className="mr-2 p-2 bg-gray-100 rounded-full"
+                aria-label="Refresh"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+              </button>
               <CitySelector 
                 currentCity={selectedCity} 
                 onCityChange={(city) => {
@@ -435,14 +430,12 @@ const ExplorePage = () => {
               <div className="text-center py-12">
                 <p className="text-lg text-gray-600">No events found matching your criteria.</p>
                 <p className="text-gray-500 mt-2">Try adjusting your filters or search terms.</p>
-                {isMobile && (
-                  <button 
-                    onClick={forceRefreshMobile}
-                    className="mt-4 px-4 py-2 bg-primary text-white rounded-lg shadow-sm"
-                  >
-                    Refresh Events
-                  </button>
-                )}
+                <button 
+                  onClick={refreshData}
+                  className="mt-4 px-4 py-2 bg-primary text-white rounded-lg shadow-sm"
+                >
+                  Refresh Events
+                </button>
               </div>
             ) : (
               <>
