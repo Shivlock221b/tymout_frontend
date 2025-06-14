@@ -229,20 +229,24 @@ const placeSchema = new mongoose.Schema({
 });
 
 // Indexes for faster queries
-placeSchema.index({ name: 1 });
-placeSchema.index({ 'owner.userId': 1 });
-placeSchema.index({ category: 1 });
-placeSchema.index({ status: 1 });
-placeSchema.index({ 'location.city': 1 });
+eventSchema.index({ 'date.start': 1 });
+eventSchema.index({ 'host.userId': 1 });
+eventSchema.index({ category: 1 });
+eventSchema.index({ status: 1 });
+eventSchema.index({ 'location.city': 1 });
+eventSchema.index({ 'stats.viewCount': -1 });
+eventSchema.index({ 'stats.interestedCount': -1 });
+eventSchema.index({ 'stats.commentCount': -1 });
+eventSchema.index({ 'stats.shareCount': -1 });
 
 // Virtual for checking if event is full
-placeSchema.virtual('isFull').get(function() {
+eventSchema.virtual('isFull').get(function() {
   const confirmedAttendees = this.attendees.filter(a => a.status === 'confirmed').length;
   return confirmedAttendees >= this.capacity;
 });
 
 // Method to add attendee
-placeSchema.methods.addAttendee = function(userId, name) {
+eventSchema.methods.addAttendee = function(userId, name) {
   if (this.isFull) {
     throw new Error('Event is at full capacity');
   }
@@ -260,6 +264,6 @@ placeSchema.methods.addAttendee = function(userId, name) {
   });
 };
 
-const Place = mongoose.model('Place', placeSchema);
+const Event = mongoose.model('Event', eventSchema);
 
-module.exports = Place; 
+module.exports = Event; 
