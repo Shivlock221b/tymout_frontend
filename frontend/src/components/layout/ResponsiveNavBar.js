@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FaCommentDots, FaUsers, FaUser } from 'react-icons/fa';
+import { FaCommentDots, FaUsers, FaUser, FaStar } from 'react-icons/fa';
 
 // Combined navigation component that serves as both bottom nav on mobile and side nav on desktop
 // Following Single Responsibility Principle - This component handles all navigation in a unified way
@@ -9,7 +9,8 @@ const ResponsiveNavBar = () => {
   
   // Navigation items configuration - memoized to prevent recreating on each render
   const navItems = useMemo(() => [
-    { name: 'Experience', path: '/explore', icon: <FaUsers /> },
+    { name: 'Tables', path: '/explore', icon: <FaUsers /> },
+    { name: 'Experience', path: '/experience', icon: <FaStar /> },
     { name: 'Chats', path: '/myevents', icon: <FaCommentDots /> },
     { name: 'Profile', path: '/profile', icon: <FaUser /> }
   ], []);

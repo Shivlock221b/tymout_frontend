@@ -1,0 +1,476 @@
+
+**1.2: Setup Mock Data for Development**
+
+- Create
+    
+    ```
+    experience/data/mockExperienceData.js
+    ```
+    
+- Include sample experience objects with all required fields:
+    
+    ```
+    javascript
+    
+    export const mockExperiences = [
+      {
+        id: 'exp-001',
+        title: 'Mountain Hiking Tour',
+        description: 'Experience breathtaking views on this guided mountain hiking adventure',
+        location: 'Blue Mountain Range',
+        image: 'https://example.com/experience1.jpg',
+        host: {
+          id: 'host-001',
+          name: 'Adventure Guides Inc.',
+          image: 'https://example.com/host1.jpg',
+          verified: true
+        },
+        date: '2025-07-15',
+        time: '08:00 AM',
+        maxParticipants: 12,
+        participants: 5,
+        tags: ['Hiking', 'Outdoors', 'Adventure'],
+        rating: 4.8,
+        price: 75.00,
+        duration: '6 hours'
+      },
+    // Additional mock experiences...
+    ];
+    
+    ```
+    
+
+**1.3: Create Basic Experience Model**
+
+- Define the Experience data model with proper TypeScript/PropTypes
+
+
+
+
+## **Phase 2: Core Components and Utilities**
+
+**2.1: Create ExperienceCard Component**
+
+- Create
+    
+    ```
+    components/ExperienceCard.js
+    ```
+    
+- Implement WhatsApp-like chat interface styling similar to EventCard
+- Include proper prop validation with PropTypes
+- Implement different size and variant support
+- Add accessibility attributes
+
+**2.2: Create Experience Loading State Components**
+
+- Create  for loading states
+    
+    ```
+    components/ExperienceCardSkeleton.js
+    ```
+    
+- Implement skeletal loading animation with Tailwind
+
+**2.3: Create Utility Functions**
+
+- Create  with functions for:
+    
+    ```
+    utils/experienceHelpers.js
+    ```
+    
+    - Date/time formatting
+    - Tag color generation
+    - Experience state calculations
+    - Image fallback handling
+
+## **Phase 3: State Management and Hooks**
+
+**3.1: Create Zustand Store**
+
+- Create  for client-side state:
+    
+    ```
+    stores/experienceStore.js
+    ```
+    
+    ```
+    javascript
+    
+    import { create } from 'zustand';
+    
+    export const useExperienceStore = create((set, get) => ({
+    // Filters and current view state
+      filterCriteria: {
+        category: null,
+        location: null,
+        date: null,
+        searchTerm: '',
+        priceRange: { min: 0, max: 1000 }
+      },
+    
+    // UI states
+      view: 'grid',// grid or list
+      sortBy: 'date',// date, price, rating
+    
+    // Actions
+      setFilterCriteria: (criteria) => set((state) => ({
+        filterCriteria: { ...state.filterCriteria, ...criteria }
+      })),
+    
+      setView: (view) => set({ view }),
+      setSortBy: (sortBy) => set({ sortBy }),
+      resetFilters: () => set({
+        filterCriteria: {
+          category: null,
+          location: null,
+          date: null,
+          searchTerm: '',
+          priceRange: { min: 0, max: 1000 }
+        }
+      })
+    }));
+    
+    ```
+    
+
+**3.2: Create Experience Card Hook**
+
+- Create :
+    
+    ```
+    hooks/useExperienceCard.js
+    ```
+    
+    ```
+    javascript
+    
+    import { useNavigate } from 'react-router-dom';
+    import { useUIStore } from '../../stores/uiStore';
+    import { useMutation, useQueryClient } from '@tanstack/react-query';
+    import { toast } from 'react-toastify';
+    import { useMemo, useCallback } from 'react';
+    
+    const useExperienceCard = (source = 'experience') => {
+      const navigate = useNavigate();
+      const queryClient = useQueryClient();
+      const setScrollTarget = useUIStore(state => state.setScrollTarget);
+    
+    // Navigation handling
+      const handleCardClick = useCallback((item) => {
+        const cardElementId = `experience-card-${item.id}`;
+        setScrollTarget(source, cardElementId);
+    
+    // Prefetch data
+        queryClient.prefetchQuery({
+          queryKey: ['experience', item.id],
+          queryFn: () => import('../services/experienceService')
+            .then(module => module.default.getExperienceById(item.id)),
+          staleTime: 10 * 1000,
+        });
+    
+        navigate(`/experience/${item.id}`, {
+          state: { from: source, cardElementId }
+        });
+      }, [source, navigate, setScrollTarget, queryClient]);
+    
+    // More handler functions...
+    
+      return {
+        handleCardClick,
+        handleProfileClick,
+        handlePrimaryAction,
+        isPending: false// Will be updated with actual mutation state
+      };
+    };
+    
+    export default useExperienceCard;
+    
+    ```
+    
+
+## **Phase 4: API Services and React Query Integration**
+
+**4.1: Create API Service**
+
+- Create :
+    
+    ```
+    services/experienceService.js
+    ```
+    
+    ```
+    javascript
+    
+    import axios from 'axios';
+    
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3008';
+    const EXPERIENCE_SERVICE_URL = `${API_URL}/api/experiences`;
+    
+    const experienceService = {
+    // Get all experiences with optional filters
+      getExperiences: async (filters = {}) => {
+        try {
+          const response = await axios.get(EXPERIENCE_SERVICE_URL, { params: filters });
+          return response.data;
+        } catch (error) {
+          console.error('Error fetching experiences:', error);
+          throw error;
+        }
+      },
+    
+    // Get single experience by ID
+      getExperienceById: async (experienceId) => {
+        try {
+          const response = await axios.get(`${EXPERIENCE_SERVICE_URL}/${experienceId}`);
+          return response.data;
+        } catch (error) {
+          console.error('Error fetching experience details:', error);
+          throw error;
+        }
+      },
+    
+    // Book/join an experience
+      bookExperience: async (experienceId, bookingData) => {
+        try {
+          const response = await axios.post(`${EXPERIENCE_SERVICE_URL}/${experienceId}/book`, bookingData);
+          return response.data;
+        } catch (error) {
+          console.error('Error booking experience:', error);
+          throw error;
+        }
+      }
+    
+    // Additional API methods...
+    };
+    
+    export default experienceService;
+    
+    ```
+    
+
+**4.2: Create React Query Hooks**
+
+- Create :
+    
+    ```
+    queries/experienceQueries.js
+    ```
+    
+    ```
+    javascript
+    
+    import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+    import experienceService from '../services/experienceService';
+    
+    // Hook to fetch experiences with filters
+    export const useExperiences = (filters = {}) => {
+      return useQuery({
+        queryKey: ['experiences', filters],
+        queryFn: () => experienceService.getExperiences(filters),
+        staleTime: 5 * 60 * 1000// 5 minutes
+      });
+    };
+    
+    // Hook to fetch a single experience
+    export const useExperienceById = (experienceId) => {
+      return useQuery({
+        queryKey: ['experience', experienceId],
+        queryFn: () => experienceService.getExperienceById(experienceId),
+        enabled: !!experienceId,
+        staleTime: 5 * 60 * 1000
+      });
+    };
+    
+    // Hook to book an experience
+    export const useBookExperience = () => {
+      const queryClient = useQueryClient();
+    
+      return useMutation({
+        mutationFn: ({ experienceId, bookingData }) =>
+          experienceService.bookExperience(experienceId, bookingData),
+        onSuccess: (data) => {
+    // Invalidate relevant queries
+          queryClient.invalidateQueries({ queryKey: ['experiences'] });
+          queryClient.invalidateQueries({ queryKey: ['experience', data.experienceId] });
+    
+    // Update user bookings if relevant
+          queryClient.invalidateQueries({ queryKey: ['user', 'bookings'] });
+        }
+      });
+    };
+    
+    // Additional React Query hooks...
+    
+    ```
+    
+
+## **Phase 5: Experience Page Enhancement**
+
+**5.1: Create Experience List Component**
+
+- Create :
+    
+    ```
+    components/ExperienceCardList.js
+    ```
+    
+    ```
+    javascript
+    
+    import React from 'react';
+    import PropTypes from 'prop-types';
+    import ExperienceCard from './ExperienceCard';
+    import ExperienceCardSkeleton from './ExperienceCardSkeleton';
+    
+    const ExperienceCardList = ({
+      experiences,
+      isLoading,
+      variant = 'default',
+      size = 'medium'
+    }) => {
+      if (isLoading) {
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <ExperienceCardSkeleton key={i} />
+            ))}
+          </div>
+        );
+      }
+    
+      if (!experiences?.length) {
+        return (
+          <div className="text-center p-8">
+            <p className="text-gray-500">No experiences found.</p>
+          </div>
+        );
+      }
+    
+      return (
+        <div className="space-y-4">
+          {experiences.map(experience => (
+            <ExperienceCard
+              key={experience.id}
+              item={experience}
+              variant={variant}
+              size={size}
+            />
+          ))}
+        </div>
+      );
+    };
+    
+    ExperienceCardList.propTypes = {
+      experiences: PropTypes.array,
+      isLoading: PropTypes.bool,
+      variant: PropTypes.string,
+      size: PropTypes.string
+    };
+    
+    export default ExperienceCardList;
+    
+    ```
+    
+
+**5.2: Update Experience Page**
+
+- Update  to include the Experience list:
+    
+    ```
+    pages/ExperiencePage.js
+    ```
+    
+    ```
+    javascript
+    
+    import React from 'react';
+    import ExperienceCardList from '../components/ExperienceCardList';
+    import { useExperiences } from '../queries/experienceQueries';
+    import { useExperienceStore } from '../stores/experienceStore';
+    
+    const ExperiencePage = () => {
+    // Get filter state from zustand
+      const { filterCriteria, view, sortBy, setFilterCriteria } = useExperienceStore();
+    
+    // Fetch experiences using React Query
+      const { data: experiences, isLoading, error } = useExperiences(filterCriteria);
+    
+    // Handle any errors
+      if (error) {
+        return (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-4">Experience</h1>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <p className="text-red-700">Failed to load experiences. Please try again later.</p>
+            </div>
+          </div>
+        );
+      }
+    
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-4">Experience</h1>
+    
+          {/* Filter controls will go here */}
+    
+          <ExperienceCardList
+            experiences={experiences?.items || []}
+            isLoading={isLoading}
+            variant="explore"
+          />
+        </div>
+      );
+    };
+    
+    export default ExperiencePage;
+    
+    ```
+    
+
+## **Phase 6: Experience Details Page and Routing**
+
+**6.1: Create Experience Details Page**
+
+- Create  for viewing experience details
+    
+    ```
+    pages/ExperienceDetailPage.js
+    ```
+    
+- Include all necessary components (header, description, booking widget, etc.)
+
+**6.2: Update App.js Routing**
+
+- Add routes for Experience in App.js:
+    
+    ```
+    javascript
+    
+    // In App.js
+    
+    // Import the experience pages
+    import ExperiencePage from './experience/pages/ExperiencePage';
+    import ExperienceDetailPage from './experience/pages/ExperienceDetailPage';
+    
+    // Inside the Routes component
+    <Route
+      path="/experience"
+      element={
+        <PublicRoute>
+          <PageTransition><ExperiencePage /></PageTransition>
+        </PublicRoute>
+      }
+    />
+    
+    <Route
+      path="/experience/:id"
+      element={
+        <PublicRoute>
+          <PageTransition><ExperienceDetailPage /></PageTransition>
+        </PublicRoute>
+      }
+    />
+    
+    ```

@@ -30,13 +30,13 @@ mongoose.connect(MONGO_URI)
 const eventRoutes = require('./routes/events');
 const circleRoutes = require('./routes/circles');
 const imageRoutes = require('./routes/images');
-const placeRoutes = require('./routes/placeRoutes');
+const experienceRoutes = require('./routes/experienceRoutes');
 
 // Use routes
 app.use('/events', eventRoutes);
 app.use('/circles', circleRoutes);
 app.use('/events/images', imageRoutes);
-app.use('/places', placeRoutes);
+app.use('/experiences', experienceRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

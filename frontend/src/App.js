@@ -47,6 +47,9 @@ import EventChatPage from './myevents/pages/EventChatPage';
 import EventAboutPage from './myevents/pages/EventAboutPage';
 import JoinRequestsPage from './myevents/pages/JoinRequestsPage';
 import EventGroupPage from './myevents/pages/EventGroupPage';
+// Experience module
+import ExperiencePage from './experience/ExperiencePage';
+import ExperienceDetailPage from './experience/pages/ExperienceDetailPage';
 // Shop components
 // Shop routes now handled by ShopRouter
 import ShopEditPage from './shop/pages/ShopEditPage';
@@ -135,6 +138,23 @@ const App = () => {
               element={
                 <PublicRoute>
                   <PageTransition><ExplorePage /></PageTransition>
+                </PublicRoute>
+              } 
+            />
+            {/* Experience routes */}
+            <Route 
+              path="/experience" 
+              element={
+                <PublicRoute>
+                  <PageTransition><ExperiencePage /></PageTransition>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/experience/:id" 
+              element={
+                <PublicRoute>
+                  <PageTransition><ExperienceDetailPage /></PageTransition>
                 </PublicRoute>
               } 
             />
@@ -387,31 +407,26 @@ const App = () => {
         </main>
       </div>
       {!isEventChatPage && <ResponsiveNavBar />}
-      {/* Hide Footer on specific routes */}
+      {/* Show Footer only on specific routes */}
       {(() => {
-        // Hide Footer on basic system pages
-        if (isEventChatPage || isMyEventsPage) return null;
+        // Define pages where Footer should be shown
+        const footerPages = [
+          '/about',
+          '/features',
+          '/business',
+          '/guidelines',
+          '/faq',
+          '/contact',
+          '/policies'
+        ];
         
-        // Hide Footer on ExplorePage
-        if (location.pathname === '/explore' || location.pathname === '/city-select') return null;
+        // Show Footer only on information pages
+        if (footerPages.includes(location.pathname)) {
+          return <Footer />;
+        }
         
-        // Hide Footer on event detail pages
-        if (/^\/(events|tables|circles)\/[^/]+$/.test(location.pathname)) return null;
-        
-        // Hide Footer on host dashboard and host subpages
-        if (/^\/host(\/.*)?$/.test(location.pathname)) return null;
-        
-        // Hide Footer on ALL profile pages (both main profile and user profiles)
-        if (location.pathname === '/profile' || /^\/profile\/.*$/.test(location.pathname)) return null;
-        
-        // Hide Footer on EventGroupPage
-        if (/^\/myevents\/[^/]+\/group$/.test(location.pathname)) return null;
-        
-        // Hide Footer on shop pages
-        if (/^\/shop(\/.*)?$/.test(location.pathname)) return null;
-        
-        // Show Footer on all other pages
-        return <Footer />;
+        // Hide Footer by default on all other pages
+        return null;
       })()}
 
       {/* Only show Footer when user is NOT authenticated */}

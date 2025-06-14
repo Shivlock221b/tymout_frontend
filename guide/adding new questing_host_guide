@@ -1,0 +1,62 @@
+ Create a Table page (e.g., a new input in the form), here’s a comprehensive breakdown of all the files and layers you’ll likely need to update to fully support this change, from database to UI and API docs.
+________________________________________
+1. Database Layer (MongoDB)
+•	Collection:
+•	Update the tables collection schema/model to include the new field.
+•	If you use Mongoose (Node.js): update the schema in models/Table.js (or similar).
+•	If using plain MongoDB: ensure the new field is handled in inserts/updates.
+2. Backend Microservice (Table/Host Service)
+•	API Input Validation:
+•	Update validation logic (e.g., Joi, express-validator, Pydantic, Marshmallow) to allow/require the new field.
+•	Controller/Route Handler:
+•	Update the controller handling table creation (e.g., controllers/tableController.js).
+•	Ensure the new field is extracted from the request and saved to the database.
+•	DTOs/Serializers (if any):
+•	Update any data transfer objects or serializers to include the new field.
+•	API Docs:
+•	Update OpenAPI/Swagger or markdown API docs to document the new field for /tables creation endpoint.
+3. Frontend Service Layer
+•	API Service:
+•	Update the service function that submits the create-table form (e.g., frontend/src/services/hostService.js or tableService.js).
+•	Ensure the new field is included in the payload sent to the backend.
+4. Frontend State/Hook Layer
+•	React Query Hook:
+•	Update the custom hook that manages the create-table mutation (e.g., frontend/src/hooks/queries/useHostQueries.js).
+•	Make sure the new field is included in the form data and mutation.
+5. UI Layer
+•	Form Component:
+•	Update the create-table form component (e.g., frontend/src/components/host/EventCreationForm.js or similar).
+•	Add a new input for the question/field.
+•	Update form validation (Yup, custom, etc.) to include the new field.
+•	Ensure the field is included in the form’s state and submission handler.
+•	Table Detail Page (optional):
+•	If you display this field elsewhere (e.g., table detail, summary, admin view), update those components to render the new field.
+6. Testing
+•	Backend Tests:
+•	Update or add tests for the API endpoint to check the new field is handled correctly.
+•	Frontend Tests:
+•	Update or add tests for the form and any affected components.
+7. Documentation
+•	Frontend Data Fetch Docs:
+•	Update frontend/GUIDE/README.md > Data Fetch Endpoints to document changes in data fetches or API calls.
+•	API Docs:
+•	Update backend API documentation to reflect the new field.
+________________________________________
+Summary Table
+| Layer | File/Location (Example) | Change Required | |----------------------|------------------------------------------------------------|----------------------------------------| | Database Model | backend/models/Table.js (Mongoose) | Add new field to schema | | API Validation | backend/validators/tableValidator.js | Allow/require new field | | Controller/Route | backend/controllers/tableController.js | Handle new field in create/update | | API Docs | backend/docs/swagger.yaml or README.md | Document new field | | API Service (FE) | frontend/src/services/hostService.js | Include new field in API call | | React Query Hook | frontend/src/hooks/queries/useHostQueries.js | Pass new field in mutation | | Form Component | frontend/src/components/host/EventCreationForm.js | Add input, validation, state | | Table Detail Page | frontend/src/pages/TableDetailPage.js (if displayed) | Display new field | | Frontend Docs | frontend/GUIDE/README.md | Update data fetch documentation | | Backend Tests | backend/tests/table.test.js | Test new field in API | | Frontend Tests | frontend/src/components/host/tests/EventCreationForm.js| Test form with new field |
+________________________________________
+Example: Adding “Table Purpose” Field
+Suppose you want to add a “Table Purpose” question to the create table form:
+1.	Database:
+•	Add purpose: String to the Table schema.
+2.	Backend:
+•	Validate and save purpose in the create-table endpoint.
+3.	Frontend Service:
+•	Add purpose to the payload in the table creation service.
+4.	React Query Hook:
+•	Ensure purpose is sent in the mutation.
+5.	Form Component:
+•	Add a new input for “Table Purpose”, update state and validation.
+6.	Docs/Tests:
+•	Update docs and tests to cover the new field.
+
