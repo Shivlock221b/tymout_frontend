@@ -336,7 +336,7 @@ const ExplorePage = () => {
                   onTagSelect={handleTagSelect} 
                   onSpecialTagSelect={handleSpecialTagSelect}
                   activeSpecialTag={activeSpecialTag}
-                  categories={bffData.categories || []}
+                  categories={(bffData && bffData.categories) || []}
                 />  
               </div>
             </div>
